@@ -1,58 +1,68 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { login } from "../../api/login/loginApi.ts";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate }  from 'react-router-dom';
+import { loginService } from "../../api/user/loginService.ts";
 // 스타일(css) 추가
 import "../../css/Login/Login.css";
 
-function Login() {
-  const navigate                          = useNavigate();
-  const [showPassword, setShowPassword]   = useState(false);    // 비밀번호 보여주기 Hook 선언
-  const [rememberMe, setRememberMe]       = useState(false);    // 사용자ID 저장 Hook 선언
-  const [userId, setUserId]               = useState("");       // 사용자ID Hook 선언
-  const [password, setPassword]           = useState("");       // 비밀번호 Hook 선언
-  const [popupMessage, setPopupMessage]   = useState("");       // 팝업 메세지 Hook 선언
+const Login: React.FC = () => {
+  const [showPassword, setShowPassword]   = useState(false);  // 비밀번호 표시 여부
+  const [regUserId, setRegUserId]         = useState(false);  // 아이디 저장 여부
+  const [userId, setUserId]               = useState("");     // 사용자 아이디
+  const [password, setPassword]           = useState("");     // 비밀번호
+  const [popupMessage, setPopupMessage]   = useState("");     // 로그인 실패 메시지 
+  
+  const userIdRef       = useRef<HTMLInputElement>(null);     // 사용자 아이디 입력 필드 참조 
+  const passwordRef     = useRef<HTMLInputElement>(null);     // 비밀번호 입력 필드 참조
+
+  const navigate                          = useNavigate();    // 
 
   // 로그인
-  const handleLogin = (e: React.SyntheticEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e: React.SyntheticEvent) => {
+    // 폼 제출 기본 동작 방지
+    e.preventDefault();                                       
 
     if (!userId.trim()) {
       setPopupMessage("아이디를 입력하세요.");
+      userIdRef.current?.focus();
       return;
     }
+
     if (!password.trim()) {
       setPopupMessage("비밀번호를 입력하세요.");
+       passwordRef.current?.focus();
       return;
     }
 
-    login(
+    await loginService(
       { userId, password },
-      (data) => {
-        // 로그인 성공
-        console.log("result data : " + JSON.stringify(data));
-
-        // 아이디 저장 처리
-        if (rememberMe) {
-          localStorage.setItem("savedUserId", userId);
-        } else {
-          localStorage.removeItem("savedUserId");
-        }
-
-        // 페이지 이동
-        console.log("메인 페이지 이동")
-        //navigate("/main");
+      (res) => {
+        // 성공 콜백
+        navigate('/main', { replace: true });
       },
-      (message) => {
-        console.log("result message : " + message);
-        // 로그인 실패
-        setPopupMessage(message);
+      (err) => {
+        // 1. 서버가 응답을 보냈는지 확인 (401, 500 등)
+        if (err.response) {
+          console.log('에러 상태 코드:', err.response.status); // 401
+          console.log('서버 에러 데이터:', err.response.data); // 여기서 resultCode, resultMessage 확인 가능
+          
+          var resultCode = err.response.data.resultCode;
+          var resultMsg  = err.response.data.resultMessage || '오류가 발생했습니다. 담당자에게 문의하여 주십시오.'
+          
+          if (resultCode == "0002") {
+              setPopupMessage(resultMsg);
+              return;
+          } 
+        } else {
+          // 2. 서버 접속 자체가 안 된 경우 (네트워크 에러 등)
+          console.error('네트워크 에러:', err.message);
+          alert('서버와 통신할 수 없습니다.');
+        }
       }
     );
   };
 
   return (
     <div className="login-wrapper">
-
       {/* 레이어 팝업 */}
       {popupMessage && (
         <div className="popup-overlay">
@@ -65,7 +75,7 @@ function Login() {
               </svg>
             </div>
             <p className="popup-message">{popupMessage}</p>
-            <button className="popup-confirm" onClick={() => setPopupMessage("")}>확인</button>
+            <button className="popup-confirm" onClick={() => setPopupMessage("")} tabIndex={-1}>확인</button>
           </div>
         </div>
       )}
@@ -109,7 +119,7 @@ function Login() {
             </p>
           </div>
 
-          <form className="login-form" onSubmit={handleLogin}>
+          <form className="login-form" onSubmit={handleSubmit}>
             {/* 사용자 아이디 */}
             <div className="form-group">
               <label className="form-label">사용자 아이디</label>
@@ -126,6 +136,7 @@ function Login() {
                   value={userId}
                   onChange={(e) => setUserId(e.target.value)}
                   autoComplete="username"
+                  ref={userIdRef}
                 />
               </div>
             </div>
@@ -149,6 +160,7 @@ function Login() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete="current-password"
+                  ref={passwordRef}
                 />
                 <button
                   type="button"
@@ -176,9 +188,9 @@ function Login() {
             <div className="remember-row">
               <input
                 type="checkbox"
-                id="rememberMe"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
+                id="regUserId"
+                checked={regUserId}
+                onChange={(e) => setRegUserId(e.target.checked)}
               />
               <label htmlFor="rememberMe">아이디 저장</label>
             </div>

@@ -1,40 +1,77 @@
-import axios from "axios";
-import type { AxiosResponse } from "axios";
+import axios from 'axios';
+import type { AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import { API_BASE_ROOT } from "./index";
 
-const transaction = axios.create({
-    baseURL : "http://localhost:8080",              // 백엔드 주소
-    timeout : 10000,                                // 타임아웃 : 10초 초과시 자동 실패처리
-    headers : {
-        "Content-Type" : "application/json"
-    }
-});
-
-// 모든 백엔드 응답의 공통 구조
+// 공통 응답 구조 (서버 규격에 맞춤)
 export interface ApiResponse<T> {
-    resultcode : string;
-    resultMsg  : string;
-    data       : T;
+    status  : number;
+    message : string;
+    data    : T; 
 }
 
-// 공통 요청 처리 : resultcode 기반으로 성공/실패 분기
-export const request = <T>(
-    apiCall  : Promise<AxiosResponse<ApiResponse<T>>>,
-    onSuccess: (data: T) => void,
-    onError  : (message: string) => void
-) => {
-    apiCall
-        .then(res => {
-            const { resultcode, resultMsg, data } = res.data;
-            if (resultcode === "00") {
-                onSuccess(data);
-            } else {
-                onError(resultMsg);
+// Axios 인스턴스 생성
+const transaction : AxiosInstance = axios.create({
+    baseURL: API_BASE_ROOT,
+    timeout: 10000,
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
+
+// 요청 인터셉터: 토큰 자동 첨부
+transaction.interceptors.request.use(
+    (config: InternalAxiosRequestConfig) => {
+        const token = localStorage.getItem('accessToken');
+        if (token && config.headers) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+    
+        return config;
+    },
+    (error) => Promise.reject(error)
+);
+
+// 응답 인터셉터: 에러 처리 및 데이터 가공
+transaction.interceptors.response.use(
+    (response: AxiosResponse) => response.data, // 필요한 데이터만 반환하도록 가공
+    (error) => {
+        if (error.response?.status === 401) {
+            // 1. 로그인 요청 자체가 401인 경우 (비밀번호 틀림 등)
+            // 백엔드에서 보낸 resultCode가 '0002'(로그인 실패)라면 그냥 에러만 반환
+            if (error.response.data.resultCode === '0002') {
+                return Promise.reject(error);
             }
-        })
-        .catch(err => {
-            const message: string = err?.response?.data?.resultMsg ?? "오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
-            onError(message);
-        });
+
+            // 2. 로그인 이외의 요청이 401인 경우 (토큰 만료 등)
+            alert('세션이 만료되었습니다. 다시 로그인해주세요.');
+            localStorage.clear();
+            window.location.href = '/login';
+        }
+    }
+);
+
+// 공통 API 요청 함수
+interface RequestParam<T, R> {
+    // Axios 요청 설정
+    config : AxiosRequestConfig;
+    // 성공 콜백        
+    onSuccess?: (data: R) => void;
+    // 에러 콜백    
+    onError?: (error: any) => void;     
+}
+
+// API 요청 함수
+export const request = async <T, R>({ config, onSuccess, onError }: RequestParam<T, R>) => {
+    try {
+        const response: AxiosResponse<R> = await transaction(config);
+    
+        if (onSuccess) onSuccess(response.data);
+        
+        return response.data;
+    } catch (error) {
+        if (onError) onError(error);
+        throw error;
+    }
 };
 
 export default transaction;
