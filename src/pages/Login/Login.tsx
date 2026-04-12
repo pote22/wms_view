@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { useNavigate }  from 'react-router-dom';
 import { loginService } from "../../api/user/loginService.ts";
 // 스타일(css) 추가
@@ -11,8 +11,9 @@ const Login: React.FC = () => {
   const [password, setPassword]           = useState("");     // 비밀번호
   const [popupMessage, setPopupMessage]   = useState("");     // 로그인 실패 메시지 
   
-  const userIdRef       = useRef<HTMLInputElement>(null);     // 사용자 아이디 입력 필드 참조 
-  const passwordRef     = useRef<HTMLInputElement>(null);     // 비밀번호 입력 필드 참조
+  const userIdRef         = useRef<HTMLInputElement>(null);   // 사용자 아이디 입력 필드 참조
+  const passwordRef       = useRef<HTMLInputElement>(null);   // 비밀번호 입력 필드 참조
+  const focusAfterPopup   = useRef<HTMLInputElement | null>(null); // 팝업 닫힌 후 포커스 대상
 
   const navigate                          = useNavigate();    // 
 
@@ -22,14 +23,14 @@ const Login: React.FC = () => {
     e.preventDefault();                                       
 
     if (!userId.trim()) {
+      focusAfterPopup.current = userIdRef.current;
       setPopupMessage("아이디를 입력하세요.");
-      userIdRef.current?.focus();
       return;
     }
 
     if (!password.trim()) {
+      focusAfterPopup.current = passwordRef.current;
       setPopupMessage("비밀번호를 입력하세요.");
-       passwordRef.current?.focus();
       return;
     }
 
@@ -75,7 +76,7 @@ const Login: React.FC = () => {
               </svg>
             </div>
             <p className="popup-message">{popupMessage}</p>
-            <button className="popup-confirm" onClick={() => setPopupMessage("")} tabIndex={-1}>확인</button>
+            <button className="popup-confirm" onClick={() => { setPopupMessage(""); focusAfterPopup.current?.focus(); }} tabIndex={-1}>확인</button>
           </div>
         </div>
       )}
@@ -111,6 +112,7 @@ const Login: React.FC = () => {
 
         {/* 오른쪽 흰색 패널 */}
         <div className="login-right">
+          <div className="login-right-inner">
           <div className="login-right-header">
             <h1 className="login-title">LOGIN WMS</h1>
             <p className="login-notice">
@@ -213,6 +215,7 @@ const Login: React.FC = () => {
             <a href="#">고객지원</a>
             <span className="login-footer-divider">/</span>
             <a href="#">개인정보처리방침</a>
+          </div>
           </div>
         </div>
 
