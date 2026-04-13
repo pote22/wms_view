@@ -1,0 +1,108 @@
+.sidebar {
+  width: 256px;
+  flex-shrink: 0;
+  background-color: #f1f5f9;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  z-index: 20;
+}
+
+.sidebarHeader {
+  padding: 32px 24px 24px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.sidebarHeader:hover {
+  opacity: 0.8;
+}
+
+
+.sidebarLogo {
+  font-family: 'Manrope', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  color: #1e3a6e;
+  letter-spacing: -0.5px;
+  margin: 0;
+}
+
+.sidebarSub {
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 500;
+  margin: 4px 0 0;
+}
+
+.sidebarNav {
+  flex: 1;
+  padding: 0 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.sidebarNav::-webkit-scrollbar { width: 4px; }
+.sidebarNav::-webkit-scrollbar-track { background: transparent; }
+.sidebarNav::-webkit-scrollbar-thumb { background: #c2c6d4; border-radius: 10px; }
+
+.sidebarSection {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebarGroupLabel {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: #94a3b8;
+  padding: 0 12px;
+  margin-bottom: 6px;
+  font-family: 'Manrope', sans-serif;
+}
+
+.sidebarMenuItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #475569;
+  text-decoration: none;
+  transition: background-color 0.15s, transform 0.2s;
+}
+
+.sidebarMenuItem:hover {
+  background-color: rgba(148, 163, 184, 0.2);
+  transform: translateX(4px);
+  color: #1e293b;
+}
+
+.sidebarMenuItemActive {
+  background-color: #003f87;
+  color: #ffffff;
+}
+
+.sidebarMenuItemActive:hover {
+  background-color: #0050a8;
+  transform: none;
+  color: #ffffff;
+}
+
+.sidebarMenuIcon {
+  font-size: 20px;
+  color: inherit;
+}
+
+.sidebarFooter {
+  padding: 16px;
+  border-top: 1px solid rgba(226, 232, 240, 0.6);
+}

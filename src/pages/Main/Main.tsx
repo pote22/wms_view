@@ -1,241 +1,237 @@
-import { useState, useEffect, useRef } from "react";
-import "../../css/Main/main.css";
+import { useState } from "react";
 
-import CjWmsHome0010    from "../Home/cj_wms_home_0010";
-import CjWmsHome0020    from "../Home/cj_wms_home_0020";
-import CjWmsHome0050    from "../Home/cj_wms_home_0050";
-import CjWmsReceipt0010 from "../Receipt/cj_wms_receipt_0010";
-import CjWmsReceipt0020 from "../Receipt/cj_wms_receipt_0020";
-import CjWmsOrder0010   from "../Order/cj_wms_order_0010";
-import CjWmsOrder0020   from "../Order/cj_wms_order_0020";
-import CjWmsComm0010    from "../Common/cj_wms_comm_0010";
-import CjWmsComm0020    from "../Common/cj_wms_comm_0020";
+/* ── Mock 데이터 ── */
+const NOTICES = [
+  { no: 10, important: true,  title: "추석 연휴 기간 물류 센터 운영 일정 안내", author: "김철수", date: "2023-10-12" },
+  { no: 9,  important: false, title: "WMS 시스템 정기 점검 안내 (10/15)",      author: "이영희", date: "2023-10-10" },
+  { no: 8,  important: false, title: "인천 제2물류센터 구역명 변경 공지",       author: "박민준", date: "2023-10-08" },
+];
 
-/* ── 페이지 맵 ── */
-const PAGE_MAP: Record<string, React.ReactNode> = {
-  "notice":            <CjWmsHome0010 />,
-  "items":             <CjWmsHome0020 />,
-  "zone":              <CjWmsHome0050 />,
-  "inbound-register":  <CjWmsReceipt0010 />,
-  "inbound-schedule":  <CjWmsReceipt0020 />,
-  "outbound-register": <CjWmsOrder0010 />,
-  "outbound-assign":   <CjWmsOrder0020 />,
-  "center-customer":   <CjWmsComm0010 />,
-  "user-manage":       <CjWmsComm0020 />,
+const INBOUND_STATS  = { todayCount: 1248, unit: "SKU", rate: "+12%",  progress: 65, waiting: 24, waitingUnit: "건", label: "확정 대기" };
+const OUTBOUND_STATS = { todayCount: 2105, unit: "SKU", rate: "+8.5%", progress: 78, waiting: 42, waitingUnit: "건", label: "출고 대기" };
+
+const TRANSACTIONS = {
+  inbound: [
+    { id: "IB-20231012-005", status: "완료",  statusType: "done",    type: "Pallet 입고", location: "Warehouse A-04", qty: 120,  time: "14:20 PM" },
+    { id: "IB-20231012-004", status: "진행중", statusType: "active",  type: "Bulk 입고",   location: "Warehouse B-12", qty: 450,  time: "13:45 PM" },
+    { id: "IB-20231012-003", status: "대기",  statusType: "pending", type: "Pallet 입고", location: "Warehouse C-01", qty: 85,   time: "11:10 AM" },
+    { id: "IB-20231012-002", status: "완료",  statusType: "done",    type: "Box 입고",    location: "Warehouse A-02", qty: 300,  time: "10:30 AM" },
+    { id: "IB-20231012-001", status: "완료",  statusType: "done",    type: "Bulk 입고",   location: "Warehouse D-05", qty: 210,  time: "09:15 AM" },
+    { id: "IB-20231012-000", status: "완료",  statusType: "done",    type: "Pallet 입고", location: "Warehouse B-08", qty: 95,   time: "08:45 AM" },
+  ],
+  outbound: [
+    { id: "OB-20231012-088", status: "완료",  statusType: "done",    type: "택배 출고",   location: "Dock 04",        qty: 45,   time: "15:10 PM" },
+    { id: "OB-20231012-087", status: "피킹중", statusType: "active",  type: "Box 출고",    location: "Dock 02",        qty: 1200, time: "14:55 PM" },
+    { id: "OB-20231012-086", status: "대기",  statusType: "pending", type: "팔레트 출고", location: "Dock 01",        qty: 12,   time: "14:30 PM" },
+  ],
 };
 
-/* ── 셀렉터 데이터 ── */
-const CUSTOMERS = ["GS칼텍스", "CJ대한통운", "삼성전자", "LG화학"];
-const CENTERS   = ["인천GSC센터", "부산센터", "대전센터", "광주센터"];
+const INBOUND_DIST = {
+  title: "입고 유형별 분포도 (4월 기준)",
+  total: 980,
+  items: [
+    { label: "Pallet 입고", pct: 50, color: "#003f87", offset: 0   },
+    { label: "Bulk 입고",   pct: 30, color: "#cbe7f5", offset: -50 },
+    { label: "긴급 입고",   pct: 12, color: "#983c00", offset: -80 },
+    { label: "기타",        pct: 8,  color: "#cbd5e1", offset: -92 },
+  ],
+};
 
-/* ── 사이드바 메뉴 정의 ── */
-const HOME_MENUS = [
-  { group: "홈", items: [
-    { icon: "notifications", label: "공지사항", key: "notice" },
-  ]},
-];
-const STORAGE_MENUS = [
-  { group: "마스터 관리", items: [
-    { icon: "inventory_2",     label: "품번관리",       key: "items"             },
-    { icon: "location_on",     label: "존&로케이션관리", key: "zone"              },
-  ]},
-  { group: "입고관리", items: [
-    { icon: "download",        label: "입고등록",       key: "inbound-register"  },
-    { icon: "pending_actions", label: "입고예정&확정",  key: "inbound-schedule"  },
-  ]},
-  { group: "출고관리", items: [
-    { icon: "upload",          label: "출고등록",       key: "outbound-register" },
-    { icon: "assignment",      label: "출고/할당 관리", key: "outbound-assign"   },
-  ]},
-];
-const COMMON_MENUS = [
-  { group: "사용자관리", items: [
-    { icon: "manage_accounts", label: "센터고객관리",   key: "center-customer"   },
-    { icon: "person",          label: "회원관리",       key: "user-manage"       },
-  ]},
-];
+const OUTBOUND_DIST = {
+  title: "수불유형 분포도 (4월 기준)",
+  total: 1200,
+  items: [
+    { label: "B2C 이커머스", pct: 45, color: "#003f87", offset: 0   },
+    { label: "B2B 대리점",   pct: 30, color: "#cbe7f5", offset: -45 },
+    { label: "긴급 보충",    pct: 15, color: "#983c00", offset: -75 },
+    { label: "기타 반품",    pct: 10, color: "#cbd5e1", offset: -90 },
+  ],
+};
 
 /* ── 컴포넌트 ── */
 const Main: React.FC = () => {
-  const [activeMainTab,    setActiveMainTab]    = useState<"home" | "storage" | "common">("home");
-  const [activeSideMenu,   setActiveSideMenu]   = useState<string>("notice");
-  const [selectedCustomer, setSelectedCustomer] = useState(CUSTOMERS[0]);
-  const [selectedCenter,   setSelectedCenter]   = useState(CENTERS[0]);
-  const [openDropdown,     setOpenDropdown]      = useState<"customer" | "center" | null>(null);
+  const [activeOpsTab, setActiveOpsTab] = useState<"inbound" | "outbound">("inbound");
 
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setOpenDropdown(null);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const menus = activeMainTab === "home" ? HOME_MENUS
-              : activeMainTab === "storage" ? STORAGE_MENUS
-              : COMMON_MENUS;
+  const opsStats = activeOpsTab === "inbound" ? INBOUND_STATS  : OUTBOUND_STATS;
+  const txList   = activeOpsTab === "inbound" ? TRANSACTIONS.inbound : TRANSACTIONS.outbound;
+  const txTitle  = activeOpsTab === "inbound" ? "최근 입고 트랜젝션 (Recent Transactions)" : "최근 출고 트랜젝션 (Recent Transactions)";
+  const distData = activeOpsTab === "inbound" ? INBOUND_DIST : OUTBOUND_DIST;
 
   return (
-    <div className="main-wrapper">
+    <>
+      {/* 공지사항 */}
+      <section className="card notice-card">
+        <div className="card-header">
+          <h3 className="card-title">공지사항 (Notice)</h3>
+          <a className="card-link" href="#">모두 보기</a>
+        </div>
+        <table className="notice-table">
+          <thead>
+            <tr>
+              <th className="notice-th">No.</th>
+              <th className="notice-th">Title</th>
+              <th className="notice-th notice-th--author">작성자</th>
+              <th className="notice-th">등록일자</th>
+            </tr>
+          </thead>
+          <tbody>
+            {NOTICES.map((n) => (
+              <tr className="notice-row" key={n.no}>
+                <td className="notice-td notice-td--no">{String(n.no).padStart(2, "0")}</td>
+                <td className="notice-td">
+                  <div className="notice-title-cell">
+                    {n.important && <span className="badge badge--important">중요</span>}
+                    <span className={n.important ? "notice-title--bold" : "notice-title"}>{n.title}</span>
+                  </div>
+                </td>
+                <td className="notice-td notice-td--author">{n.author}</td>
+                <td className="notice-td notice-td--date">{n.date}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
 
-      {/* ── 사이드바 ── */}
-      <aside className="sidebar">
-        <div className="sidebar-header">
-          <h2 className="sidebar-logo">CJ WMS</h2>
-          <p className="sidebar-sub">CJ Logistics</p>
+      {/* 운영 현황 + 분포도 그리드 */}
+      <div className="ops-grid">
+
+        {/* 운영 현황 탭 */}
+        <div className="card ops-card">
+          <div className="ops-tab-nav">
+            <button
+              className={`ops-tab ${activeOpsTab === "inbound" ? "ops-tab--active" : ""}`}
+              onClick={() => setActiveOpsTab("inbound")}
+            >
+              <span className="material-symbols-outlined">download</span>
+              입고 현황 (Inbound)
+            </button>
+            <button
+              className={`ops-tab ${activeOpsTab === "outbound" ? "ops-tab--active" : ""}`}
+              onClick={() => setActiveOpsTab("outbound")}
+            >
+              <span className="material-symbols-outlined">upload</span>
+              출고 현황 (Outbound)
+            </button>
+          </div>
+          <div className="ops-content">
+            <div className="ops-summary-grid">
+              <div className="summary-card summary-card--blue">
+                <p className="summary-label">{activeOpsTab === "inbound" ? "금일 입고" : "금일 출고"}</p>
+                <div className="summary-value">
+                  {opsStats.todayCount.toLocaleString()}
+                  <span className="summary-unit"> {opsStats.unit}</span>
+                </div>
+                <span className="summary-rate">{opsStats.rate} ↑</span>
+              </div>
+              <div className="summary-card summary-card--gray">
+                <p className="summary-label">주간 진행률</p>
+                <div className="progress-bar-wrap">
+                  <div className="progress-bar">
+                    <div className="progress-bar__fill" style={{ width: `${opsStats.progress}%` }} />
+                  </div>
+                </div>
+                <span className="summary-progress-text">{opsStats.progress}% 완료</span>
+              </div>
+              <div className="summary-card summary-card--gray">
+                <p className="summary-label">{opsStats.label}</p>
+                <div className="summary-value">
+                  {opsStats.waiting}
+                  <span className="summary-unit"> {opsStats.waitingUnit}</span>
+                </div>
+              </div>
+            </div>
+            <p className="ops-footnote">실시간 운영 요약 데이터</p>
+          </div>
         </div>
 
-        <nav className="sidebar-nav">
-          {menus.map((section) => (
-            <div className="sidebar-section" key={section.group}>
-              <span className="sidebar-group-label">{section.group}</span>
-              {section.items.map((item) => (
-                <a
-                  className={`sidebar-menu-item${activeSideMenu === item.key ? " sidebar-menu-item--active" : ""}`}
-                  href="#"
-                  key={item.key}
-                  onClick={(e) => { e.preventDefault(); setActiveSideMenu(item.key); }}
-                >
-                  <span className="material-symbols-outlined sidebar-menu-icon">{item.icon}</span>
-                  <span>{item.label}</span>
-                </a>
+        {/* 분포도 */}
+        <div className="card dist-card">
+          <div className="card-header">
+            <h3 className="card-title">{distData.title}</h3>
+            <span className="material-symbols-outlined card-icon">bar_chart</span>
+          </div>
+          <div className="dist-content">
+            <div className="donut-wrap">
+              <svg className="donut-svg" viewBox="0 0 36 36">
+                <circle cx="18" cy="18" r="16" fill="none" stroke="#e2e8f0" strokeWidth="4" />
+                {distData.items.map((seg) => (
+                  <circle
+                    key={seg.label}
+                    cx="18" cy="18" r="16"
+                    fill="none"
+                    stroke={seg.color}
+                    strokeWidth="4"
+                    strokeDasharray={`${seg.pct} 100`}
+                    strokeDashoffset={seg.offset}
+                  />
+                ))}
+              </svg>
+              <div className="donut-center">
+                <span className="donut-total">{distData.total.toLocaleString()}</span>
+                <span className="donut-label">TOTAL ORDERS</span>
+              </div>
+            </div>
+            <div className="dist-legend">
+              {distData.items.map((seg) => (
+                <div className="legend-row" key={seg.label}>
+                  <div className="legend-dot" style={{ backgroundColor: seg.color }} />
+                  <span className="legend-text">{seg.label}</span>
+                  <span className="legend-pct">{seg.pct}%</span>
+                </div>
               ))}
             </div>
-          ))}
-        </nav>
+          </div>
+        </div>
+      </div>
 
-        <div className="sidebar-footer">
-          <a className="sidebar-menu-item" href="#">
-            <span className="material-symbols-outlined sidebar-menu-icon">help</span>
-            <span>Support</span>
+      {/* 최근 트랜젝션 */}
+      <section className="card tx-card">
+        <div className="card-header">
+          <h3 className="card-title">{txTitle}</h3>
+          <a className="card-link" href="#">
+            전체 내역 보기
+            <span className="material-symbols-outlined" style={{ fontSize: 14 }}>arrow_forward</span>
           </a>
         </div>
-      </aside>
-
-      {/* ── 메인 콘텐츠 ── */}
-      <main className="main-content">
-
-        {/* 상단 헤더 */}
-        <header className="top-header">
-          <div className="header-top-row">
-
-            {/* 좌측: 셀렉터 */}
-            <div className="header-selectors" ref={dropdownRef}>
-              <div className="dropdown-wrap">
-                <div className="selector-box" onClick={() => setOpenDropdown(openDropdown === "customer" ? null : "customer")}>
-                  <span className="selector-label">고객사</span>
-                  <span className="selector-value">{selectedCustomer}</span>
-                  <span className={`material-symbols-outlined selector-arrow ${openDropdown === "customer" ? "selector-arrow--open" : ""}`}>expand_more</span>
+        <div className="tx-list">
+          {txList.map((tx) => (
+            <div className="tx-row" key={tx.id}>
+              <div className="tx-left">
+                <div className={`tx-icon tx-icon--${tx.statusType}`}>
+                  <span className="material-symbols-outlined">
+                    {tx.statusType === "done" ? "check_circle" : tx.statusType === "active" ? "sync" : "schedule"}
+                  </span>
                 </div>
-                {openDropdown === "customer" && (
-                  <ul className="dropdown-list">
-                    {CUSTOMERS.map((c) => (
-                      <li key={c} className={`dropdown-item ${c === selectedCustomer ? "dropdown-item--active" : ""}`}
-                        onClick={() => { setSelectedCustomer(c); setOpenDropdown(null); }}>
-                        {c}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                <div className="tx-info">
+                  <div className="tx-title-row">
+                    <span className="tx-id">{tx.id}</span>
+                    <span className={`badge badge--${tx.statusType}`}>{tx.status}</span>
+                  </div>
+                  <div className="tx-meta">
+                    <span className="material-symbols-outlined tx-meta-icon">inventory_2</span>
+                    {tx.type}
+                    <span className="tx-divider" />
+                    <span className="material-symbols-outlined tx-meta-icon">location_on</span>
+                    {tx.location}
+                  </div>
+                </div>
               </div>
-              <div className="dropdown-wrap">
-                <div className="selector-box" onClick={() => setOpenDropdown(openDropdown === "center" ? null : "center")}>
-                  <span className="selector-label">센터</span>
-                  <span className="selector-value">{selectedCenter}</span>
-                  <span className={`material-symbols-outlined selector-arrow ${openDropdown === "center" ? "selector-arrow--open" : ""}`}>expand_more</span>
+              <div className="tx-right">
+                <div className="tx-qty">
+                  <p className="tx-qty-value">{tx.qty.toLocaleString()} EA</p>
+                  <p className="tx-qty-label">QUANTITY</p>
                 </div>
-                {openDropdown === "center" && (
-                  <ul className="dropdown-list">
-                    {CENTERS.map((c) => (
-                      <li key={c} className={`dropdown-item ${c === selectedCenter ? "dropdown-item--active" : ""}`}
-                        onClick={() => { setSelectedCenter(c); setOpenDropdown(null); }}>
-                        {c}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                <div className="tx-time">
+                  <p className="tx-time-value">{tx.time}</p>
+                  <p className="tx-time-label">Today</p>
+                </div>
+                <button className="tx-more material-symbols-outlined">more_vert</button>
               </div>
             </div>
-
-            {/* 우측: 사용자 정보 */}
-            <div className="header-user-area">
-              <div className="user-info">
-                <div className="user-avatar">JS</div>
-                <div className="user-text">
-                  <span className="user-name">김철수 관리자</span>
-                  <span className="user-role">SUPER USER</span>
-                </div>
-              </div>
-              <button className="logout-btn">
-                <span className="material-symbols-outlined">logout</span>
-                로그아웃
-              </button>
-              <div className="header-icons">
-                <button className="icon-btn material-symbols-outlined">notifications</button>
-                <button className="icon-btn material-symbols-outlined">settings</button>
-              </div>
-            </div>
-          </div>
-
-          {/* 탭 네비게이션 — 탭 클릭 시 본문 변경 없음, 사이드바만 교체 */}
-          <div className="header-tab-row">
-            <button
-              className={`main-tab ${activeMainTab === "home" ? "main-tab--active" : ""}`}
-              onClick={() => setActiveMainTab("home")}
-            >
-              홈
-            </button>
-            <button
-              className={`main-tab ${activeMainTab === "storage" ? "main-tab--active" : ""}`}
-              onClick={() => setActiveMainTab("storage")}
-            >
-              보관관리
-            </button>
-            <button
-              className={`main-tab ${activeMainTab === "common" ? "main-tab--active" : ""}`}
-              onClick={() => setActiveMainTab("common")}
-            >
-              공통관리
-            </button>
-          </div>
-        </header>
-
-        {/* 페이지 캔버스 — activeSideMenu 에 따라 컴포넌트 교체 */}
-        <div className="page-canvas">
-          {PAGE_MAP[activeSideMenu] ?? null}
+          ))}
         </div>
-
-        {/* 하단 상태바 */}
-        <div className="status-footer">
-          <div className="status-left">
-            <div className="status-item">
-              <span className="status-item-label">시스템 상태</span>
-              <div className="status-item-value">
-                <span className="status-dot status-dot--on" />
-                정상 작동 중
-              </div>
-            </div>
-            <div className="status-item">
-              <span className="status-item-label">활성 작업자</span>
-              <span className="status-item-value">124 / 150</span>
-            </div>
-            <div className="status-item">
-              <span className="status-item-label">창고 가동률</span>
-              <span className="status-item-value">88.42% 사용 중</span>
-            </div>
-          </div>
-          <div className="status-right">
-            <span className="status-refresh-text">30초마다 데이터 갱신됨</span>
-            <span className="status-ping" />
-          </div>
-        </div>
-
-      </main>
-    </div>
+      </section>
+    </>
   );
 };
 

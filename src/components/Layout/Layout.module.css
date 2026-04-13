@@ -1,0 +1,40 @@
+.mainWrapper {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  font-family: 'Inter', sans-serif;
+  background-color: #f8fafb;
+  color: #191c1d;
+}
+
+.mainContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background-color: #f8fafb;
+  overflow: hidden;
+}
+
+.pageCanvas {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px;
+  padding-bottom: 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.pageCanvas::-webkit-scrollbar {
+  width: 4px;
+}
+
+.pageCanvas::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pageCanvas::-webkit-scrollbar-thumb {
+  background: #c2c6d4;
+  border-radius: 10px;
+}
