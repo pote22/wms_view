@@ -63,11 +63,11 @@ interface RequestParam<T, R> {
 // API 요청 함수
 export const request = async <T, R>({ config, onSuccess, onError }: RequestParam<T, R>) => {
     try {
-        const response: AxiosResponse<R> = await transaction(config);
+        const response: any = await transaction(config);
     
-        if (onSuccess) onSuccess(response.data);
+        if (onSuccess) onSuccess(response);
         
-        return response.data;
+        return response;
     } catch (error) {
         if (onError) onError(error);
         throw error;

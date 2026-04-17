@@ -37,7 +37,10 @@ const Login: React.FC = () => {
     await loginService(
       { userId, password },
       (res) => {
-        // 성공 콜백
+        // 성공 콜백: 토큰 및 사용자 정보 저장
+        localStorage.setItem("accessToken", res.accessToken);
+        localStorage.setItem("userInfo",    JSON.stringify(res.data));
+        
         navigate('/main', { replace: true });
       },
       (err) => {

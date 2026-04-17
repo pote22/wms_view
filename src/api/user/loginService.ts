@@ -9,12 +9,19 @@ export interface LoginRequest {
 
 // API 응답에 필요한 인터페이스 정의
 export interface LoginResponse {
-    accessToken : string;
-    expireDt    : string;
-    userId      : string;
-    userName    : string;
-    authId      : string;
-    status      : string;
+    resultCode      : string;
+    resultMessage   : string;
+    accessToken     : string;
+    expireDate      : any;
+    data: {
+        userId      : string;
+        userNm      : string;
+        adminYn     : string;
+        userSts     : string;
+        useYn       : string;
+        role        : string;
+        profileImgUrl?: string;
+    }
 }
 
 export const loginService = (
