@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import styles from "./Header.module.css";
+import { getTokenPayload } from "../../utils/auth";
 
+// 헤더 컴포넌트
 interface HeaderProps {
     selectedCustomer: string;
     selectedCenter: string;
@@ -24,6 +27,33 @@ const Header: React.FC<HeaderProps> = ({
 }) => {
     const [openDropdown, setOpenDropdown] = useState<"customer" | "center" | null>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    // 토큰에서 사용자 정보 가져오기
+    const payload = getTokenPayload();           // 페이로드
+    const userId = payload?.userId ?? "";        // 사용자ID
+    const userNm = payload?.userNm ?? "사용자";   // 사용자명
+    const role = payload?.role ?? "";            // 사용자권한
+    const initial = userNm.charAt(0);            // 이니셜 (첫글자)
+    const isAdmin = payload?.adminYn === 'Y';    // 관리자 여부 
+
+    const navigate = useNavigate();
+
+    // 로그아웃
+    const handleLogout = () => {
+        sessionStorage.clear();
+        navigate("/login", { replace: true });
+    }
+
+    const getAuthLabel = (role: string): string => {
+        if (role == "ADMIN") {
+            return "관리자";
+        } else if (role.includes("WMS")) {
+            return "담당자";
+        } else if (role.includes("CUSTOMER")) {
+            return "사용자";
+        } else {
+            return "";
+        }
+    }
 
     // 드롭다운 외부 클릭 시 닫기 로직
     useEffect(() => {
@@ -81,20 +111,22 @@ const Header: React.FC<HeaderProps> = ({
                 {/* 우측: 사용자 정보 */}
                 <div className={styles.headerUserArea}>
                     <div className={styles.userInfo}>
-                        <div className={styles.userAvatar}>JS</div>
+                        <div className={styles.userAvatar}>{initial}</div>
                         <div className={styles.userText}>
-                            <span className={styles.userName}>김철수 관리자</span>
-                            <span className={styles.userRole}>SUPER USER</span>
+                            <span className={styles.userName}>{userNm}</span>
+                            <span className={styles.userRole}>{getAuthLabel(role)}</span>
                         </div>
                     </div>
-                    <button className={styles.logoutBtn}>
+                    <button className={styles.logoutBtn} onClick={handleLogout}>
                         <span className={`material-symbols-outlined ${styles.icon}`}>logout</span>
                         로그아웃
                     </button>
+                    {/* 설정 기능 추가시 사용예정
                     <div className={styles.headerIcons}>
                         <button className={`${styles.iconBtn} material-symbols-outlined`}>notifications</button>
                         <button className={`${styles.iconBtn} material-symbols-outlined`}>settings</button>
                     </div>
+                    */}
                 </div>
             </div>
 
@@ -112,12 +144,14 @@ const Header: React.FC<HeaderProps> = ({
                 >
                     보관관리
                 </button>
-                <button
-                    className={`${styles.mainTab} ${activeMainTab === "common" ? styles.mainTabActive : ""}`}
-                    onClick={() => onTabChange("common")}
-                >
-                    공통관리
-                </button>
+                {isAdmin && (
+                    <button
+                        className={`${styles.mainTab} ${activeMainTab === "common" ? styles.mainTabActive : ""}`}
+                        onClick={() => onTabChange("common")}
+                    >
+                        공통관리
+                    </button>
+                )}
             </div>
         </header>
     );

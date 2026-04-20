@@ -1,4 +1,4 @@
-const CjWmsComm0020: React.FC = () => (
+const CJ_WMS_COMM_0020: React.FC = () => (
   <div className="stub-page">
     <span className="material-symbols-outlined stub-icon">person</span>
     <h2 className="stub-title">회원관리</h2>
@@ -6,4 +6,4 @@ const CjWmsComm0020: React.FC = () => (
   </div>
 );
 
-export default CjWmsComm0020;
+export default CJ_WMS_COMM_0020;

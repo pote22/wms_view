@@ -4,13 +4,13 @@ import { API_BASE_ROOT } from "./index";
 
 // 공통 응답 구조 (서버 규격에 맞춤)
 export interface ApiResponse<T> {
-    status  : number;
-    message : string;
-    data    : T; 
+    status: number;
+    message: string;
+    data: T;
 }
 
 // Axios 인스턴스 생성
-const transaction : AxiosInstance = axios.create({
+const transaction: AxiosInstance = axios.create({
     baseURL: API_BASE_ROOT,
     timeout: 10000,
     headers: {
@@ -21,11 +21,11 @@ const transaction : AxiosInstance = axios.create({
 // 요청 인터셉터: 토큰 자동 첨부
 transaction.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
-        const token = localStorage.getItem('accessToken');
+        const token = sessionStorage.getItem('accessToken');
         if (token && config.headers) {
             config.headers.Authorization = `Bearer ${token}`;
         }
-    
+
         return config;
     },
     (error) => Promise.reject(error)
@@ -44,7 +44,7 @@ transaction.interceptors.response.use(
 
             // 2. 로그인 이외의 요청이 401인 경우 (토큰 만료 등)
             alert('세션이 만료되었습니다. 다시 로그인해주세요.');
-            localStorage.clear();
+            sessionStorage.clear();
             window.location.href = '/login';
         }
     }
@@ -53,20 +53,20 @@ transaction.interceptors.response.use(
 // 공통 API 요청 함수
 interface RequestParam<T, R> {
     // Axios 요청 설정
-    config : AxiosRequestConfig;
+    config: AxiosRequestConfig;
     // 성공 콜백        
     onSuccess?: (data: R) => void;
     // 에러 콜백    
-    onError?: (error: any) => void;     
+    onError?: (error: any) => void;
 }
 
 // API 요청 함수
 export const request = async <T, R>({ config, onSuccess, onError }: RequestParam<T, R>) => {
     try {
         const response: any = await transaction(config);
-    
+
         if (onSuccess) onSuccess(response);
-        
+
         return response;
     } catch (error) {
         if (onError) onError(error);
