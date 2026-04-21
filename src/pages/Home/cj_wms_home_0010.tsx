@@ -20,14 +20,14 @@ const CJ_WMS_HOME_0010: React.FC = () => {
     const [selectedNoticeId, setSelectedNoticeId] = useState<string | null>("01");
     const [checkedIds, setCheckedIds] = useState<string[]>([]);
     const [isEditing, setIsEditing] = useState(false);
-    
+
     // 3. Popup State
     const [popup, setPopup] = useState<{
         isOpen: boolean;
         type: "alert" | "confirm";
         message: string;
         onConfirm: () => void;
-    }>({ isOpen: false, type: "alert", message: "", onConfirm: () => {} });
+    }>({ isOpen: false, type: "alert", message: "", onConfirm: () => { } });
 
     const closePopup = () => setPopup(p => ({ ...p, isOpen: false }));
 
@@ -107,12 +107,15 @@ const CJ_WMS_HOME_0010: React.FC = () => {
     };
 
     const handleDelete = () => {
-        if (checkedIds.length === 0) {
+        if (checkedIds.length === 0 && !selectedNoticeId) {
             showAlert("삭제할 항목을 선택해주세요.");
             return;
         }
-        showConfirm(`${checkedIds.length}개의 항목을 삭제하시겠습니까?`, () => {
-            setNotices(prev => prev.filter(n => !checkedIds.includes(n.id)));
+
+        const idsToDelete = checkedIds.length > 0 ? checkedIds : [selectedNoticeId!];
+        console.log(idsToDelete);
+        showConfirm(`${idsToDelete.length}개의 항목을 삭제하시겠습니까?`, () => {
+            setNotices(prev => prev.filter(n => !idsToDelete.includes(n.id)));
             setCheckedIds([]);
             setSelectedNoticeId(null);
             setIsEditing(false);
@@ -153,7 +156,7 @@ const CJ_WMS_HOME_0010: React.FC = () => {
         if (validFiles.length > 0) {
             setAttachedFiles(prev => [...prev, ...validFiles]);
         }
-        
+
         // 동일 파일 다시 선택 가능하도록 초기화
         e.target.value = '';
     };
@@ -352,8 +355,8 @@ const CJ_WMS_HOME_0010: React.FC = () => {
                                                 <p className={styles.fileSize}>{file.size}</p>
                                             </div>
                                             {isEditing && (
-                                                <span 
-                                                    className="material-symbols-outlined" 
+                                                <span
+                                                    className="material-symbols-outlined"
                                                     style={{ fontSize: '16px', color: '#94a3b8', cursor: 'pointer', marginLeft: 'auto' }}
                                                     onClick={() => removeFile(file.id)}
                                                 >
