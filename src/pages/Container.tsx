@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "../css/Main/main.css";
 
 import { getTokenPayload } from "../utils/auth";
+import { getUserAuthSrvcWhList, type UserAuthSrvcWh } from "../api/common/commonService";
 
 import MainLayout from "../components/Layout/Layout";
 import Sidebar from "../components/Sidebar/Sidebar";
@@ -56,9 +57,6 @@ const PAGE_MAP: Record<string, React.ReactNode> = {
   "user-manage": <CJ_WMS_COMM_0020 />,
 };
 
-const CUSTOMERS = ["GS칼텍스", "CJ대한통운", "삼성전자", "LG화학"];
-const CENTERS = ["인천GSC센터", "부산센터", "대전센터", "광주센터"];
-
 const HOME_MENUS = [
   { group: "홈", items: [{ icon: "notifications", label: "공지사항", key: "notice" }] },
 ];
@@ -106,8 +104,33 @@ const COMMON_MENUS = [
 const Container: React.FC = () => {
   const [activeMainTab, setActiveMainTab] = useState<"home" | "storage" | "common">("home");
   const [activeSideMenu, setActiveSideMenu] = useState<string>(""); // 초기값은 비움 (메인 대시보드 노출용)
-  const [selectedCustomer, setSelectedCustomer] = useState(CUSTOMERS[0]);
-  const [selectedCenter, setSelectedCenter] = useState(CENTERS[0]);
+  const [authList, setAuthList] = useState<UserAuthSrvcWh[]>([]);
+  const [selectSrvcCd, setSelectSrvcCd] = useState<string>("");
+  const [selectWhCd, setSelectWhCd] = useState<string>("");
+
+  const payload = getTokenPayload();
+  const STORAGE_KEY_SRVC_CD = `wms_srvc_cd_${payload?.userId}`;
+  const STORAGE_KEY_WH_CD = `wms_wh_cd_${payload?.userId}`;
+
+  useEffect(() => {
+    if (!payload) return;
+
+    getUserAuthSrvcWhList(
+      { userId: payload.userId },
+      (res) => {
+        const list = res?.data ?? [];
+        setAuthList(list);
+        const savedSrvcCd = localStorage.getItem(STORAGE_KEY_SRVC_CD);
+        const savedWhCd = localStorage.getItem(STORAGE_KEY_WH_CD);
+        const base = list.find(item => item.base_yn === 'Y') ?? list[0];
+
+        setSelectSrvcCd(savedSrvcCd ?? base?.srvc_cd ?? "");
+        setSelectWhCd(savedWhCd ?? base?.wh_cd ?? "");
+      },
+      (err) => console.error('고객사/센터 목록 조회 실패', err)
+    );
+  }, []);
+
   // 활성화된 탭에 따른 메뉴 결정
   const currentMenus = activeMainTab === "home" ? HOME_MENUS
     : activeMainTab === "storage" ? STORAGE_MENUS
@@ -118,6 +141,28 @@ const Container: React.FC = () => {
     setActiveMainTab("home");
     setActiveSideMenu("");
   };
+
+  const handleSrvcCdChange = (srvcCd: string) => {
+    setSelectSrvcCd(srvcCd);
+    localStorage.setItem(STORAGE_KEY_SRVC_CD, srvcCd);
+    const firstWh = authList.find(v => v.srvc_cd === srvcCd);
+    const whCd = firstWh?.wh_cd ?? "";
+    setSelectWhCd(whCd);
+    localStorage.setItem(STORAGE_KEY_WH_CD, whCd);
+  };
+
+  const handleWhCdChange = (whCd: string) => {
+    setSelectWhCd(whCd);
+    localStorage.setItem(STORAGE_KEY_WH_CD, whCd);
+  };
+
+  const srvcCdList = authList
+    .filter((v, i, arr) => arr.findIndex(a => a.srvc_cd === v.srvc_cd) === i)
+    .map(v => ({ srvcCd: v.srvc_cd, srvcNm: v.srvc_nm }));
+
+  const whCdList = authList
+    .filter(v => v.srvc_cd === selectSrvcCd)
+    .map(v => ({ whCd: v.wh_cd, whNm: v.wh_nm }));
 
   return (
     <MainLayout
@@ -133,13 +178,13 @@ const Container: React.FC = () => {
       /* 헤더 조립 */
       header={
         <Header
-          selectedCustomer={selectedCustomer}
-          selectedCenter={selectedCenter}
+          selectSrvcCd={selectSrvcCd}
+          selectWhCd={selectWhCd}
           activeMainTab={activeMainTab}
-          customers={CUSTOMERS}
-          centers={CENTERS}
-          onCustomerChange={setSelectedCustomer}
-          onCenterChange={setSelectedCenter}
+          srvcCdList={srvcCdList}
+          whCdList={whCdList}
+          onSrvcCdChange={handleSrvcCdChange}
+          onWhCdChange={handleWhCdChange}
           onTabChange={(tab) => {
             setActiveMainTab(tab);
           }}

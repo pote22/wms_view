@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>공지사항 관리 - CJ WMS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Manrope:wght@500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-error-container": "#93000a",
+                        "tertiary-container": "#983c00",
+                        "secondary-fixed-dim": "#afcbd8",
+                        "secondary-container": "#cbe7f5",
+                        "on-secondary-container": "#4e6874",
+                        "on-background": "#191c1d",
+                        "on-primary-fixed": "#001a40",
+                        "tertiary-fixed-dim": "#ffb694",
+                        "on-tertiary-fixed-variant": "#7b2f00",
+                        "tertiary": "#722b00",
+                        "secondary-fixed": "#cbe7f5",
+                        "surface-variant": "#e1e3e4",
+                        "surface-tint": "#115cb9",
+                        "inverse-on-surface": "#eff1f2",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-fixed-variant": "#304a55",
+                        "primary": "#003f87",
+                        "surface-container-low": "#f2f4f5",
+                        "primary-fixed": "#d7e2ff",
+                        "error": "#ba1a1a",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed-variant": "#004491",
+                        "on-secondary-fixed": "#021f29",
+                        "primary-fixed-dim": "#acc7ff",
+                        "surface-bright": "#f8fafb",
+                        "outline": "#727784",
+                        "surface-dim": "#d8dadb",
+                        "inverse-primary": "#acc7ff",
+                        "error-container": "#ffdad6",
+                        "background": "#f8fafb",
+                        "on-surface-variant": "#424752",
+                        "surface-container": "#eceeef",
+                        "on-tertiary-container": "#ffc2a7",
+                        "on-tertiary": "#ffffff",
+                        "surface": "#f8fafb",
+                        "secondary": "#48626e",
+                        "tertiary-fixed": "#ffdbcc",
+                        "surface-container-high": "#e6e8e9",
+                        "surface-container-highest": "#e1e3e4",
+                        "inverse-surface": "#2e3132",
+                        "outline-variant": "#c2c6d4",
+                        "on-tertiary-fixed": "#351000",
+                        "on-surface": "#191c1d",
+                        "primary-container": "#0056b3",
+                        "on-primary": "#ffffff",
+                        "on-primary-container": "#bbd0ff",
+                        "on-error": "#ffffff"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3 { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #c2c6d4; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface flex h-screen overflow-hidden">
+<!-- SideNavBar Component -->
+<aside class="bg-slate-100 dark:bg-slate-950 flex flex-col h-full border-r border-slate-200 dark:border-slate-800 w-64 shrink-0 z-20">
+<div class="px-6 py-8">
+<h2 class="text-xl font-bold text-blue-900 font-headline uppercase tracking-tight">CJ WMS</h2>
+<p class="text-xs text-slate-500 font-medium mt-1">CJ Logistics</p>
+</div>
+<nav class="flex-1 px-4 space-y-6 overflow-y-auto custom-scrollbar">
+<div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-2 block mb-2 font-headline">마스터 관리</span>
+<div class="space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/30 hover:translate-x-1 transition-transform duration-200 text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">database</span>
+<span>품번관리</span>
+</a>
+</div>
+</div>
+<div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-2 block mb-2 font-headline">입고관리</span>
+<div class="space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/30 hover:translate-x-1 transition-transform duration-200 text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">download</span>
+<span>입고등록</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/30 hover:translate-x-1 transition-transform duration-200 text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">pending_actions</span>
+<span>입고예정&amp;확정</span>
+</a>
+</div>
+</div>
+<div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-2 block mb-2 font-headline">출고관리</span>
+<div class="space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/30 hover:translate-x-1 transition-transform duration-200 text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">upload</span>
+<span>출고등록</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/30 hover:translate-x-1 transition-transform duration-200 text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">assignment</span>
+<span>출고/할당 관리</span>
+</a>
+</div>
+</div>
+</nav>
+<div class="p-4 mt-auto border-t border-slate-200/60 dark:border-slate-800/60">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 text-sm font-medium transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">help</span>
+<span>Support</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col min-w-0 bg-surface">
+<!-- TopNavBar Component -->
+<header class="bg-slate-50 dark:bg-slate-900 docked full-width top-0 z-10">
+<div class="flex justify-between items-center w-full px-8 py-3">
+<div class="flex items-center gap-12">
+<div class="hidden lg:flex items-center gap-4">
+<div class="flex items-center gap-2 px-3 py-1.5 rounded bg-surface-container-low text-xs font-semibold text-slate-700 cursor-pointer">
+<span class="text-slate-400 font-normal">고객사</span>
+<span>GS칼텍스</span>
+<span class="material-symbols-outlined text-[14px]">expand_more</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-1.5 rounded bg-surface-container-low text-xs font-semibold text-slate-700 cursor-pointer">
+<span class="text-slate-400 font-normal">센터</span>
+<span>인천GSC센터</span>
+<span class="material-symbols-outlined text-[14px]">expand_more</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2 mr-4">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container text-xs font-bold">JS</div>
+<div class="flex flex-col">
+<span class="text-xs font-bold text-on-primary-fixed">김철수 관리자</span>
+<span class="text-[10px] text-slate-500 uppercase">Super User</span>
+</div>
+<button class="ml-4 flex items-center gap-1 px-3 py-1.5 rounded-lg text-error hover:bg-error-container/10 transition-colors border border-error/20">
+<span class="material-symbols-outlined text-[18px]">logout</span>
+<span class="text-xs font-bold">로그아웃</span>
+</button>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-slate-500 hover:bg-slate-200/50 p-2 rounded transition-colors">notifications</button>
+<button class="material-symbols-outlined text-slate-500 hover:bg-slate-200/50 p-2 rounded transition-colors">settings</button>
+</div>
+</div>
+</div>
+<div class="flex items-center w-full px-8 gap-8 border-t border-slate-200 dark:border-slate-800 h-12">
+<a class="text-slate-500 dark:text-slate-400 font-medium hover:text-blue-900 h-full flex items-center px-2 text-sm transition-colors" href="#">보관관리</a>
+<a class="text-blue-700 dark:text-blue-300 font-bold border-b-2 border-blue-700 dark:border-blue-300 h-full flex items-center px-2 text-sm" href="#">공통관리</a>
+</div>
+</header>
+<!-- Page Canvas -->
+<div class="flex-1 overflow-y-auto p-10 custom-scrollbar">
+<!-- Header & Actions Area -->
+<div class="max-w-7xl mx-auto flex justify-between items-end mb-8">
+<div>
+<h1 class="text-3xl font-headline font-extrabold text-on-primary-fixed tracking-tight">공지사항 관리</h1>
+<p class="text-sm text-slate-500 font-label mt-1">시스템 공지 및 센터 운영 업데이트를 관리합니다.</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 bg-surface-container-high px-4 py-2 rounded-md text-sm font-semibold text-on-primary-fixed-variant hover:bg-slate-200 transition-colors">
+<span class="material-symbols-outlined text-lg">search</span> 조회
+                    </button>
+<button class="flex items-center gap-2 bg-surface-container-high px-4 py-2 rounded-md text-sm font-semibold text-on-primary-fixed-variant hover:bg-slate-200 transition-colors">
+<span class="material-symbols-outlined text-lg">add</span> 신규
+                    </button>
+<button class="flex items-center gap-2 bg-gradient-to-r from-primary to-primary-container px-6 py-2 rounded-md text-sm font-bold text-white shadow-md hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-lg">save</span> 저장
+                    </button>
+<button class="flex items-center gap-2 bg-error-container px-4 py-2 rounded-md text-sm font-semibold text-error hover:bg-red-200 transition-colors">
+<span class="material-symbols-outlined text-lg">delete</span> 삭제
+                    </button>
+</div>
+</div>
+<!-- Content Structure -->
+<div class="max-w-7xl mx-auto space-y-8">
+<!-- 1. Top Section: Notice List Table -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm border border-slate-200/30 overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-50 border-b border-slate-200">
+<th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-16">No</th>
+<th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">제목</th>
+<th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-32">작성자</th>
+<th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest w-40">일자</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100">
+<tr class="hover:bg-blue-50/50 cursor-pointer bg-blue-50/30 transition-colors">
+<td class="px-6 py-4 text-sm font-medium text-slate-400">01</td>
+<td class="px-6 py-4 text-sm font-bold text-on-primary-fixed">Q4 재고 실사 - 인천GSC센터 유지보수 일정 안내</td>
+<td class="px-6 py-4 text-sm text-slate-600 font-medium">관리자 (김재원)</td>
+<td class="px-6 py-4 text-sm text-slate-500">2024-11-20</td>
+</tr>
+<tr class="hover:bg-slate-50 cursor-pointer transition-colors">
+<td class="px-6 py-4 text-sm font-medium text-slate-400">02</td>
+<td class="px-6 py-4 text-sm font-medium text-on-surface">추석 연휴 기간 센터 운영 시간 변경 공지</td>
+<td class="px-6 py-4 text-sm text-slate-600 font-medium">운영본부</td>
+<td class="px-6 py-4 text-sm text-slate-500">2024-09-10</td>
+</tr>
+<tr class="hover:bg-slate-50 cursor-pointer transition-colors">
+<td class="px-6 py-4 text-sm font-medium text-slate-400">03</td>
+<td class="px-6 py-4 text-sm font-medium text-on-surface">시스템 업데이트 (v2.4) 작업 완료 안내</td>
+<td class="px-6 py-4 text-sm text-slate-600 font-medium">IT지원팀</td>
+<td class="px-6 py-4 text-sm text-slate-500">2024-08-25</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination Component -->
+<div class="flex items-center justify-between px-6 py-4 bg-white border-t border-slate-100">
+<div class="flex items-center gap-2">
+<span class="text-xs text-slate-500">Showing 1 to 3 of 15 entries</span>
+</div>
+<div class="flex items-center gap-1">
+<button class="p-1 rounded hover:bg-slate-100 text-slate-400">
+<span class="material-symbols-outlined text-lg">chevron_left</span>
+</button>
+<button class="w-8 h-8 rounded text-sm font-bold bg-primary text-white">1</button>
+<button class="w-8 h-8 rounded text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">2</button>
+<button class="w-8 h-8 rounded text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">3</button>
+<button class="w-8 h-8 rounded text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">4</button>
+<button class="w-8 h-8 rounded text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">5</button>
+<button class="p-1 rounded hover:bg-slate-100 text-slate-400">
+<span class="material-symbols-outlined text-lg">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- 2. Bottom Section: Notice Detail View -->
+<div class="grid grid-cols-12 gap-8">
+<!-- Detail Form -->
+<div class="col-span-8 bg-surface-container-lowest rounded-xl p-8 shadow-sm border border-slate-200/30">
+<div class="mb-8">
+<label class="block text-xs font-bold text-on-primary-fixed uppercase tracking-widest mb-2 font-label">제목</label>
+<input class="w-full bg-surface-container-low border-none focus:ring-2 focus:ring-primary rounded-lg px-4 py-3 font-headline text-xl font-bold text-on-surface" placeholder="공지 제목을 입력하세요..." type="text" value="Q4 재고 실사 - 인천GSC센터 유지보수 일정 안내"/>
+</div>
+<div class="mb-0">
+<label class="block text-xs font-bold text-on-primary-fixed uppercase tracking-widest mb-2 font-label">공지 내용</label>
+<div class="border border-outline-variant/20 rounded-lg overflow-hidden">
+<div class="bg-surface-container border-b border-outline-variant/20 px-4 py-2 flex items-center gap-4">
+<span class="material-symbols-outlined text-slate-500 cursor-pointer hover:text-primary">format_bold</span>
+<span class="material-symbols-outlined text-slate-500 cursor-pointer hover:text-primary">format_italic</span>
+<span class="material-symbols-outlined text-slate-500 cursor-pointer hover:text-primary">format_list_bulleted</span>
+<div class="w-px h-4 bg-outline-variant"></div>
+<span class="material-symbols-outlined text-slate-500 cursor-pointer hover:text-primary">link</span>
+<span class="material-symbols-outlined text-slate-500 cursor-pointer hover:text-primary">image</span>
+</div>
+<textarea class="w-full min-h-[400px] border-none focus:ring-0 p-6 text-sm leading-relaxed text-on-surface-variant bg-white custom-scrollbar" placeholder="공지 내용을 상세히 작성해주세요...">Q4 재고 실사 진행에 따라 Bay-7 및 Bay-12의 모든 운영이 일시 중지될 예정입니다.
+
+주요 지침:
+1. 해당 구역의 모든 보류 중인 피킹 리스트는 금요일 업무 종료 전까지 완료되어야 합니다.
+2. 해당 베이로 예정된 입고 화물은 Zone C로 경로가 변경됩니다.
+3. 승인된 실사 인원 외의 접근은 제한됩니다.
+
+자세한 일정 및 베이별 세부 사항은 첨부된 PDF 파일을 참조해 주시기 바랍니다.
+
+협조해 주셔서 감사합니다.
+- 운영팀 배상</textarea>
+</div>
+</div>
+</div>
+<!-- Side Actions & Attachments -->
+<div class="col-span-4 space-y-6">
+<!-- Attachments Card -->
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-slate-200/30">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-sm font-bold text-on-primary-fixed font-headline uppercase tracking-wider">첨부 파일</h3>
+<button class="text-primary hover:text-primary-container">
+<span class="material-symbols-outlined">upload_file</span>
+</button>
+</div>
+<div class="space-y-3">
+<div class="flex items-center justify-between p-3 hover:bg-surface-container-low rounded-lg transition-colors group cursor-pointer border border-outline-variant/5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-error-container/20 flex items-center justify-center rounded-lg">
+<span class="material-symbols-outlined text-error text-xl">picture_as_pdf</span>
+</div>
+<div class="min-w-0">
+<p class="text-xs font-bold truncate max-w-[150px] text-on-surface">audit_schedule_q4.pdf</p>
+<p class="text-[10px] text-slate-400">1.2 MB</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-slate-300 group-hover:text-slate-500">download</span>
+</div>
+<div class="flex items-center justify-between p-3 hover:bg-surface-container-low rounded-lg transition-colors group cursor-pointer border border-outline-variant/5">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-blue-100 flex items-center justify-center rounded-lg">
+<span class="material-symbols-outlined text-blue-600 text-xl">table_chart</span>
+</div>
+<div class="min-w-0">
+<p class="text-xs font-bold truncate max-w-[150px] text-on-surface">bay_mapping_audit.xlsx</p>
+<p class="text-[10px] text-slate-400">450 KB</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-slate-300 group-hover:text-slate-500">download</span>
+</div>
+</div>
+</div>
+<!-- Contextual Visual (Kept for design consistency) -->
+<div class="bg-slate-900 rounded-xl overflow-hidden relative group">
+<img alt="Warehouse Maintenance" class="w-full h-48 object-cover opacity-60 transition-transform duration-500 group-hover:scale-110" data-alt="professional wide shot of a modern clean warehouse aisle with shelves and a technician inspecting a pallet rack" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHyZ1oJJ5EdVh2W9v9YHEySIS4m8jeMlqny8oJgqLy-GekL4M4lhZ8e3hyIw6wiVKSsObBtkhs_wpnOeC5OzYBWyvWho6k-7bRquq_eLk1tKwydJB0ZMJ-2aQ1BLaDJoAH9--DOMo8HoybDVcZC7lCgKifdgh2AjSP2AAkLsZ5HjjAzXdxbPl-Ak0RQcXnUdRjw1URLvFmPztqTKRbsSHeWlq9-JEvK8AhJCWmUT7rGNoXiM_QjnVaFvfWATZhhi-gZkLNZTCIo20"/>
+<div class="absolute inset-0 bg-gradient-to-t from-slate-950 to-transparent p-6 flex flex-col justify-end">
+<span class="text-blue-400 text-[10px] font-bold uppercase tracking-[0.2em] mb-1">상세 정보</span>
+<h4 class="text-white font-headline font-bold text-sm">Zone A-Zone B 구역 실사 현황</h4>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Visual Component -->
+<footer class="h-12 flex justify-between items-center px-10 bg-slate-50 border-t border-slate-200/50 text-xs text-slate-400">
+<div>© 2024 CJ Logistics. All Rights Reserved. Precision Architect WMS v2.4</div>
+<div class="flex gap-6">
+<a class="hover:text-slate-600" href="#">개인정보 처리방침</a>
+<a class="hover:text-slate-600" href="#">이용약관</a>
+<a class="hover:text-slate-600" href="#">시스템 상태</a>
+</div>
+</footer>
+</main>
+</body></html>

@@ -3,26 +3,29 @@ import { useNavigate } from "react-router-dom";
 import styles from "./Header.module.css";
 import { getTokenPayload } from "../../utils/auth";
 
+interface SrvcCdOption { srvcCd: string; srvcNm: string; }
+interface WhCdOption   { whCd: string;  whNm: string;  }
+
 // 헤더 컴포넌트
 interface HeaderProps {
-    selectedCustomer: string;
-    selectedCenter: string;
+    selectSrvcCd: string;
+    selectWhCd: string;
     activeMainTab: "home" | "storage" | "common";
-    customers: string[];
-    centers: string[];
-    onCustomerChange: (val: string) => void;
-    onCenterChange: (val: string) => void;
+    srvcCdList: SrvcCdOption[];
+    whCdList: WhCdOption[];
+    onSrvcCdChange: (val: string) => void;
+    onWhCdChange: (val: string) => void;
     onTabChange: (tab: "home" | "storage" | "common") => void;
 }
 
 const Header: React.FC<HeaderProps> = ({
-    selectedCustomer,
-    selectedCenter,
+    selectSrvcCd,
+    selectWhCd,
     activeMainTab,
-    customers,
-    centers,
-    onCustomerChange,
-    onCenterChange,
+    srvcCdList,
+    whCdList,
+    onSrvcCdChange,
+    onWhCdChange,
     onTabChange,
 }) => {
     const [openDropdown, setOpenDropdown] = useState<"customer" | "center" | null>(null);
@@ -74,15 +77,15 @@ const Header: React.FC<HeaderProps> = ({
                     <div className={styles.dropdownWrap}>
                         <div className={styles.selectorBox} onClick={() => setOpenDropdown(openDropdown === "customer" ? null : "customer")}>
                             <span className={styles.selectorLabel}>고객사</span>
-                            <span className={styles.selectorValue}>{selectedCustomer}</span>
+                            <span className={styles.selectorValue}>{srvcCdList.find(c => c.srvcCd === selectSrvcCd)?.srvcNm ?? ""}</span>
                             <span className={`material-symbols-outlined ${styles.selectorArrow} ${openDropdown === "customer" ? styles.selectorArrowOpen : ""}`}>expand_more</span>
                         </div>
                         {openDropdown === "customer" && (
                             <ul className={styles.dropdownList}>
-                                {customers.map((c) => (
-                                    <li key={c} className={`${styles.dropdownItem} ${c === selectedCustomer ? styles.dropdownItemActive : ""}`}
-                                        onClick={() => { onCustomerChange(c); setOpenDropdown(null); }}>
-                                        {c}
+                                {srvcCdList.map((c) => (
+                                    <li key={c.srvcCd} className={`${styles.dropdownItem} ${c.srvcCd === selectSrvcCd ? styles.dropdownItemActive : ""}`}
+                                        onClick={() => { onSrvcCdChange(c.srvcCd); setOpenDropdown(null); }}>
+                                        {c.srvcNm}
                                     </li>
                                 ))}
                             </ul>
@@ -92,15 +95,15 @@ const Header: React.FC<HeaderProps> = ({
                     <div className={styles.dropdownWrap}>
                         <div className={styles.selectorBox} onClick={() => setOpenDropdown(openDropdown === "center" ? null : "center")}>
                             <span className={styles.selectorLabel}>센터</span>
-                            <span className={styles.selectorValue}>{selectedCenter}</span>
+                            <span className={styles.selectorValue}>{whCdList.find(c => c.whCd === selectWhCd)?.whNm ?? ""}</span>
                             <span className={`material-symbols-outlined ${styles.selectorArrow} ${openDropdown === "center" ? styles.selectorArrowOpen : ""}`}>expand_more</span>
                         </div>
                         {openDropdown === "center" && (
                             <ul className={styles.dropdownList}>
-                                {centers.map((c) => (
-                                    <li key={c} className={`${styles.dropdownItem} ${c === selectedCenter ? styles.dropdownItemActive : ""}`}
-                                        onClick={() => { onCenterChange(c); setOpenDropdown(null); }}>
-                                        {c}
+                                {whCdList.map((c) => (
+                                    <li key={c.whCd} className={`${styles.dropdownItem} ${c.whCd === selectWhCd ? styles.dropdownItemActive : ""}`}
+                                        onClick={() => { onWhCdChange(c.whCd); setOpenDropdown(null); }}>
+                                        {c.whNm}
                                     </li>
                                 ))}
                             </ul>

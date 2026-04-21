@@ -1,0 +1,432 @@
+.pageContainer {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 120px); /* 헤더 제외 높이 고정 */
+    background-color: #f8fafb;
+    font-family: 'Inter', sans-serif;
+    padding: 0 15px 15px; /* 상단 여백은 공통 레이아웃 마진 활용 */
+    overflow: hidden;
+}
+
+/* Header Action Row (Search & Common Buttons) */
+.headerRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 5px;
+    flex-shrink: 0;
+}
+
+.titleArea h1 {
+    font-family: 'Manrope', sans-serif;
+    font-size: 24px;
+    font-weight: 800;
+    color: #001a40;
+    margin: 0;
+}
+
+.titleArea p {
+    font-size: 13px;
+    color: #64748b;
+    margin-top: 4px;
+}
+
+.actionButtons {
+    display: flex;
+    gap: 10px;
+}
+
+.btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btnSecondary { background-color: #eceeef; color: #004491; }
+.btnSecondary:hover { background-color: #e2e8f0; }
+
+.btnPrimary {
+    background-color: #003f87;
+    background-image: linear-gradient(to right, #003f87, #0056b3);
+    color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.btnPrimary:hover { opacity: 0.9; transform: translateY(-1px); }
+
+.btnDanger { background-color: #ffdad6; color: #ba1a1a; }
+.btnDanger:hover { background-color: #fecaca; }
+
+.btnEdit { background-color: #f1f5f9; color: #475569; }
+.btnEditActive { background-color: #003f87; color: white; }
+
+/* Mid Section Layout (Split View) */
+.splitView {
+    display: flex;
+    gap: 20px;
+    flex: 1;
+    overflow: hidden; /* 영역별 독립 스크롤을 위해 부모는 숨김 */
+}
+
+/* Left: Notice List Sidebar */
+.noticeListSidebar {
+    flex: 0 0 35%; /* 35% 고정 */
+    background-color: white;
+    border-radius: 12px;
+    border: 1px solid rgba(226, 232, 240, 0.5);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.listHeader {
+    padding: 15px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    background-color: #fafbfc;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.checkboxArea {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+}
+
+.customCheckbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #003f87;
+}
+
+.listHeader h3 {
+    font-size: 12px;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0;
+}
+
+.scrollArea {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 0;
+}
+
+.scrollArea::-webkit-scrollbar { width: 4px; }
+.scrollArea::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 16px;
+    color: #94a3b8;
+    padding: 40px;
+    text-align: center;
+}
+
+.emptyIcon {
+    font-size: 48px;
+    opacity: 0.5;
+}
+
+.noticeItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 15px 20px;
+    border-bottom: 1px solid #f8fafc;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    position: relative;
+}
+
+.itemCheckArea {
+    padding-top: 2px;
+}
+
+.itemContent {
+    flex: 1;
+}
+
+.noticeItem:hover { background-color: #f8fafb; }
+
+.noticeItemActive {
+    background-color: #f0f7ff;
+    border-left: 4px solid #003f87;
+}
+
+.itemTop {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.itemNo { font-size: 11px; font-weight: 700; color: #94a3b8; }
+.itemDate { font-size: 11px; color: #64748b; }
+
+.itemTitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+    line-height: 1.4;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.itemAuthor { font-size: 12px; color: #64748b; }
+
+.newBadge {
+    display: inline-block;
+    background-color: #003f87;
+    color: white;
+    font-size: 9px;
+    font-weight: 800;
+    padding: 1px 4px;
+    border-radius: 4px;
+    margin-left: 6px;
+}
+
+/* Right: Detail Content & Editor */
+.detailContentArea {
+    flex: 1; /* 나머지 65% */
+    background-color: white;
+    border-radius: 12px;
+    border: 1px solid rgba(226, 232, 240, 0.5);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.detailHeader {
+    padding: 25px 30px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.inputLabel {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 10px;
+}
+
+.detailTitleInput {
+    width: 100%;
+    font-family: 'Manrope', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #001a40;
+    border: none;
+    outline: none;
+    padding: 8px 12px;
+    background: transparent;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+}
+
+.detailTitleInput:focus {
+    background-color: #f1f5f9;
+}
+
+.inputEditable {
+    background-color: #f8fafb;
+    border: 1px solid #e2e8f0 !important;
+}
+
+.detailBody {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+.editorSection {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #f1f5f9;
+    overflow: hidden; /* Quill 내부 스크롤을 위해 부모는 숨김 */
+}
+
+.editorToolbar {
+    padding: 10px 20px;
+    background-color: #fafbfc;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    gap: 8px;
+}
+
+.editorToolbar button {
+    background: transparent;
+    border: none;
+    padding: 4px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.editorToolbar button:hover {
+    background-color: #f1f5f9;
+}
+
+.editorToolbar :global(.ql-active), .btnActive {
+    background-color: #e0f2fe !important;
+}
+
+.editorToolbar :global(.ql-active) .toolbarIcon, .btnActive .toolbarIcon {
+    color: #003f87;
+}
+
+.toolbarIcon {
+    color: #64748b;
+    font-size: 20px;
+}
+
+.mainTextarea {
+    flex: 1;
+    border: none;
+    padding: 25px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #334155;
+    resize: none;
+    outline: none;
+    overflow-y: auto;
+    transition: background-color 0.2s;
+}
+
+.mainTextarea:focus {
+    background-color: #f8fafb;
+}
+
+/* Tiptap Editor Customization */
+.editorWrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.editorWrapper :global(.ProseMirror) {
+    flex: 1;
+    padding: 25px;
+    line-height: 1.6;
+    color: #334155;
+    font-family: 'Inter', 'Noto Sans KR', sans-serif;
+    font-size: 14px;
+    outline: none;
+    overflow-y: auto;
+    min-height: 100%;
+}
+
+.editorWrapper :global(.ProseMirror p.is-editor-empty:first-child::before) {
+    content: attr(data-placeholder);
+    float: left;
+    color: #94a3b8;
+    pointer-events: none;
+    height: 0;
+}
+
+.textareaReadOnly :global(.ProseMirror) {
+    background-color: white;
+    cursor: default;
+}
+
+.textareaEditable :global(.ProseMirror) {
+    background-color: #fdfdfd;
+}
+
+/* Tiptap Content Styles */
+.editorWrapper :global(.ProseMirror h1) { font-size: 1.8em; font-weight: 800; margin-top: 0.5em; }
+.editorWrapper :global(.ProseMirror h2) { font-size: 1.5em; font-weight: 700; margin-top: 0.5em; }
+.editorWrapper :global(.ProseMirror ul) { padding-left: 1.5em; list-style-type: disc; margin: 1em 0; }
+.editorWrapper :global(.ProseMirror ol) { padding-left: 1.5em; list-style-type: decimal; margin: 1em 0; }
+.editorWrapper :global(.ProseMirror blockquote) { border-left: 3px solid #e2e8f0; padding-left: 1em; color: #64748b; font-style: italic; }
+.editorWrapper :global(.ProseMirror a) { color: #003f87; text-decoration: underline; cursor: pointer; }
+.editorWrapper :global(.ProseMirror strong) { font-weight: 800; }
+.editorWrapper :global(.ProseMirror em), .editorWrapper :global(.ProseMirror i) { 
+    display: inline-block;
+    transform: skewX(-12deg);
+    font-style: normal !important; /* 브라우저의 불안정한 italic 대신 skew를 사용 */
+}
+
+.attachmentSidebar {
+    width: 280px;
+    padding: 25px;
+    background-color: #fafbfc;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.sidebarTitleRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sidebarTitleRow h3 {
+    font-size: 12px;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    margin: 0;
+}
+
+.fileList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.fileItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background-color: white;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.fileItem:hover { border-color: #cbd5e1; transform: translateY(-1px); }
+
+.fileIconBox {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    background-color: #fef2f2;
+}
+
+.fileIconPdf { color: #dc2626; }
+.fileIconExcel { color: #16a34a; background-color: #f0fdf4; }
+
+.fileMeta p { margin: 0; }
+.fileName { font-size: 11px; font-weight: 700; color: #334155; }
+.fileSize { font-size: 10px; color: #94a3b8; }
