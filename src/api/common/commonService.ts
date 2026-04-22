@@ -38,3 +38,11 @@ export const getUserAuthSrvcWhList = (
         onError
     });
 };
+
+// 첨부파일 업로드
+export interface AttachedFile {
+    fileId: string;
+    fileNm: string;
+    fileSize: string;
+    fileType: string;
+}

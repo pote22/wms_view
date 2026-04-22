@@ -1,145 +1,56 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Popup from "../../components/common/Popup";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Bold from "@tiptap/extension-bold";
 import Italic from "@tiptap/extension-italic";
 import styles from "./cj_wms_home_0010.module.css";
+import { getTokenPayload } from "../../utils/auth";
+import { usePopup } from "../../components/common/usePopup";
+import { useNoticeList } from "./hooks/useNoticeList";
 
 const CJ_WMS_HOME_0010: React.FC = () => {
-    // 1. Data State (Mock)
-    const [notices, setNotices] = useState([
-        { id: "01", title: "Q4 재고 실사 - 인천GSC센터 유지보수 일정 안내", author: "관리자 (김재원)", date: "2024-11-20", isNew: true },
-        { id: "02", title: "추석 연휴 기간 센터 운영 시간 변경 공지", author: "운영본부", date: "2024-09-10", isNew: false },
-        { id: "03", title: "시스템 업데이트 (v2.4) 작업 완료 안내", author: "IT지원팀", date: "2024-08-25", isNew: false },
-        { id: "04", title: "신규 보안 가이드라인 준수 요청", author: "보안팀", date: "2024-08-10", isNew: false },
-        { id: "05", title: "여름 휴가 집중 기간 인력 운영 계획", author: "인사팀", date: "2024-07-15", isNew: false },
-    ]);
+    const userId = getTokenPayload()?.userId ?? "";
+    const MAX_FILE_SIZE = 20 * 1024 * 1024;
 
-    // 2. Interaction State
-    const [selectedNoticeId, setSelectedNoticeId] = useState<string | null>("01");
-    const [checkedIds, setCheckedIds] = useState<string[]>([]);
-    const [isEditing, setIsEditing] = useState(false);
-
-    // 3. Popup State
-    const [popup, setPopup] = useState<{
-        isOpen: boolean;
-        type: "alert" | "confirm";
-        message: string;
-        onConfirm: () => void;
-    }>({ isOpen: false, type: "alert", message: "", onConfirm: () => { } });
-
-    const closePopup = () => setPopup(p => ({ ...p, isOpen: false }));
-
-    const showAlert = (message: string) =>
-        setPopup({ isOpen: true, type: "alert", message, onConfirm: closePopup });
-
-    const showConfirm = (message: string, onConfirm: () => void) =>
-        setPopup({ isOpen: true, type: "confirm", message, onConfirm, });
-
-    // 4. File Attachment State
-    interface AttachedFile {
-        id: string;
-        name: string;
-        size: string;
-        type: string;
-    }
+    // 1. File Attachment State
+    interface AttachedFile { id: string; name: string; size: string; type: string; }
     const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB (20,971,520 bytes)
-
-    // 4. Tiptap Editor Initialization
+    const titleInputRef = useRef<HTMLInputElement>(null);
+    // 2. Tiptap Editor
     const editor = useEditor({
-        extensions: [
-            StarterKit,
-            Bold,
-            Italic,
-        ],
-        content: notices[0] ? `<strong>[공지내역]</strong><br/>${notices[0].title}에 대한 세부 공지입니다.<br/><br/>업무에 참고하시기 바랍니다.<br/><br/>- ${notices[0].author} 배상` : "",
+        extensions: [StarterKit, Bold, Italic],
+        content: "",
         editable: false,
     });
 
-    // 5. Computed State
-    const selectedNotice = useMemo(() =>
-        notices.find(n => n.id === selectedNoticeId) || null,
-        [notices, selectedNoticeId]
-    );
+    // 3. Custom Hooks
+    const { popup, showAlert, showConfirm, closePopup } = usePopup();
+    const {
+        notices, selectedNoticeId, selectedNotice, checkedIds, isEditing,
+        setIsEditing, fetchList, handleNew, handleSelect,
+        handleCheckItem, handleCheckAll, handleSave, handleDelete, isNew,
+    } = useNoticeList({ editor, userId, showAlert, showConfirm, closePopup });
 
-    // 6. Effects
+    // 4. 첨부파일 초기화 (공지 선택 시)
     useEffect(() => {
-        if (editor) {
-            editor.setEditable(isEditing);
-        }
-    }, [isEditing, editor]);
-
-    // 7. Handlers
-    const handleNew = () => {
-        setSelectedNoticeId(null);
-        setIsEditing(true);
-        setCheckedIds([]);
-        setAttachedFiles([]);
-        editor?.commands.setContent("");
-    };
-
-    const handleSelect = (id: string) => {
-        setSelectedNoticeId(id);
-        setIsEditing(false);
-        const notice = notices.find(n => n.id === id);
-        if (editor && notice) {
-            editor.commands.setContent(`<strong>[공지내역]</strong><br/>${notice.title}에 대한 세부 공지입니다.<br/><br/>업무에 참고하시기 바랍니다.<br/><br/>- ${notice.author} 배상`);
-        }
-        setAttachedFiles([{ id: 'f1', name: 'manual_update.pdf', size: '1.2 MB', type: 'pdf' }]);
-    };
-
-    const handleCheckItem = (e: React.MouseEvent, id: string) => {
-        e.stopPropagation();
-        setCheckedIds(prev =>
-            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-        );
-    };
-
-    const handleCheckAll = () => {
-        if (notices.length > 0 && checkedIds.length === notices.length) {
-            setCheckedIds([]);
+        if (selectedNoticeId !== null) {
+            setAttachedFiles([{ id: 'f1', name: 'manual_update.pdf', size: '1.2 MB', type: 'pdf' }]);
         } else {
-            setCheckedIds(notices.map(n => n.id));
+            setAttachedFiles([]);
         }
-    };
+    }, [selectedNoticeId]);
 
-    const handleDelete = () => {
-        if (checkedIds.length === 0 && !selectedNoticeId) {
-            showAlert("삭제할 항목을 선택해주세요.");
-            return;
-        }
-
-        const idsToDelete = checkedIds.length > 0 ? checkedIds : [selectedNoticeId!];
-        console.log(idsToDelete);
-        showConfirm(`${idsToDelete.length}개의 항목을 삭제하시겠습니까?`, () => {
-            setNotices(prev => prev.filter(n => !idsToDelete.includes(n.id)));
-            setCheckedIds([]);
-            setSelectedNoticeId(null);
-            setIsEditing(false);
-            editor?.commands.setContent("");
-            closePopup();
-        });
-    };
-
-    // 8. File Attachment Handlers
-    const handleAddFileClick = () => {
-        fileInputRef.current?.click();
-    };
+    // 5. File Attachment Handlers
+    const handleAddFileClick = () => fileInputRef.current?.click();
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files || files.length === 0) return;
 
-        console.warn("---> [File Attachment] checking files...", files);
-
         const filesArray = Array.from(files);
-        const oversizedFiles = filesArray.filter(file => {
-            console.log(`Checking file: ${file.name}, size: ${file.size} bytes (Limit: ${MAX_FILE_SIZE})`);
-            return file.size > MAX_FILE_SIZE;
-        });
+        const oversizedFiles = filesArray.filter(file => file.size > MAX_FILE_SIZE);
 
         if (oversizedFiles.length > 0) {
             const fileNames = oversizedFiles.map(f => f.name).join('\n');
@@ -150,22 +61,16 @@ const CJ_WMS_HOME_0010: React.FC = () => {
             id: Math.random().toString(36).substr(2, 9),
             name: file.name,
             size: (file.size / (1024 * 1024)).toFixed(1) + ' MB',
-            type: file.name.split('.').pop()?.toLowerCase() || 'file'
+            type: file.name.split('.').pop()?.toLowerCase() || 'file',
         }));
 
-        if (validFiles.length > 0) {
-            setAttachedFiles(prev => [...prev, ...validFiles]);
-        }
-
-        // 동일 파일 다시 선택 가능하도록 초기화
+        if (validFiles.length > 0) setAttachedFiles(prev => [...prev, ...validFiles]);
         e.target.value = '';
     };
 
-    const removeFile = (id: string) => {
-        setAttachedFiles(prev => prev.filter(f => f.id !== id));
-    };
+    const removeFile = (id: string) => setAttachedFiles(prev => prev.filter(f => f.id !== id));
 
-    // 9. Toolbar Command Handlers
+    // 6. Toolbar Command Handlers
     const toggleBold = () => editor?.chain().focus().toggleBold().run();
     const toggleItalic = () => editor?.chain().focus().toggleItalic().run();
     const toggleOrderedList = () => editor?.chain().focus().toggleOrderedList().run();
@@ -180,13 +85,7 @@ const CJ_WMS_HOME_0010: React.FC = () => {
                 onConfirm={popup.onConfirm}
                 onCancel={closePopup}
             />
-            <input
-                type="file"
-                ref={fileInputRef}
-                style={{ display: 'none' }}
-                multiple
-                onChange={handleFileChange}
-            />
+            <input type="file" ref={fileInputRef} style={{ display: 'none' }} multiple onChange={handleFileChange} />
 
             <div className={styles.headerRow}>
                 <div className={styles.titleArea}>
@@ -194,13 +93,13 @@ const CJ_WMS_HOME_0010: React.FC = () => {
                     <p>시스템 공지 및 센터 운영 업데이트를 관리합니다.</p>
                 </div>
                 <div className={styles.actionButtons}>
-                    <button className={`${styles.btn} ${styles.btnSecondary}`}>
+                    <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={fetchList}>
                         <span className="material-symbols-outlined">search</span> 조회
                     </button>
                     <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={handleNew}>
                         <span className="material-symbols-outlined">add</span> 신규
                     </button>
-                    <button className={`${styles.btn} ${styles.btnPrimary}`}>
+                    <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => handleSave(titleInputRef.current?.value ?? "")}>
                         <span className="material-symbols-outlined">save</span> 저장
                     </button>
                     <button className={`${styles.btn} ${styles.btnDanger}`} onClick={handleDelete}>
@@ -232,29 +131,29 @@ const CJ_WMS_HOME_0010: React.FC = () => {
                         ) : (
                             notices.map((notice) => (
                                 <div
-                                    key={notice.id}
-                                    className={`${styles.noticeItem} ${selectedNoticeId === notice.id ? styles.noticeItemActive : ""}`}
-                                    onClick={() => handleSelect(notice.id)}
+                                    key={notice.board_id}
+                                    className={`${styles.noticeItem} ${selectedNoticeId === notice.board_id ? styles.noticeItemActive : ""}`}
+                                    onClick={() => handleSelect(notice.board_id)}
                                 >
                                     <div className={styles.itemCheckArea}>
                                         <input
                                             type="checkbox"
                                             className={styles.customCheckbox}
-                                            checked={checkedIds.includes(notice.id)}
-                                            onClick={(e) => handleCheckItem(e, notice.id)}
+                                            checked={checkedIds.includes(notice.board_id)}
+                                            onClick={(e) => handleCheckItem(e, notice.board_id)}
                                             onChange={() => { }}
                                         />
                                     </div>
                                     <div className={styles.itemContent}>
                                         <div className={styles.itemTop}>
-                                            <span className={styles.itemNo}>NO. {notice.id}</span>
-                                            <span className={styles.itemDate}>{notice.date}</span>
+                                            <span className={styles.itemNo}>NO. {notice.board_id}</span>
+                                            <span className={styles.itemDate}>{notice.reg_date}</span>
                                         </div>
                                         <span className={styles.itemTitle}>
                                             {notice.title}
-                                            {notice.isNew && <span className={styles.newBadge}>NEW</span>}
+                                            {isNew(notice.reg_date) && <span className={styles.newBadge}>NEW</span>}
                                         </span>
-                                        <span className={styles.itemAuthor}>{notice.author}</span>
+                                        <span className={styles.itemAuthor}>{notice.user_id}</span>
                                     </div>
                                 </div>
                             ))
@@ -262,7 +161,7 @@ const CJ_WMS_HOME_0010: React.FC = () => {
                     </div>
                 </div>
 
-                <div className={styles.detailContentArea} key={selectedNoticeId || 'new'}>
+                <div className={styles.detailContentArea} key={selectedNoticeId ?? 'new'}>
                     <div className={styles.detailHeader}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <label className={styles.inputLabel}>
@@ -282,6 +181,7 @@ const CJ_WMS_HOME_0010: React.FC = () => {
                             )}
                         </div>
                         <input
+                            ref={titleInputRef}
                             className={`${styles.detailTitleInput} ${isEditing ? styles.inputEditable : ""}`}
                             type="text"
                             defaultValue={selectedNotice?.title || ""}
@@ -293,36 +193,19 @@ const CJ_WMS_HOME_0010: React.FC = () => {
                     <div className={styles.detailBody}>
                         <div className={styles.editorSection}>
                             <div className={styles.editorToolbar}>
-                                <button
-                                    onClick={toggleBold}
-                                    className={editor?.isActive('bold') ? styles.btnActive : ""}
-                                    type="button"
-                                >
+                                <button onClick={toggleBold} className={editor?.isActive('bold') ? styles.btnActive : ""} type="button">
                                     <span className={`material-symbols-outlined ${styles.toolbarIcon}`}>format_bold</span>
                                 </button>
-                                <button
-                                    onClick={toggleItalic}
-                                    className={editor?.isActive('italic') ? styles.btnActive : ""}
-                                    type="button"
-                                >
+                                <button onClick={toggleItalic} className={editor?.isActive('italic') ? styles.btnActive : ""} type="button">
                                     <span className={`material-symbols-outlined ${styles.toolbarIcon}`}>format_italic</span>
                                 </button>
-                                <button
-                                    onClick={toggleOrderedList}
-                                    className={editor?.isActive('orderedList') ? styles.btnActive : ""}
-                                    type="button"
-                                >
+                                <button onClick={toggleOrderedList} className={editor?.isActive('orderedList') ? styles.btnActive : ""} type="button">
                                     <span className={`material-symbols-outlined ${styles.toolbarIcon}`}>format_list_numbered</span>
                                 </button>
-                                <button
-                                    onClick={toggleBulletList}
-                                    className={editor?.isActive('bulletList') ? styles.btnActive : ""}
-                                    type="button"
-                                >
+                                <button onClick={toggleBulletList} className={editor?.isActive('bulletList') ? styles.btnActive : ""} type="button">
                                     <span className={`material-symbols-outlined ${styles.toolbarIcon}`}>format_list_bulleted</span>
                                 </button>
                             </div>
-
                             <div className={`${styles.editorWrapper} ${isEditing ? styles.textareaEditable : styles.textareaReadOnly}`}>
                                 <EditorContent editor={editor} />
                             </div>
