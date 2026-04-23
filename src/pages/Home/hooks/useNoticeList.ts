@@ -81,12 +81,14 @@ export const useNoticeList = ({ editor, userId, showAlert, showConfirm, closePop
         }
     };
 
-    const handleSave = (title: string) => {
+    const handleSave = (title: string, onSaved?: (boardId: number) => void) => {
         if (!title.trim()) { showAlert("제목을 입력해주세요."); return; }
         saveNotice(
             { boardId: selectedNoticeId, title: title.trim(), content: editor?.getHTML() ?? "", boardType: "00", userId },
             (res) => {
                 if (res.resultCode === "0000") {
+                    const boardId = (res.data as any)?.[0]?.board_id as number | undefined;
+                    if (onSaved && boardId) onSaved(boardId);
                     showAlert("저장되었습니다.");
                     setIsEditing(false);
                     fetchList();

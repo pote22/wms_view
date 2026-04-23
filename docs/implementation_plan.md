@@ -19,6 +19,8 @@
 | Phase 11.3 | 리치 텍스트 에디터 (Tiptap) 도입 | ✅ 완료 |
 | Phase 12 | 공지사항 API 연동 및 데이터 바인딩 | 🔲 미완료 |
 | Phase 13 | 공통 레이어 팝업 컴포넌트 도입 (alert/confirm 통합) | ✅ 완료 |
+| Phase 14 | 차량관리 화면 UI 구현 (디자인 파일 이식) | ✅ 완료 |
+| Phase 15 | 차량관리 API 연동 및 데이터 바인딩 | 🔲 미완료 |
 
 ---
 
@@ -542,3 +544,38 @@ const closePopup = () => setPopup(p => ({ ...p, isOpen: false }));
 |--------|------|
 | `TB_BOARD` | 게시판 (BOARD_ID, CONTENT, VW_CNT, BOARD_TYPE, USER_ID, USE_YN) |
 | `TB_COMM_BOARD_FILE` | 게시판 첨부파일 (FILE_ID, BOARD_ID, FILE_NM, FILE_SIZE, FILE_PATH) |
+
+---
+
+## Phase 14 — 차량관리 화면 UI 구현 ✅
+
+> `cj_wms_master_0010_design.html` 파일을 분석하여 마스터 관리용 차량관리 화면을 구현하였습니다.
+
+### 변경 파일
+
+| 파일 | 작업 |
+|------|------|
+| `src/pages/Master/cj_wms_master_0010.tsx` | UI 컴포넌트 구현 및 Mock 데이터 연동 |
+| `src/pages/Master/cj_wms_master_0010.module.css` | Tailwind 스타일의 모듈 CSS화 |
+
+### 주요 구현 내용
+
+#### 1. 마스터-그리드 레이아웃
+- **조회 영역**: 센터(Select), 차량번호(Input), 사용여부(Select) 필터 구성.
+- **액션 툴바**: 조회/저장/삭제/엑셀 버튼 및 행추가/행삭제/업로드 기능 버튼 배치.
+- **데이터 그리드**: 11개 주요 정보를 포함한 테이블 레이아웃 및 Mock 데이터(5건) 바인딩.
+
+#### 2. 디자인 고도화
+- **Glassmorphism**: 하단 "Live System Status" 영역에 `backdrop-filter: blur`를 적용한 반투명 플로팅 도크(Dock) 구현.
+- **애니메이션**: 실시간 상태를 나타내는 Ping 애니메이션 효과 적용.
+- **시각적 배지**: 사용여부(Y/N) 및 업로드 상태에 따른 가독성 높은 배지 스타일 적용.
+
+## Phase 15 — 차량관리 API 연동 및 데이터 바인딩 🔲
+
+> 차량마스터 정보를 실제 DB와 연동하여 CRUD 기능을 완성합니다.
+
+### 작업 목록
+- [ ] 차량 목록 조회 API 연동
+- [ ] 차량 정보 저장/수정 API 연동
+- [ ] 선택 차량 일괄 삭제 API 연동
+- [ ] 엑셀 업로드/다운로드 로직 연동

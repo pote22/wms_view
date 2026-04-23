@@ -3,6 +3,7 @@ import "../css/Main/main.css";
 
 import { getTokenPayload } from "../utils/auth";
 import { getUserAuthSrvcWhList, type UserAuthSrvcWh } from "../api/common/commonService";
+import { useCommonWhList } from "../api/common/commonWhList";
 
 import MainLayout from "../components/Layout/Layout";
 import Sidebar from "../components/Sidebar/Sidebar";
@@ -13,10 +14,10 @@ import MainDashboard from "./Main/Main";                           // 메인 화
 // 홈
 import CJ_WMS_HOME_0010 from "./Home/cj_wms_home_0010";            // 공지사항
 // 마스터 관리
-import CJ_WMS_MASTER_0010 from "./master/cj_wms_master_0010";      // 차량관리
-import CJ_WMS_MASTER_0020 from "./master/cj_wms_master_0020";      // 거래처관리
-import CJ_WMS_MASTER_0030 from "./master/cj_wms_master_0030";      // 품목관리
-import CJ_WMS_MASTER_0040 from "./master/cj_wms_master_0040";      // 존&로케이션관리
+import CJ_WMS_MASTER_0010 from "./Master/cj_wms_master_0010";      // 차량관리
+import CJ_WMS_MASTER_0020 from "./Master/cj_wms_master_0020";      // 거래처관리
+import CJ_WMS_MASTER_0030 from "./Master/cj_wms_master_0030";      // 품목관리
+import CJ_WMS_MASTER_0040 from "./Master/cj_wms_master_0040";      // 존&로케이션관리
 // 입고관리
 import CJ_WMS_RECEIPT_0010 from "./Receipt/cj_wms_receipt_0010";   // 입고등록
 import CJ_WMS_RECEIPT_0020 from "./Receipt/cj_wms_receipt_0020";   // 입고예정&확정
@@ -105,8 +106,12 @@ const Container: React.FC = () => {
   const [activeMainTab, setActiveMainTab] = useState<"home" | "storage" | "common">("home");
   const [activeSideMenu, setActiveSideMenu] = useState<string>(""); // 초기값은 비움 (메인 대시보드 노출용)
   const [authList, setAuthList] = useState<UserAuthSrvcWh[]>([]);
-  const [selectSrvcCd, setSelectSrvcCd] = useState<string>("");
-  const [selectWhCd, setSelectWhCd] = useState<string>("");
+
+  const {
+    selectSrvcCd, selectWhCd,
+    srvcList, whList,
+    setSelectSrvcCd, setSelectWhCd,
+    setSrvcList, setWhList } = useCommonWhList();
 
   const payload = getTokenPayload();
   const STORAGE_KEY_SRVC_CD = `wms_srvc_cd_${payload?.userId}`;
@@ -124,8 +129,21 @@ const Container: React.FC = () => {
         const savedWhCd = localStorage.getItem(STORAGE_KEY_WH_CD);
         const base = list.find(item => item.base_yn === 'Y') ?? list[0];
 
-        setSelectSrvcCd(savedSrvcCd ?? base?.srvc_cd ?? "");
-        setSelectWhCd(savedWhCd ?? base?.wh_cd ?? "");
+        const srvcCd = savedSrvcCd ?? base?.srvc_cd ?? "";
+        const whCd = savedWhCd ?? base?.wh_cd ?? "";
+
+        // 전체 고객사 목록 (중복제거)
+        const srvcList = list.filter((v, i, arr) => arr.findIndex(a => a.srvc_cd === v.srvc_cd) === i)
+          .map(v => ({ srvcCd: v.srvc_cd, srvcNm: v.srvc_nm }));
+
+        // 고객사별 센터 목록
+        const whList = list.filter((v, i, arr) => arr.findIndex(a => a.wh_cd === v.wh_cd) === i)
+          .map(v => ({ whCd: v.wh_cd, whNm: v.wh_nm }));
+
+        setSrvcList(srvcList);
+        setWhList(whList);
+        setSelectSrvcCd(srvcCd);
+        setSelectWhCd(whCd);
       },
       (err) => console.error('고객사/센터 목록 조회 실패', err)
     );
@@ -149,6 +167,10 @@ const Container: React.FC = () => {
     const whCd = firstWh?.wh_cd ?? "";
     setSelectWhCd(whCd);
     localStorage.setItem(STORAGE_KEY_WH_CD, whCd);
+    // 센터 목록 갱신
+    const whList = authList.filter(v => v.srvc_cd == srvcCd)
+      .map(v => ({ whCd: v.wh_cd, whNm: v.wh_nm }));
+    setWhList(whList);
   };
 
   const handleWhCdChange = (whCd: string) => {

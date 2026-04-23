@@ -8,16 +8,26 @@ import styles from "./cj_wms_home_0010.module.css";
 import { getTokenPayload } from "../../utils/auth";
 import { usePopup } from "../../components/common/usePopup";
 import { useNoticeList } from "./hooks/useNoticeList";
+import { getFileList, uploadFile, downloadFile, deleteFile } from "../../api/home/home_0010Service";
+
+interface AttachedFile {
+    id: string;
+    fileId?: number;      // DB file_id (없으면 미업로드 대기 파일)
+    name: string;
+    size: string;
+    type: string;
+    pendingFile?: File;   // 미업로드 파일 원본 (저장 시 업로드에 사용)
+}
 
 const CJ_WMS_HOME_0010: React.FC = () => {
     const userId = getTokenPayload()?.userId ?? "";
     const MAX_FILE_SIZE = 20 * 1024 * 1024;
 
     // 1. File Attachment State
-    interface AttachedFile { id: string; name: string; size: string; type: string; }
     const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const titleInputRef = useRef<HTMLInputElement>(null);
+
     // 2. Tiptap Editor
     const editor = useEditor({
         extensions: [StarterKit, Bold, Italic],
@@ -33,16 +43,37 @@ const CJ_WMS_HOME_0010: React.FC = () => {
         handleCheckItem, handleCheckAll, handleSave, handleDelete, isNew,
     } = useNoticeList({ editor, userId, showAlert, showConfirm, closePopup });
 
-    // 4. 첨부파일 초기화 (공지 선택 시)
+    // 4. 첨부파일 목록 조회
+    const loadFileList = (boardId: number) => {
+        getFileList(
+            { boardId },
+            (res) => {
+                if (res.resultCode === "0000" && res.data) {
+                    setAttachedFiles(res.data.map(f => ({
+                        id: f.file_id.toString(),
+                        fileId: f.file_id,
+                        name: f.file_nm,
+                        size: f.file_size,
+                        type: f.file_nm.split('.').pop()?.toLowerCase() || 'file',
+                    })));
+                } else {
+                    setAttachedFiles([]);
+                }
+            },
+            () => setAttachedFiles([])
+        );
+    };
+
+    // 5. 공지 선택 시 첨부파일 조회
     useEffect(() => {
         if (selectedNoticeId !== null) {
-            setAttachedFiles([{ id: 'f1', name: 'manual_update.pdf', size: '1.2 MB', type: 'pdf' }]);
+            loadFileList(selectedNoticeId);
         } else {
             setAttachedFiles([]);
         }
     }, [selectedNoticeId]);
 
-    // 5. File Attachment Handlers
+    // 6. File Attachment Handlers
     const handleAddFileClick = () => fileInputRef.current?.click();
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,15 +93,60 @@ const CJ_WMS_HOME_0010: React.FC = () => {
             name: file.name,
             size: (file.size / (1024 * 1024)).toFixed(1) + ' MB',
             type: file.name.split('.').pop()?.toLowerCase() || 'file',
+            pendingFile: file,
         }));
 
         if (validFiles.length > 0) setAttachedFiles(prev => [...prev, ...validFiles]);
         e.target.value = '';
     };
 
-    const removeFile = (id: string) => setAttachedFiles(prev => prev.filter(f => f.id !== id));
+    const removeFile = (file: AttachedFile) => {
+        if (file.fileId) {
+            deleteFile(
+                { fileId: file.fileId, userId },
+                (res) => {
+                    if (res.resultCode === "0000") {
+                        setAttachedFiles(prev => prev.filter(f => f.id !== file.id));
+                    } else {
+                        showAlert(res.resultMessage ?? "파일 삭제 실패");
+                    }
+                },
+                () => showAlert("파일 삭제 중 오류가 발생했습니다.")
+            );
+        } else {
+            setAttachedFiles(prev => prev.filter(f => f.id !== file.id));
+        }
+    };
 
-    // 6. Toolbar Command Handlers
+    const handleFileDownload = (file: AttachedFile) => {
+        if (!file.fileId) return;
+        downloadFile(file.fileId, file.name).catch(() => showAlert("파일 다운로드 중 오류가 발생했습니다."));
+    };
+
+    // 7. 저장 — 공지 저장 후 대기 중인 파일 업로드
+    const handleSaveClick = () => {
+        handleSave(titleInputRef.current?.value ?? "", (boardId) => {
+            const pendingFiles = attachedFiles.filter(f => f.pendingFile);
+            if (pendingFiles.length === 0) return;
+            const formData = new FormData();
+            formData.append('boardId', boardId.toString());
+            formData.append('userId', userId);
+            pendingFiles.forEach(f => formData.append('files', f.pendingFile!));
+            uploadFile(
+                formData,
+                (res) => {
+                    if (res.resultCode === "0000") {
+                        loadFileList(boardId);
+                    } else {
+                        showAlert(res.resultMessage ?? "파일 업로드 실패");
+                    }
+                },
+                () => showAlert("파일 업로드 중 오류가 발생했습니다.")
+            );
+        });
+    };
+
+    // 8. Toolbar Command Handlers
     const toggleBold = () => editor?.chain().focus().toggleBold().run();
     const toggleItalic = () => editor?.chain().focus().toggleItalic().run();
     const toggleOrderedList = () => editor?.chain().focus().toggleOrderedList().run();
@@ -99,7 +175,7 @@ const CJ_WMS_HOME_0010: React.FC = () => {
                     <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={handleNew}>
                         <span className="material-symbols-outlined">add</span> 신규
                     </button>
-                    <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => handleSave(titleInputRef.current?.value ?? "")}>
+                    <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleSaveClick}>
                         <span className="material-symbols-outlined">save</span> 저장
                     </button>
                     <button className={`${styles.btn} ${styles.btnDanger}`} onClick={handleDelete}>
@@ -234,14 +310,21 @@ const CJ_WMS_HOME_0010: React.FC = () => {
                                                 </span>
                                             </div>
                                             <div className={styles.fileMeta}>
-                                                <p className={styles.fileName}>{file.name}</p>
+                                                <p
+                                                    className={styles.fileName}
+                                                    style={{ cursor: file.fileId ? 'pointer' : 'default' }}
+                                                    onClick={() => handleFileDownload(file)}
+                                                >
+                                                    {file.name}
+                                                    {file.pendingFile && <span style={{ fontSize: '10px', color: '#94a3b8', marginLeft: '4px' }}>(저장 대기)</span>}
+                                                </p>
                                                 <p className={styles.fileSize}>{file.size}</p>
                                             </div>
                                             {isEditing && (
                                                 <span
                                                     className="material-symbols-outlined"
                                                     style={{ fontSize: '16px', color: '#94a3b8', cursor: 'pointer', marginLeft: 'auto' }}
-                                                    onClick={() => removeFile(file.id)}
+                                                    onClick={() => removeFile(file)}
                                                 >
                                                     cancel
                                                 </span>
