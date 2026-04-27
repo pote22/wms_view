@@ -1,25 +1,25 @@
-import { request } from "../common/trasaction";
-import { API_USER_ROOT } from "../common/index";    
+import { request } from "../common/transaction";
+import { API_USER_ROOT } from "../common/index";
 
 // API 요청에 필요한 인터페이스 정의
 export interface LoginRequest {
-    userId      : string;
-    password    : string;
+    userId: string;
+    password: string;
 }
 
 // API 응답에 필요한 인터페이스 정의
 export interface LoginResponse {
-    resultCode      : string;
-    resultMessage   : string;
-    accessToken     : string;
-    expireDate      : any;
+    resultCode: string;
+    resultMessage: string;
+    accessToken: string;
+    expireDate: any;
     data: {
-        userId      : string;
-        userNm      : string;
-        adminYn     : string;
-        userSts     : string;
-        useYn       : string;
-        role        : string;
+        userId: string;
+        userNm: string;
+        adminYn: string;
+        userSts: string;
+        useYn: string;
+        role: string;
         profileImgUrl?: string;
     }
 }

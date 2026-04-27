@@ -1,4 +1,4 @@
-import { request } from "./trasaction";
+import { request } from "./transaction";
 import { API_USER_ROOT } from "./index";
 
 // 사용자 권한별 고객사 센터 조회 데이터

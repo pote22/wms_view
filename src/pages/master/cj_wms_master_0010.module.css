@@ -218,14 +218,16 @@
 /* Table */
 .tableWrapper {
     overflow-x: auto;
+    overflow-y: auto;
     flex: 1;
-    /* Expand to fill the remaining space in sectionCard */
+    min-height: 0;
 }
 
 .table {
     width: 100%;
     text-align: left;
     border-collapse: collapse;
+    table-layout: fixed;
 }
 
 .thead {
@@ -239,10 +241,13 @@
 }
 
 .thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
     padding: 1rem 1.5rem;
     text-align: center;
-    /* Center align header text as requested */
     white-space: nowrap;
+    background-color: rgba(248, 250, 251, 0.5);
 }
 
 .tbody tr {
@@ -250,6 +255,7 @@
     transition: background-color 0.2s;
     cursor: pointer;
     text-align: center;
+    height: 48px;
 }
 
 .tbody tr:hover {
@@ -257,8 +263,10 @@
 }
 
 .tbody td {
-    padding: 1rem 1.5rem;
+    padding: 0 1.0rem;
     font-size: 0.875rem;
+    height: 48px;
+    box-sizing: border-box;
 }
 
 .cellCenter {
@@ -476,4 +484,21 @@
     border-top: none;
     border-left: none;
     transform: rotate(45deg);
+}
+
+.cellInput {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    color: #000000;
+    outline: none;
+    background-color: #ffffff;
+    min-width: 0;
+}
+
+.cellInput:focus {
+    border-color: #003f87;
 }

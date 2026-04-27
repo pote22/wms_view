@@ -1,5 +1,5 @@
-import { request } from "../common/trasaction";
-import transaction from "../common/trasaction";
+import { request } from "../common/transaction";
+import transaction from "../common/transaction";
 import { API_HOME_ROOT } from "../common/index";
 
 export interface Notice {

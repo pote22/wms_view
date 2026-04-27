@@ -47,6 +47,9 @@ transaction.interceptors.response.use(
             sessionStorage.clear();
             window.location.href = '/login';
         }
+
+        // 401외 모든 공통에러(500, 400) -> 화면에 에러메세지 출력
+        return Promise.reject(error);
     }
 );
 
