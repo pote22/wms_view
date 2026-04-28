@@ -116,8 +116,81 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
     };
 
     // 엑셀다운로드
-    const handleExcel = () => {
-        console.log("---> vehicleIds : " + JSON.stringify(vehicleIds));
+    const handleExcel = async () => {
+        if (vehicleIds.length === 0) {
+            alert("다운로드할 데이터가 없습니다.");
+            return;
+        }
+
+        const wb = new ExcelJS.Workbook();
+        const ws = wb.addWorksheet("차량관리");
+
+        // 컬럼 정의
+        ws.columns = [
+            { header: "차량번호", key: "vehicleNo", width: 20 },
+            { header: "기사명", key: "drvNm", width: 15 },
+            { header: "톤급", key: "tonClsCd", width: 10 },
+            { header: "HP번호", key: "hpNo", width: 18 },
+            { header: "사용여부", key: "useYn", width: 10 },
+            { header: "등록자", key: "regId", width: 15 },
+            { header: "등록일자", key: "regDate", width: 14 },
+            { header: "수정자", key: "updId", width: 15 },
+            { header: "수정일자", key: "updDate", width: 14 },
+        ];
+
+        // 헤더 스타일
+        const headerRow = ws.getRow(1);
+        headerRow.eachCell((cell) => {
+            cell.fill = {
+                type: "pattern",
+                pattern: "solid",
+                fgColor: { argb: "FF003F87" },
+            };
+            cell.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 11 };
+            cell.alignment = { vertical: "middle", horizontal: "center" };
+            cell.border = {
+                top: { style: "thin" }, left: { style: "thin" },
+                bottom: { style: "thin" }, right: { style: "thin" },
+            };
+        });
+
+        headerRow.height = 22;
+
+        // 데이터 행 추가
+        vehicleIds.forEach(v => {
+            const row = ws.addRow({
+                vehicleNo: v.vehicleNo,
+                drvNm: v.drvNm,
+                tonClsCd: v.tonClsCd,
+                hpNo: v.hpNo,
+                useYn: v.useYn,
+                regId: v.regId ?? "",
+                regDate: v.regDate ?? "",
+                updId: v.updId ?? "",
+                updDate: v.updDate ?? "",
+            });
+
+            row.eachCell((cell) => {
+                cell.alignment = { vertical: "middle", horizontal: "center" };
+                cell.border = {
+                    top: { style: "thin" }, left: { style: "thin" },
+                    bottom: { style: "thin" }, right: { style: "thin" },
+                };
+            });
+            row.height = 18;
+        });
+
+        // 파일 저장
+        const buffer = await wb.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `차량관리_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url)
     };
 
     // 체크박스 : 전체선택
@@ -239,7 +312,6 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // 로딩바 표시
         setIsUploading(true);
 
         const reader = new FileReader();
@@ -266,14 +338,12 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
                 }));
 
             setVehicleIds(prev => [...prev.filter(v => !v.isNew), ...newVehicles]);
-            // 로딩바 해제
             setIsUploading(false);
         };
         reader.onerror = () => {
             alert("엑셀 파일 업로드 실패");
-            // 로딩바 해제
             setIsUploading(false);
-        }
+        };
         reader.readAsBinaryString(file);
         e.target.value = "";
     };
