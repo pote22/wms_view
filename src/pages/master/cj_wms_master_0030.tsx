@@ -130,6 +130,7 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
                     </div>
 
                     {/* Pagination */}
+                    {/* 
                     <div className={styles.pagination}>
                         <p className={styles.paginationInfo}>Showing 1 to 5 of 124 entries</p>
                         <div className={styles.paginationControls}>
@@ -146,6 +147,7 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
                             </button>
                         </div>
                     </div>
+                    */}
                 </div>
             </div>
         </div>

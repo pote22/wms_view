@@ -17,8 +17,17 @@ export const usePopup = () => {
 
     const closePopup = () => setPopup(p => ({ ...p, isOpen: false }));
 
-    const showAlert = (message: string) =>
-        setPopup({ isOpen: true, type: "alert", message, onConfirm: closePopup });
+    const showAlert = (message: string, onClose?: () => void) =>
+        setPopup(
+            { isOpen    : true, 
+              type      : "alert", 
+              message, 
+              onConfirm : () => { 
+                closePopup(); 
+                if (onClose) setTimeout(onClose, 0); 
+              }, 
+            }
+        );
 
     const showConfirm = (message: string, onConfirm: () => void) =>
         setPopup({ isOpen: true, type: "confirm", message, onConfirm });

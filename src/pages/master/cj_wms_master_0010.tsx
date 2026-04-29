@@ -3,15 +3,18 @@ import React, { useState, useEffect, useRef } from "react";
 import * as XLSX from "xlsx";
 import { useCommonWhList } from "../../api/common/commonWhList";
 import { getTokenPayload } from "../../utils/auth";
-import { getList, saveVehicle, deleteVehicle, type Vehicle } from "../../api/master/master_0010Service";
+import { getList, saveVehicle, deleteVehicle, getCheckList, type Vehicle, type CheckResult } from "../../api/master/master_0010Service";
+import Popup from "../../components/common/Popup";
+import { usePopup } from "../../components/common/usePopup";
 import styles from "./cj_wms_master_0010.module.css";
+import { getTonList, type TonCd } from "../../api/common/commonService"
 
 // 화면에서 사용하는 차량타입
 interface VehicleRow extends Vehicle {
-    _id: number;               // 화면용 임시 ID
-    isNew: boolean;            // 신규여부
-    isDirty: boolean;          // 수정여부
-    uploadStatus: string;      // 엑셀업로드 상태
+    chk             : string;      // 체크박스 ('0'=미선택, '1'=선택)
+    isNew           : boolean;     // 신규여부
+    isDirty         : boolean;     // 수정여부
+    uploadStatus    : string;      // 엑셀업로드 상태
 }
 
 const CJ_WMS_MASTER_0010: React.FC = () => {
@@ -19,106 +22,165 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
     const { srvcList, whList, selectSrvcCd, selectWhCd } = useCommonWhList();
     const [searchSrvcCd, setSearchSrvcCd] = useState(selectSrvcCd);
     const [searchWhCd, setSearchWhCd] = useState(selectWhCd);
+    // 차량톤급 조회(공통)
+    const [tonList, setTonList] = useState<TonCd[]>([]);
     // 검색조건
     const [searchVehicleNo, setSearchVehicleNo] = useState("");
     const [searchUseYn, setSearchUseYn] = useState("");
+    // 공통팝업
+    const { popup, showAlert, showConfirm, closePopup } = usePopup();
     // 차량 목록
     const [vehicleIds, setVehicleIds] = useState<VehicleRow[]>([]);
-    const [selectCheckIds, setSelectCheckIds] = useState<number[]>([]);
-
     // 엑셀문서 입력
     const fileInputRef = useRef<HTMLInputElement>(null);
     // 사용자ID 정보 가져오기
     const payload = getTokenPayload();
     // 로딩바표시
     const [isUploading, setIsUploading] = useState(false);
+    // confirm 다이얼로그
+    const [isSaving, setIsSaving] = useState(false);
+    // HP 번호 정규식
+    const HP_NO_REGEX = /^0\d{1,2}-\d{3,4}-\d{4}$/;
+    const cellRefs = useRef<Map<string, HTMLInputElement | HTMLSelectElement>>(new Map());
+    const setCellRef = (idx: number, field: string) => (
+        el: HTMLInputElement | HTMLSelectElement | null) => {
+            if (el) cellRefs.current.set(`${idx}_${field}`, el);
+            else cellRefs.current.delete(`${idx}_${field}`);
+    };
 
     // 헤더 고객사/센터 변경시 동기화
-    useEffect(() => { setSearchSrvcCd(selectSrvcCd); }, [selectSrvcCd]);
-    useEffect(() => { setSearchWhCd(selectWhCd); }, [selectWhCd]);
+    useEffect(() => { 
+        setSearchSrvcCd(selectSrvcCd); 
+    }, [selectSrvcCd]);
+    
+    useEffect(() => { 
+        setSearchWhCd(selectWhCd); 
+    }, [selectWhCd]);
+
+    useEffect(() => {
+        getTonList(
+            (res) => setTonList(res.data ?? []),
+            (err) => console.error("톤급 목록 조회 실패 : ", err)
+        );
+    }, []);
 
     // 조회
     const handleSearch = () => {
         getList(
             { srvcCd: searchSrvcCd, whCd: searchWhCd, vehicleNo: searchVehicleNo, useYn: searchUseYn },
             (res) => {
-                const rows: VehicleRow[] = (res.data ?? []).map((v: any, i) => ({
-                    _id: i + 1,
-                    srvcCd: v.srvc_cd ?? "",
-                    whCd: v.wh_cd ?? "",
-                    vehicleNo: v.vehicle_no ?? "",
-                    drvNm: v.drv_nm ?? "",
-                    hpNo: v.hp_no ?? "",
-                    tonClsCd: v.ton_cls_cd ?? "",
-                    useYn: v.use_yn ?? "",
-                    regId: v.reg_id ?? "",
-                    regDate: v.reg_date ?? "",
-                    updId: v.upd_id ?? "",
-                    updDate: v.upd_date ?? "",
-                    isNew: false,
-                    isDirty: false,
+                const rows: VehicleRow[] = (res.data ?? []).map((v: any) => ({
+                    chk         : v.chk ?? '0',
+                    srvcCd      : v.srvc_cd ?? "",
+                    whCd        : v.wh_cd ?? "",
+                    vehicleNo   : v.vehicle_no ?? "",
+                    drvNm       : v.drv_nm ?? "",
+                    hpNo        : v.hp_no ?? "",
+                    tonClsCd    : v.ton_cls_cd ?? "",
+                    useYn       : v.use_yn ?? "",
+                    regId       : v.reg_id ?? "",
+                    regDate     : v.reg_date ?? "",
+                    updId       : v.upd_id ?? "",
+                    updDate     : v.upd_date ?? "",
+                    isNew       : false,
+                    isDirty     : false,
                     uploadStatus: "",
                 }));
                 setVehicleIds(rows);
-                setSelectCheckIds([]);
             },
-            (err) => alert("조회 실패: " + err?.message)
+            (err) => showAlert("조회 실패: " + err?.message)
         );
     };
 
-    // 저장 (신규 또는 수정된 행)
+    // 저장 (체크된 행)
     const handleSave = () => {
-        const saveRows = vehicleIds.filter(v => v.isNew || v.isDirty);
+        const saveRows = vehicleIds.filter(v => v.chk === '1');
+
         if (saveRows.length === 0) {
-            alert("저장할 데이터가 없습니다.");
+            showAlert("저장할 항목을 선택해주세요.");
             return;
         }
 
-        const invalid = saveRows.find(v => !v.vehicleNo.trim());
-        if (invalid) {
-            alert("차량번호는 필수 입력값입니다.");
+        const inValidVNoIdx = vehicleIds.findIndex(v => v.chk === '1' && !v.vehicleNo.trim());
+
+        if (inValidVNoIdx !== -1) {
+            
+            const el = cellRefs.current.get(`${inValidVNoIdx}_vehicleNo`);
+            showAlert("차량번호를 입력하세요.", () => el?.focus());
             return;
         }
 
-        const userId = payload?.userId ?? "";
-        const vehicleList = saveRows.map(v => ({
-            srvcCd: v.srvcCd ? v.srvcCd : searchSrvcCd,
-            whCd: v.whCd ? v.whCd : searchWhCd,
-            vehicleNo: v.vehicleNo.trim(),
-            drvNm: v.drvNm,
-            hpNo: v.hpNo,
-            tonClsCd: v.tonClsCd,
-            useYn: v.useYn,
-            userId,
-        }));
+        const vehicleTonCdList = tonList.map(t => t.sys_cd)
+        const inValidIdx = vehicleIds.findIndex(v => v.chk === '1' && v.tonClsCd && !vehicleTonCdList.includes(v.tonClsCd));
+        
+        if (inValidIdx !== -1) {
+            const el = cellRefs.current.get(`${inValidIdx}_tonClsCd`);
+            showAlert(`차량번호 : ${vehicleIds[inValidIdx].vehicleNo}의 톤급이 올바르지 않습니다.`, () => el?.focus());
+            return;
+        }
 
-        saveVehicle(
-            { vehicles: vehicleList },
-            () => { alert("저장되었습니다."); handleSearch(); },
-            (err) => alert("저장 실패: " + err?.message)
-        );
+        const inValidHpNoIdx = vehicleIds.findIndex(v => v.chk === '1' && v.hpNo && !HP_NO_REGEX.test(v.hpNo));
+
+        if (inValidHpNoIdx !== -1) {
+            const el = cellRefs.current.get(`${inValidHpNoIdx}_hpNo`);
+            showAlert(`H.P번호 형식이 올바르지 않습니다.(예 : 010-1234-5678)`, () => el?.focus());
+            return;
+        }
+
+        showConfirm(`저장하시겠습니까?`, () => {
+            closePopup();
+            setIsSaving(true);
+
+            const userId        = payload?.userId ?? "";
+            const vehicleList   = saveRows.map(v => ({
+                srvcCd      : v.srvcCd ? v.srvcCd : searchSrvcCd,
+                whCd        : v.whCd ? v.whCd : searchWhCd,
+                vehicleNo   : v.vehicleNo.trim(),
+                drvNm       : v.drvNm,
+                hpNo        : v.hpNo,
+                tonClsCd    : v.tonClsCd,
+                useYn       : v.useYn,
+                userId,
+            }));
+            
+            saveVehicle(
+                { vehicles: vehicleList },
+                () => { 
+                    setIsSaving(false); 
+                    showAlert("저장 되었습니다.");
+                    handleSearch();  
+                },
+                (err) => {
+                    setIsSaving(false);
+                    showAlert("저장 실패: " + err?.message)
+                }
+            );
+        });
     };
 
-    // 삭제 (DB 행)
+    // 삭제 (체크된 DB 행)
     const handleDelete = () => {
-        const dbRows = vehicleIds.filter(v => selectCheckIds.includes(v._id) && !v.isNew);
+        const dbRows = vehicleIds.filter(v => v.chk === '1' && !v.isNew);
+
         if (dbRows.length === 0) {
-            alert("삭제할 항목을 선택해주세요.");
+            showAlert("삭제할 항목을 선택해주세요.");
             return;
         }
-        if (!window.confirm(`선택한 ${dbRows.length}건을 삭제하시겠습니까?`)) return;
 
-        deleteVehicle(
-            { vehicleNos: dbRows.map(v => v.vehicleNo), srvcCd: searchSrvcCd, whCd: searchWhCd },
-            () => { alert("삭제되었습니다."); handleSearch(); },
-            (err) => alert("삭제 실패: " + err?.message)
-        );
+        showConfirm(`선택한 ${dbRows.length}건을 삭제하시겠습니까?`, () => {
+            closePopup();
+            deleteVehicle(
+                { vehicleNos: dbRows.map(v => v.vehicleNo), srvcCd: searchSrvcCd, whCd: searchWhCd },
+                () => { handleSearch(); showAlert("삭제 되었습니다."); },
+                (err) => showAlert("삭제 실패: " + err?.message)
+            );
+        });
     };
 
     // 엑셀다운로드
     const handleExcel = async () => {
         if (vehicleIds.length === 0) {
-            alert("다운로드할 데이터가 없습니다.");
+            showAlert("다운로드할 데이터가 없습니다.");
             return;
         }
 
@@ -127,25 +189,27 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
 
         // 컬럼 정의
         ws.columns = [
-            { header: "차량번호", key: "vehicleNo", width: 20 },
-            { header: "기사명", key: "drvNm", width: 15 },
-            { header: "톤급", key: "tonClsCd", width: 10 },
-            { header: "HP번호", key: "hpNo", width: 18 },
-            { header: "사용여부", key: "useYn", width: 10 },
-            { header: "등록자", key: "regId", width: 15 },
-            { header: "등록일자", key: "regDate", width: 14 },
-            { header: "수정자", key: "updId", width: 15 },
-            { header: "수정일자", key: "updDate", width: 14 },
+            { header: "차량번호",   key: "vehicleNo",   width: 20 },
+            { header: "기사명",     key: "drvNm",       width: 15 },
+            { header: "톤급",       key: "tonClsCd",    width: 10 },
+            { header: "HP번호",     key: "hpNo",        width: 18 },
+            { header: "사용여부",   key: "useYn",       width: 10 },
+            { header: "등록자",     key: "regId",       width: 15 },
+            { header: "등록일자",   key: "regDate",     width: 14 },
+            { header: "수정자",     key: "updId",       width: 15 },
+            { header: "수정일자",   key: "updDate",     width: 14 },
         ];
 
         // 헤더 스타일
         const headerRow = ws.getRow(1);
+
         headerRow.eachCell((cell) => {
             cell.fill = {
                 type: "pattern",
                 pattern: "solid",
                 fgColor: { argb: "FF003F87" },
             };
+
             cell.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 11 };
             cell.alignment = { vertical: "middle", horizontal: "center" };
             cell.border = {
@@ -159,15 +223,15 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
         // 데이터 행 추가
         vehicleIds.forEach(v => {
             const row = ws.addRow({
-                vehicleNo: v.vehicleNo,
-                drvNm: v.drvNm,
-                tonClsCd: v.tonClsCd,
-                hpNo: v.hpNo,
-                useYn: v.useYn,
-                regId: v.regId ?? "",
-                regDate: v.regDate ?? "",
-                updId: v.updId ?? "",
-                updDate: v.updDate ?? "",
+                vehicleNo   : v.vehicleNo,
+                drvNm       : v.drvNm,
+                tonClsCd    : v.tonClsCd,
+                hpNo        : v.hpNo,
+                useYn       : v.useYn,
+                regId       : v.regId ?? "",
+                regDate     : v.regDate ?? "",
+                updId       : v.updId ?? "",
+                updDate     : v.updDate ?? "",
             });
 
             row.eachCell((cell) => {
@@ -181,13 +245,16 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
         });
 
         // 파일 저장
-        const buffer = await wb.xlsx.writeBuffer();
-        const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
+        const buffer    = await wb.xlsx.writeBuffer();
+        const blob      = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+        const url       = window.URL.createObjectURL(blob);
+        const a         = document.createElement("a");
+        
         a.href = url;
         a.download = `차량관리_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        
         document.body.appendChild(a);
+        
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url)
@@ -195,46 +262,39 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
 
     // 체크박스 : 전체선택
     const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSelectCheckIds(e.target.checked ? vehicleIds.map(v => v._id) : []);
+        const val = e.target.checked ? '1' : '0';
+        setVehicleIds(prev => prev.map(v => ({ ...v, chk: val })));
     };
 
     // 체크박스 : 행선택
-    const handleSelectRow = (id: number) => {
-        setSelectCheckIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+    const handleSelectRow = (idx: number) => {
+        setVehicleIds(prev => prev.map((v, i) => i === idx ? { ...v, chk: v.chk === '1' ? '0' : '1' } : v));
     };
 
     // 행추가
     const handleAddRow = () => {
-        const newId = Date.now();
         setVehicleIds(prev => [...prev, {
-            _id: newId,
-            vehicleNo: "",
-            drvNm: "",
-            hpNo: "",
-            tonClsCd: "",
-            useYn: "Y",
-            srvcCd: "",
-            whCd: "",
-            isNew: true,
-            isDirty: false,
-            uploadStatus: "",
+            chk             : '1',
+            vehicleNo       : "",
+            drvNm           : "",
+            hpNo            : "",
+            tonClsCd        : "",
+            useYn           : "Y",
+            srvcCd          : "",
+            whCd            : "",
+            isNew           : true,
+            isDirty         : false,
+            uploadStatus    : "",
         }]);
     };
 
-    // 행삭제
+    // 행삭제 (마지막 신규행 제거)
     const handleDeleteRow = () => {
-        // 마지막 추가행(신규)
-        const lastRow = [...vehicleIds].reverse().find(v => v.isNew);
+        const lastNewIdx = vehicleIds.map((v, i) => v.isNew ? i : -1).filter(i => i >= 0).pop();
 
-        if (!lastRow) {
-            return;
-        }
-
-        setVehicleIds(prev => {
-            const idx = [...prev].map(v => v._id).lastIndexOf(lastRow._id);
-            return prev.filter((_, i) => i !== idx);
-        });
-        setSelectCheckIds([]);
+        if (lastNewIdx === undefined) return;
+        
+        setVehicleIds(prev => prev.filter((_, i) => i !== lastNewIdx));
     };
 
     // 양식다운로드
@@ -243,17 +303,17 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
         const ws = wb.addWorksheet("차량관리_양식");
 
         ws.columns = [
-            { header: "고객사", key: "srvcCd", width: 20 },
-            { header: "센터", key: "whCd", width: 20 },
-            { header: "차량번호", key: "vehicleNo", width: 20 },
-            { header: "기사명", key: "drvNm", width: 15 },
-            { header: "톤급", key: "tonClsCd", width: 10 },
-            { header: "HP번호", key: "hpNo", width: 18 },
+            { header: "고객사",     key: "srvcCd",      width: 20 },
+            { header: "센터",       key: "whCd",        width: 20 },
+            { header: "차량번호",   key: "vehicleNo",   width: 20 },
+            { header: "기사명",     key: "drvNm",       width: 15 },
+            { header: "톤급",       key: "tonClsCd",    width: 10 },
+            { header: "HP번호",     key: "hpNo",        width: 18 },
         ];
 
         const exampleRows = [
             { srvcCd: "1201", whCd: "C102", vehicleNo: "서울12가 1234", drvNm: "홍길동", tonClsCd: "5", hpNo: "010-1234-5678" },
-            { srvcCd: "1201", whCd: "C102", vehicleNo: "경기34나 5678", drvNm: "김철수", tonClsCd: "1", hpNo: "010-9876-5432" },
+            { srvcCd: "1201", whCd: "C102", vehicleNo: "경기34나 5678", drvNm: "김철수", tonClsCd: "1.5", hpNo: "010-1234-5678" },
         ];
 
         // 헤더 행 스타일
@@ -317,43 +377,71 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
         const reader = new FileReader();
         reader.onload = (evt) => {
             const data = evt.target?.result;
-            const wb = XLSX.read(data, { type: "binary" });
+            const wb = XLSX.read(new Uint8Array(data as ArrayBuffer), { type: "array" });
             const ws = wb.Sheets[wb.SheetNames[0]];
-            const rows: string[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
+            const rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
 
             const newVehicles: VehicleRow[] = rows.slice(1)
                 .filter(row => row.length > 0 && row[0])
-                .map((row, i) => ({
-                    _id: Date.now() + i,
-                    vehicleNo: row[2] ?? "",
-                    drvNm: row[3] ?? "",
-                    tonClsCd: row[4] ?? "",
-                    hpNo: row[5] ?? "",
-                    srvcCd: row[0] ?? "",
-                    whCd: row[1] ?? "",
-                    useYn: "Y",
-                    isNew: true,
-                    isDirty: false,
-                    uploadStatus: "UPLOAD",
+                .map((row) => ({
+                    chk         : '1',
+                    vehicleNo   : String(row[2] ?? "").trim(),
+                    drvNm       : String(row[3] ?? "").trim(),
+                    tonClsCd    : String(row[4] ?? "").trim(),
+                    hpNo        : String(row[5] ?? "").trim(),
+                    srvcCd      : String(row[0] ?? "").trim(),
+                    whCd        : String(row[1] ?? "").trim(),
+                    useYn       : "Y",
+                    isNew       : true,
+                    isDirty     : false,
+                    uploadStatus: '검증중...',
                 }));
 
-            setVehicleIds(prev => [...prev.filter(v => !v.isNew), ...newVehicles]);
-            setIsUploading(false);
+            setVehicleIds(newVehicles);
+
+            getCheckList(
+                { vehicles: newVehicles.map(v => ({ vehicleNo: v.vehicleNo, tonClsCd: v.tonClsCd, hpNo: v.hpNo })) },
+                (res) => {
+                    const results: CheckResult[] = res.data ?? [];
+                    setVehicleIds(prev => {
+                        const existing = prev.filter(v => !v.isNew);
+                        const updated = newVehicles.map((v, i) => {
+                            const r = results.find(r => r.rowIndex === i);
+                            return { ...v, uploadStatus: r ? (r.isValid ? "OK" : r.errors.join(" / ")) : v.uploadStatus };
+                        });
+                        return [...existing, ...updated];
+                    });
+                    setIsUploading(false);
+                },
+                (err) => {
+                    setVehicleIds(prev => prev.filter(v => !v.isNew));
+                    showAlert("유효성 검증 실패: " + err?.message);
+                    setIsUploading(false);
+                }
+            );
         };
         reader.onerror = () => {
-            alert("엑셀 파일 업로드 실패");
+            showAlert("엑셀 파일 업로드 실패");
             setIsUploading(false);
         };
-        reader.readAsBinaryString(file);
+        reader.readAsArrayBuffer(file);
         e.target.value = "";
     };
 
     // 인라인 컬럼 편집
-    const handleCellChange = (id: number, field: keyof VehicleRow, value: string) => {
-        setVehicleIds(prev => prev.map(v => v._id === id ? { ...v, [field]: value, isDirty: true } : v));
+    const handleCellChange = (idx: number, field: keyof VehicleRow, value: string) => {
+        setVehicleIds(prev => prev.map((v, i) => i === idx ? { ...v, [field]: value, isDirty: true } : v));
     };
 
     return (
+        <>
+        <Popup
+            isOpen={popup.isOpen}
+            message={popup.message}
+            type={popup.type}
+            onConfirm={popup.onConfirm}
+            onCancel={closePopup}
+        />
         <div className={styles.pageContainer}>
             <div className={styles.contentWrapper}>
                 <div className={styles.sectionCard}>
@@ -448,24 +536,24 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
                     <div className={styles.tableWrapper}>
                         <table className={styles.table}>
                             <colgroup>
-                                <col style={{ width: '50px' }} />   {/* 체크박스 */}
-                                <col style={{ width: '110px' }} />  {/* 차량번호 */}
-                                <col style={{ width: '100px' }} />  {/* 기사명 */}
-                                <col style={{ width: '60px' }} />   {/* 톤급 */}
-                                <col style={{ width: '120px' }} />  {/* H.P 번호 */}
-                                <col style={{ width: '60px' }} />   {/* 사용 */}
-                                <col style={{ width: '80px' }} />  {/* 등록자 */}
-                                <col style={{ width: '100px' }} />  {/* 등록일자 */}
-                                <col style={{ width: '80px' }} />  {/* 수정자 */}
-                                <col style={{ width: '100px' }} />  {/* 수정일자 */}
-                                <col style={{ width: '150px' }} />  {/* 업로드결과 */}
+                                <col style={{ width: '50px' }} />
+                                <col style={{ width: '110px' }} />
+                                <col style={{ width: '100px' }} />
+                                <col style={{ width: '70px' }} />
+                                <col style={{ width: '120px' }} />
+                                <col style={{ width: '60px' }} />
+                                <col style={{ width: '80px' }} />
+                                <col style={{ width: '100px' }} />
+                                <col style={{ width: '80px' }} />
+                                <col style={{ width: '100px' }} />
+                                <col style={{ width: '150px' }} />
                             </colgroup>
                             <thead className={styles.thead}>
                                 <tr>
                                     <th className={styles.cellCenter}>
                                         <input type="checkbox" className={styles.checkbox}
                                             onChange={handleSelectAll}
-                                            checked={selectCheckIds.length === vehicleIds.length && vehicleIds.length > 0} />
+                                            checked={vehicleIds.length > 0 && vehicleIds.every(v => v.chk === '1')} />
                                     </th>
                                     <th>차량번호</th>
                                     <th>기사명</th>
@@ -480,35 +568,43 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody className={styles.tbody}>
-                                {vehicleIds.map((v) => (
-                                    <tr key={v._id} onClick={() => handleSelectRow(v._id)}
+                                {vehicleIds.map((v, idx) => (
+                                    <tr key={idx} onClick={() => handleSelectRow(idx)}
                                         style={v.isNew ? { backgroundColor: "rgba(0, 63, 135, 0.04)" } : {}}>
                                         <td className={styles.cellCenter}>
                                             <input type="checkbox" className={styles.checkbox}
-                                                checked={selectCheckIds.includes(v._id)}
+                                                checked={v.chk === '1'}
                                                 onChange={() => { }} />
                                         </td>
                                         <td className={styles.cellBold}>
                                             {v.isNew
                                                 ? <input type="text" className={styles.cellInput} value={v.vehicleNo}
-                                                    onChange={e => handleCellChange(v._id, "vehicleNo", e.target.value)}
-                                                    onClick={e => e.stopPropagation()} placeholder="차량번호" />
+                                                    onChange={e => handleCellChange(idx, "vehicleNo", e.target.value)}
+                                                    onClick={e => e.stopPropagation()} placeholder="차량번호" 
+                                                    ref={setCellRef(idx, "vehicleNo") as any}/>
                                                 : v.vehicleNo}
                                         </td>
                                         <td className={styles.cellMedium}>
                                             <input type="text" className={styles.cellInput} value={v.drvNm}
-                                                onChange={e => handleCellChange(v._id, "drvNm", e.target.value)}
+                                                onChange={e => handleCellChange(idx, "drvNm", e.target.value)}
                                                 onClick={e => e.stopPropagation()} placeholder="기사명" />
                                         </td>
                                         <td className={styles.cellDim}>
-                                            <input type="text" className={styles.cellInput} value={v.tonClsCd}
-                                                onChange={e => handleCellChange(v._id, "tonClsCd", e.target.value)}
-                                                onClick={e => e.stopPropagation()} placeholder="톤급" />
+                                            <select className={styles.cellInput} value={v.tonClsCd} 
+                                                onChange={e => handleCellChange(idx, "tonClsCd", e.target.value)}
+                                                onClick={e => e.stopPropagation()}
+                                                ref={setCellRef(idx, "tonClsCd") as any}>
+                                                <option value="">선택</option>
+                                                { tonList.map(t => (
+                                                    <option key={t.sys_cd} value={t.sys_cd}>{t.sys_cdnm}</option>
+                                                ))}
+                                            </select>
                                         </td>
                                         <td className={styles.cellMono}>
                                             <input type="text" className={styles.cellInput} value={v.hpNo}
-                                                onChange={e => handleCellChange(v._id, "hpNo", e.target.value)}
-                                                onClick={e => e.stopPropagation()} placeholder="휴대전화번호" />
+                                                onChange={e => handleCellChange(idx, "hpNo", e.target.value)}
+                                                onClick={e => e.stopPropagation()} placeholder="휴대전화번호" 
+                                                ref={setCellRef(idx, "hpNo") as any}/>
                                         </td>
                                         <td className={styles.cellCenter}>
                                             <span className={`${styles.badge} ${v.useYn === 'Y' ? styles.badgeSuccess : styles.badgeError}`}>
@@ -521,7 +617,11 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
                                         <td className={styles.cellDim}>{v.updDate}</td>
                                         <td>
                                             {v.uploadStatus && (
-                                                <span className={`${styles.badge} ${v.uploadStatus === 'UPLOAD' ? styles.badgeInfo : styles.badgeError}`}>
+                                                <span className={`${styles.badge} ${
+                                                    v.uploadStatus === '검증중...' ? styles.badgeInfo :
+                                                    v.uploadStatus === 'OK'        ? styles.badgeSuccess :
+                                                    styles.badgeError
+                                                }`}>
                                                     {v.uploadStatus}
                                                 </span>
                                             )}
@@ -552,6 +652,7 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
                 </div>
             </div>
         </div>
+        </>
     );
 };
 
