@@ -3,10 +3,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useCommonWhList } from '../../api/common/commonWhList';
 // JWT 토큰 정보
 import { getTokenPayload } from '../../utils/auth';
-import { getList, saveProdInfo, deleteProdInfo, type Item } from '../../api/master/master_0030Service'
+import { getList, saveProdInfo, deleteProdInfo, getCheckList, type Item, type CheckResult } from '../../api/master/master_0030Service'
 // 레이어 팝업
 import Popup from "../../components/common/Popup";
 import { usePopup } from "../../components/common/usePopup";
+// 품목 검색 팝업
+import ProdSearchPopup from "../../components/common/ProdSearchPopup";
 import styles from './cj_wms_master_0030.module.css';
 // 엑셀
 import ExcelJS from "exceljs";
@@ -21,6 +23,9 @@ interface ItemRow extends Item {
 }
 
 const CJ_WMS_MASTER_0030: React.FC = () => {
+    // 정수&실수 정규식
+    const INT_REGEX     = /^[0-9]+$/;
+    const FLOAT_REGEX   = /^[0-9]*\.?[0-9]*$/
     // 고객사&센터 리스트 조회
     const { srvcList, whList, selectSrvcCd, selectWhCd } = useCommonWhList();
     // 공통 팝업
@@ -37,11 +42,11 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
     const [searchProdShape, setSearchProdShape]         = useState('');
     const [searchSteItemNo, setSearchSteItemNo]         = useState('');
     // 리스트 객체
-    const [items, setItems] = useState<ItemRow[]>([]);
+    const [items, setItems]                             = useState<ItemRow[]>([]);
     // 조회 실행 여부
-    const [searched, setSearched] = useState(false);
+    const [searched, setSearched]                       = useState(false);
     // confirm 다이얼로그
-    const [isSaved, setIsSaved] = useState(false);
+    const [isSaved, setIsSaved]                         = useState(false);
     // 포커싱
     const cellRefs = useRef<Map<string, HTMLInputElement | HTMLSelectElement>>(new Map());
     const setCellRef = (idx: number, field: string) => (
@@ -50,7 +55,12 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
             else cellRefs.current.delete(`${idx}_${field}`);
     };
 
-
+    // 엑셀문서 입력
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    // 로딩바표시
+    const [isUploading, setIsUploading] = useState(false);
+    // 품목검색 팝업
+    const [isProdSearchOpen, setIsProdSearchOpen] = useState(false);
 
     // 체크박스(전체선택)
     const handleSelectAll = (e : React.ChangeEvent<HTMLInputElement>) => {
@@ -97,11 +107,11 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
                     createTime  : v.create_time     ?? '',
                     useYn       : v.use_yn          ?? '',
                     fifoYn      : v.fifo_yn         ?? '',
-                    price       : v.price           ?? 0,
+                    price       : v.price           ?? '',
                     innerpack   : v.innerpack       ?? '',
                     prodUnit    : v.prod_unit       ?? '',
-                    weight      : v.weight          ?? 0.00,
-                    realWeight  : v.real_weight     ?? 0.00,
+                    weight      : v.weight          ?? '',
+                    realWeight  : v.real_weight     ?? '',
                     weightUnit  : v.weight_unit     ?? '',
                     regId       : v.reg_id          ?? '',
                     regDate     : v.reg_date        ?? '',
@@ -127,12 +137,113 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
             return;
         }
 
-       
+        // 품번 필수체크
+        const invalidProdCdIdx = items.findIndex(v => v.chk === '1' && !v.prodCd?.trim());
+
+        if (invalidProdCdIdx !== -1) {
+            const el = cellRefs.current.get(`${invalidProdCdIdx}_prodCd`);
+            showAlert("품목번호를 입력해주세요.", () => el?.focus());
+            return; 
+        }
+
+        // 단가 정수체크
+        const invalidPriceIdx = items.findIndex(v => v.chk === '1' && v.price !== '' && !INT_REGEX.test(v.price));
+
+        if (invalidPriceIdx !== -1) {
+            const el = cellRefs.current.get(`${invalidPriceIdx}_price`);
+            showAlert("단가는 정수만 입력 가능합니다.", () => el?.focus());
+            return;
+        }
+
+        // 용기수량 정수체크
+        const invalidInnerpackIdx = items.findIndex(v => v.chk === '1' && v.innerpack !== '' && !INT_REGEX.test(v.innerpack));
+
+        if (invalidInnerpackIdx !== -1) {
+            const el = cellRefs.current.get(`${invalidInnerpackIdx}_price`);
+            showAlert("용기수량은 정수만 입력 가능합니다.", () => el?.focus());
+            return;
+        }
+
+        // 중량 실수체크
+        const invalidWeightIdx = items.findIndex(v => v.chk === '1' && v.weight !== '' && !FLOAT_REGEX.test(v.weight));
+
+        if (invalidWeightIdx !== -1) {
+            const el = cellRefs.current.get(`${invalidWeightIdx}_weight`);
+            showAlert("중량은 숫자(소수점 허용)만 입력 가능합니다.", () => el?.focus());
+            return;
+        }
+
+        // 실중량 실수체크
+        const invalidRealWeightIdx = items.findIndex(v => v.chk == '1' && v.realWeight !== '' && !FLOAT_REGEX.test(v.realWeight));
+
+        if (invalidRealWeightIdx !== -1) {
+            const el = cellRefs.current.get(`${invalidRealWeightIdx}_realWeight`);
+            showAlert("실중량은 숫자(소수점 허용)만 입력 가능합니다.", () => el?.focus());
+            return;
+        }
+
+        showConfirm(`저장하시겠습니까?`, () => {
+            closePopup();
+            setIsSaved(true);
+
+            const userId = payload?.userId ?? '';
+            const prodList = chkRow.map(v => ({
+                srvcCd          : v.srvcCd || selectSrvcCd,
+                whCd            : v.whCd || selectWhCd,
+                prodCd          : v.prodCd.trim(),
+                prodNm          : v.prodNm,
+                steitemNo       : v.steitemNo,
+                prodCategory    : v.prodCategory,
+                prodShape       : v.prodShape,
+                prodType        : v.prodType,
+                createTime      : v.createTime,
+                useYn           : v.useYn,
+                fifoYn          : v.fifoYn,
+                price           : Number(v.price),
+                innerpack       : Number(v.innerpack),
+                prodUnit        : v.prodUnit,
+                weight          : Number(v.weight),
+                realWeight      : Number(v.realWeight),
+                weightUnit      : v.weightUnit,
+                userId
+            }));
+
+            saveProdInfo(
+                { prodList },
+                (res) => {
+                    setIsSaved(false);
+                    showAlert(res.resultMessage ?? "저장되었습니다.");
+                    handleSearch();
+                },
+                (err) => {
+                    setIsSaved(false);
+                    showAlert("저장 실패: " + err?.message);
+                }
+            );
+        });
     };
 
     // 삭제
     const handleDelete = () => {
-        showAlert("삭제");
+        const chkRow = items.filter(v => v.chk === '1' && !v.isNew);
+
+        if (chkRow.length === 0) {
+            showAlert("삭제할 항목을 선택해주세요.");
+            return;
+        }
+
+        showConfirm(`삭제하시겠습니까?`, () => {
+            closePopup();
+            deleteProdInfo(
+                { 
+                  srvcCd    : chkRow[0].srvcCd,
+                  whCd      : chkRow[0].whCd, 
+                  prodList  : chkRow.map(v => ({ prodCd : v.prodCd }))
+                },
+                () => { handleSearch(); showAlert("삭제 되었습니다."); },
+                (err) => showAlert("삭제 실패: " + err?.message)
+            );
+        });
     };
 
     // 엑셀다운로드
@@ -147,17 +258,17 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
 
         // 컬럼 정의
         ws.columns = [
-            { header: "고객사",             key: "srvcCd",          width: 20 },
-            { header: "센터",               key: "whCd",            width: 15 },
-            { header: "품목번호",           key: "prodCd",          width: 10 },
-            { header: "품목명",             key: "prodNm",          width: 18 },
-            { header: "설계품번(고객품번)",  key: "steitemNo",       width: 10 },
-            { header: "품목구분",           key: "prodCategory",    width: 15 },
-            { header: "품목형태",           key: "prodShape",       width: 14 },
-            { header: "품목타입",           key: "prodType",        width: 15 },
-            { header: "생성일자",           key: "createTime",      width: 14 },
-            { header: "사용여부",           key: "useYn",           width: 14 },
-            { header: "선입선출여부",       key: "fifoYn",          width: 14 },
+            { header: "고객사",             key: "srvcCd",         width: 20 },
+            { header: "센터",               key: "whCd",           width: 15 },
+            { header: "품목번호",           key: "prodCd",         width: 18 },
+            { header: "품목명",             key: "prodNm",         width: 18 },
+            { header: "설계품번(고객품번)",  key: "steitemNo",      width: 25 },
+            { header: "품목구분",           key: "prodCategory",   width: 15 },
+            { header: "품목형태",           key: "prodShape",      width: 14 },
+            { header: "품목타입",           key: "prodType",       width: 15 },
+            { header: "생성일자",           key: "createTime",     width: 14 },
+            { header: "사용여부",           key: "useYn",          width: 14 },
+            { header: "선입선출여부",       key: "fifoYn",         width: 14 },
             { header: "단가",               key: "price",          width: 14 },
             { header: "용기수량",           key: "innerpack",      width: 14 },
             { header: "용기단위",           key: "prodUnit",       width: 14 },
@@ -165,9 +276,9 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
             { header: "무게실중량",         key: "realWeight",     width: 14 },
             { header: "무게단위",           key: "weightUnit",     width: 14 },
             { header: "등록자",             key: "regId",          width: 14 },
-            { header: "등록일자",           key: "regDate",         width: 14 },
-            { header: "수정자",             key: "updId",           width: 14 },
-            { header: "수정일자",           key: "updDate",         width: 14 },
+            { header: "등록일자",           key: "regDate",        width: 14 },
+            { header: "수정자",             key: "updId",          width: 14 },
+            { header: "수정일자",           key: "updDate",        width: 14 },
         ];
 
         // 헤더 스타일
@@ -177,10 +288,10 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
             cell.fill = {
                 type: "pattern",
                 pattern: "solid",
-                fgColor: { argb: "FF003F87" },
+                fgColor: { argb: "0080B2Fd" },
             };
 
-            cell.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 11 };
+            cell.font = { bold: true, color: { argb: "00000000" }, size: 11 };
             cell.alignment = { vertical: "middle", horizontal: "center" };
             cell.border = {
                 top: { style: "thin" }, left: { style: "thin" },
@@ -256,8 +367,8 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
             prodShape   : '',
             prodType    : '',
             createTime  : '',
-            useYn       : '',
-            fifoYn      : '',
+            useYn       : 'Y',
+            fifoYn      : 'Y',
             price       : '',
             innerpack   : '',
             prodUnit    : '',
@@ -365,8 +476,82 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
     };
 
     // 엑셀양식업로드
-    const handleExcelUpload = () => {
-        showAlert("엑셀업로드");
+    const handleExcelUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            const data = evt.target?.result;
+            const wb = XLSX.read(new Uint8Array(data as ArrayBuffer), { type: 'array' });
+            const ws = wb.Sheets[wb.SheetNames[0]];
+            const rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
+
+            const newItems: ItemRow[] = rows.slice(1)
+                .filter(row => row.length > 0 && row[2])
+                .map(row => ({
+                    chk          : '1',
+                    srvcCd       : String(row[0]  ?? selectSrvcCd).trim(),
+                    whCd         : String(row[1]  ?? selectWhCd).trim(),
+                    prodCd       : String(row[2]  ?? '').trim(),
+                    prodNm       : String(row[3]  ?? '').trim(),
+                    steitemNo    : String(row[4]  ?? '').trim(),
+                    prodCategory : String(row[5]  ?? '').trim(),
+                    prodShape    : String(row[6]  ?? '').trim(),
+                    prodType     : String(row[7]  ?? '').trim(),
+                    createTime   : '',
+                    useYn        : 'Y',
+                    fifoYn       : 'Y',
+                    price        : String(row[8]  ?? '').trim(),
+                    innerpack    : String(row[9]  ?? '').trim(),
+                    prodUnit     : String(row[10] ?? '').trim(),
+                    weight       : String(row[11] ?? '').trim(),
+                    realWeight   : String(row[12] ?? '').trim(),
+                    weightUnit   : String(row[13] ?? '').trim(),
+                    regId        : '',
+                    regDate      : '',
+                    updId        : '',
+                    updDate      : '',
+                    isNew        : true,
+                    isDirty      : false,
+                    uploadStatus : '검증중...',
+                }));
+
+            setItems(newItems);
+
+            getCheckList(
+                { prodList: newItems.map(v => ({
+                    prodCd     : v.prodCd,
+                    price      : v.price,
+                    innerpack  : v.innerpack,
+                    weight     : v.weight,
+                    realWeight : v.realWeight,
+                }))},
+                (res) => {
+                    const results: CheckResult[] = res.data ?? [];
+                    setItems(prev => prev.map((v, i) => {
+                        const r = results.find(r => r.rowIndex === i);
+                        return { ...v, uploadStatus: r ? (r.isValid ? 'OK' : r.errors.join(' / ')) : v.uploadStatus };
+                    }));
+                    setIsUploading(false);
+                },
+                (err) => {
+                    setItems([]);
+                    showAlert("유효성 검증 실패: " + err?.message);
+                    setIsUploading(false);
+                }
+            );
+        };
+
+        reader.onerror = () => {
+            showAlert("엑셀 파일 업로드 실패");
+            setIsUploading(false);
+        };
+
+        reader.readAsArrayBuffer(file);
+        e.target.value = "";
     };
 
      // 인라인 컬럼 편집
@@ -382,6 +567,17 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
             type={popup.type}
             onConfirm={popup.onConfirm}
             onCancel={closePopup}
+        />
+        <ProdSearchPopup
+            isOpen={isProdSearchOpen}
+            srvcCd={searchSrvcCd}
+            whCd={searchWhCd}
+            initialProdCd={searchProdCd}
+            onSelect={(prodCd, prodNm) => {
+                setSearchProdCd(prodCd);
+                setSearchProdNm(prodNm);
+            }}
+            onClose={() => setIsProdSearchOpen(false)}
         />
         <div className={styles.pageContainer}>
             <div className={styles.contentWrapper}>
@@ -433,8 +629,8 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
                                 <div className={styles.filterItem}>
                                     <label className={styles.filterLabel}>품목번호</label>
                                     <div className={styles.filterInputGroup}>
-                                        <input type="text" className={styles.filterInput} value={searchProdCd} onChange={(e) => setSearchProdCd(e.target.value)}/>
-                                        <button className={styles.filterSearchBtn}>
+                                        <input type="text" className={styles.filterInput} value={searchProdCd} onChange={(e) => setSearchProdCd(e.target.value)} />
+                                        <button className={styles.filterSearchBtn} onClick={() => setIsProdSearchOpen(true)}>
                                             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>search</span>
                                         </button>
                                         <input type="text" className={styles.filterInputReadonly} value={searchProdNm} onChange={(e) => setSearchProdNm(e.target.value)} readOnly />
@@ -484,10 +680,12 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
                                     <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>description</span>
                                     양식다운로드
                                 </button>
-                                <button className={styles.btnToolbar} onClick={handleExcelUpload}>
+                                <button className={styles.btnToolbar} onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
                                     <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>upload_file</span>
-                                    엑셀업로드
+                                    {isUploading ? "업로드 중..." : "엑셀업로드"}
                                 </button>
+                                <input type="file" ref={fileInputRef} accept=".xlsx,.xls"
+                                    style={{ display: 'none' }} onChange={handleExcelUpload} />
                             </div>
                         </div>
                     </div>
@@ -597,7 +795,7 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
                                                 ? <input type="text" className={styles.cellInput} value={item.prodCd}
                                                    onChange={e => handleCellChange(index, "prodCd", e.target.value)}
                                                    onClick={e => e.stopPropagation()} placeholder="품목번호"
-                                                   ref={setCellRef(index, "vehicleNo") as any}/>
+                                                   ref={setCellRef(index, "prodCd") as any}/>
                                                 : item.prodCd}
                                         </td>
                                         <td className={styles.cellMedium}>
@@ -644,13 +842,15 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
                                         </td>
                                         <td className={styles.cellCenter}>
                                             <input type="text" className={styles.cellInput} value={item.price}
-                                             onChange={e => handleCellChange(index, "price", e.target.value)}
-                                             onClick={e => e.stopPropagation()}/>
+                                             onChange={e => { const value = e.target.value.replace(/[^0-9.]/g, ''); handleCellChange(index, "price", value)}}
+                                             onClick={e => e.stopPropagation()}
+                                             ref={setCellRef(index, "price") as any}/>
                                         </td>
                                         <td className={`${styles.cellCenter} ${styles.cellGroup}`}>
                                             <input type="text" className={styles.cellInput} value={item.innerpack}
-                                             onChange={e => handleCellChange(index, "innerpack", e.target.value)}
-                                             onClick={e => e.stopPropagation()}/>
+                                             onChange={e => { const value = e.target.value.replace(/[^0-9.]/g, ''); handleCellChange(index, "innerpack", value)}}
+                                             onClick={e => e.stopPropagation()}
+                                             ref={setCellRef(index, "innerpack") as any}/>
                                         </td>
                                         <td className={`${styles.cellCenter} ${styles.cellGroup}`}>
                                             <input type="text" className={styles.cellInput} value={item.prodUnit}
@@ -659,13 +859,15 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
                                         </td>
                                         <td className={`${styles.cellCenter} ${styles.cellGroupAlt}`}>
                                             <input type="text" className={styles.cellInput} value={item.weight}
-                                             onChange={e => handleCellChange(index, "weight", e.target.value)}
-                                             onClick={e => e.stopPropagation()}/>
+                                             onChange={e => { const value = e.target.value.replace(/[^0-9.]/g, ''); handleCellChange(index, "weight", value)}}
+                                             onClick={e => e.stopPropagation()}
+                                             ref={setCellRef(index, "weight") as any}/>
                                         </td>
                                         <td className={`${styles.cellCenter} ${styles.cellGroupAlt}`}>
                                             <input type="text" className={styles.cellInput} value={item.realWeight}
-                                             onChange={e => handleCellChange(index, "realWeight", e.target.value)}
-                                             onClick={e => e.stopPropagation()}/>
+                                             onChange={e => { const value = e.target.value.replace(/[^0-9.]/g, ''); handleCellChange(index, "realWeight", value)}}
+                                             onClick={e => e.stopPropagation()}
+                                             ref={setCellRef(index, "realWeight") as any}/>
                                         </td>
                                         <td className={`${styles.cellCenter} ${styles.cellGroupAlt}`}>
                                             <input type="text" className={styles.cellInput} value={item.weightUnit}

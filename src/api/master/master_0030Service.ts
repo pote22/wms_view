@@ -35,6 +35,21 @@ export interface Response {
     data            : Item[] | null;
 }
 
+// 엑셀업로드 유효성 체크 결과
+export interface CheckResult {
+    rowIndex        : number;
+    isValid         : boolean;
+    errors          : string[];
+}
+
+export interface CheckResponse {
+    resultCode      : string;
+    resultMessage   : string;
+    accessToken     : string;
+    expireDate      : string;
+    data            : CheckResult[] | null;
+}
+
 // 품목조회
 export const getList = (
     data        : Record<string, any>,
@@ -69,6 +84,19 @@ export const deleteProdInfo = (
 ) => {
     return request<any, Response>({
         config : { url : `${API_MASTER_ROOT}/part/removeProdInfo`, method : 'POST', data},
+        onSuccess,
+        onError
+    });
+}
+
+// 엑셀업로드 유효성 체크
+export const getCheckList = (
+    data        : Record<string, any>,
+    onSuccess   : (res: CheckResponse) => void,
+    onError     : (err: any) => void
+) => {
+    return request<any, CheckResponse>({
+        config : { url : `${API_MASTER_ROOT}/part/getCheckList`, method : 'POST', data},
         onSuccess,
         onError
     });

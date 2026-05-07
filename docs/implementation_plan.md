@@ -21,20 +21,31 @@
 | Phase 13 | 공통 레이어 팝업 컴포넌트 도입 (alert/confirm 통합) | ✅ 완료 |
 | Phase 14 | 차량관리 화면 UI 구현 (디자인 파일 이식) | ✅ 완료 |
 | Phase 15 | 차량관리 API 연동 및 데이터 바인딩 | ✅ 완료 |
-| Phase 16 | 품목관리 화면 구현 (WMS_MASTER_0030) | 🔲 미완료 |
+| Phase 16 | 품목관리 화면 구현 (WMS_MASTER_0030) | ✅ 완료 |
+| Phase 17 | 공통코드 드롭다운 매핑 (품목관리) | 🔲 미완료 |
 
 > 완료된 Phase 상세 → [`docs/history/frontend_phases.md`](history/frontend_phases.md)
 
 ---
 
-## Phase 16 — 품목관리 화면 구현 (WMS_MASTER_0030) 🔲
-
-> 다음 개발 대상 화면
+## Phase 17 — 공통코드 드롭다운 매핑 (품목관리) 🔲
 
 ### 작업 목록
-- [ ] 백엔드: Controller / Service / Mapper / XML 구현
-- [ ] 프론트: UI 구현 및 API 연동
-- [ ] 공통 패턴: 차량관리(Phase 14~15)와 동일 구조 적용
+- [ ] 품목카테고리(prodCategory) · 품목형태(prodShape) · 품목타입(prodType) 공통코드 API 연동
+- [ ] 조회조건 및 인라인 편집 셀을 `<input>` → `<select>` 드롭다운으로 전환
+
+---
+
+## Phase 16 — 품목관리 화면 구현 (WMS_MASTER_0030) ✅
+
+### 구현 내용
+- `cj_wms_master_0030.tsx` — 조회 · 저장 · 삭제 · 인라인 편집 · 엑셀다운로드 · 양식다운로드 · 엑셀업로드
+- `master_0030Service.ts` — getList / saveProdInfo / deleteProdInfo / getCheckList API
+- 엑셀 업로드: `readAsArrayBuffer` + XLSX 파싱 → getCheckList 백엔드 유효성 검증 연동
+- 공통 컴포넌트 `ProdSearchPopup.tsx` + `ProdSearchPopup.module.css` 신규 구현
+  - 팝업 열릴 때 조회조건 품목번호 값 자동 채움 및 즉시 조회 (`initialProdCd` prop)
+  - Enter 검색 · ESC 닫기 · 배경 클릭 닫기 · 더블클릭 선택
+- `commonService.ts` — ProdSearch 인터페이스 · getProdSearchList API 추가
 
 ---
 
