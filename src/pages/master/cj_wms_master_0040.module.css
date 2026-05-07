@@ -1,0 +1,445 @@
+/* cj_wms_master_0040.module.css */
+
+.pageContainer {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.contentWrapper {
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    flex: 1;
+    min-height: 0;
+}
+
+.sectionCard {
+    background-color: #ffffff;
+    border-radius: 0;
+    border-top-left-radius: 0.75rem;
+    border-top-right-radius: 0.75rem;
+    border: 1px solid rgba(226, 232, 240, 0.3);
+    overflow: hidden;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ─── 섹션 헤더 ─── */
+.sectionHeader {
+    padding: 1.5rem;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    flex-shrink: 0;
+}
+
+.headerTop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.titleArea h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #001a40;
+    margin: 0;
+}
+
+.titleArea p {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin-top: 0.125rem;
+}
+
+.actionGroup {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* ─── 버튼 ─── */
+.btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.btnPrimary {
+    background-color: #003f87;
+    color: #ffffff;
+    border: none;
+}
+
+.btnPrimary:hover {
+    background-color: #002d61;
+}
+
+.btnOutline {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+}
+
+.btnOutline:hover {
+    background-color: #f8fafb;
+}
+
+/* ─── 필터 박스 ─── */
+.filterBox {
+    background-color: rgba(248, 250, 251, 0.5);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #f1f5f9;
+}
+
+.filterGrid {
+    display: grid;
+    grid-template-columns: 300px 300px;
+    gap: 1rem;
+}
+
+.filterItem {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.filterLabel {
+    font-size: 0.625rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.filterSelect {
+    width: 100%;
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    color: #000000;
+    height: 2.5rem;
+    padding: 0 0.75rem;
+    outline: none;
+    transition: border-color 0.2s;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' height='24' viewBox='0 -960 960 960' width='24'%3E%3Cpath d='M480-345 240-585l56-56 184 184 184-184 56 56-240 240Z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1.25rem;
+    padding-right: 2.5rem;
+}
+
+.filterSelect:focus {
+    border-color: #003f87;
+}
+
+/* ─── 패널 그리드 ─── */
+.panelGrid {
+    display: grid;
+    grid-template-columns: 6fr 4fr;
+    gap: 1rem;
+    flex: 1;
+    min-height: 0;
+    padding: 1rem 1.5rem 1.5rem;
+}
+
+/* ─── 패널 ─── */
+.panel {
+    display: flex;
+    flex-direction: column;
+    background-color: #ffffff;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(226, 232, 240, 0.5);
+    overflow: hidden;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+    min-height: 0;
+}
+
+/* ─── 패널 헤더 ─── */
+.panelHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    background-color: rgba(248, 250, 251, 0.5);
+    flex-shrink: 0;
+}
+
+.panelTitleGroup {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.panelAccent {
+    width: 4px;
+    height: 1rem;
+    background-color: #003f87;
+    border-radius: 9999px;
+    flex-shrink: 0;
+}
+
+.panelAccentAlt {
+    width: 4px;
+    height: 1rem;
+    background-color: #0056b3;
+    border-radius: 9999px;
+    flex-shrink: 0;
+}
+
+.panelTitle {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #001a40;
+}
+
+.panelCount {
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+/* ─── 패널 툴바 ─── */
+.panelToolbar {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.btnToolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.3rem 0.625rem;
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.375rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: #334155;
+    transition: background-color 0.2s;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.btnToolbar:hover {
+    background-color: #f8fafb;
+}
+
+.btnToolbar:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ─── 테이블 ─── */
+.tableWrapper {
+    overflow: auto;
+    flex: 1;
+    min-height: 0;
+}
+
+.table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.thead {
+    background-color: rgba(248, 250, 251, 0.8);
+    border-bottom: 1px solid #f1f5f9;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.thead th {
+    padding: 0.625rem 0.5rem;
+    text-align: center;
+    white-space: nowrap;
+    font-size: 0.625rem;
+    font-weight: 900;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.tbody tr {
+    border-bottom: 1px solid #f8fafb;
+    transition: background-color 0.15s;
+    cursor: pointer;
+}
+
+.tbody tr:hover {
+    background-color: rgba(242, 244, 245, 0.5);
+}
+
+.tbody td {
+    padding: 0.5rem 0.5rem;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ─── 선택된 존 행 ─── */
+.selectedRow {
+    background-color: rgba(0, 63, 135, 0.06) !important;
+    border-left: 2px solid #003f87;
+}
+
+.selectedRow:hover {
+    background-color: rgba(0, 63, 135, 0.1) !important;
+}
+
+/* ─── 셀 스타일 ─── */
+.cellCenter {
+    text-align: center;
+}
+
+.cellBold {
+    font-weight: 700;
+    color: #003f87;
+}
+
+.cellDim {
+    color: #64748b;
+    font-size: 0.6875rem !important;
+}
+
+.cellInput {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    color: #000000;
+    background-color: #ffffff;
+    outline: none;
+    min-width: 0;
+}
+
+.cellInput:focus {
+    border-color: #003f87;
+}
+
+/* ─── 뱃지 ─── */
+.badgeSuccess {
+    padding: 0.2rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.625rem;
+    font-weight: 700;
+    background-color: #ecfdf5;
+    color: #059669;
+    display: inline-block;
+}
+
+.badgeInactive {
+    padding: 0.2rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.625rem;
+    font-weight: 700;
+    background-color: #f1f5f9;
+    color: #64748b;
+    display: inline-block;
+}
+
+.locTypeBadge {
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.25rem;
+    background-color: #f1f5f9;
+    font-size: 0.625rem;
+    font-weight: 500;
+    color: #475569;
+    display: inline-block;
+}
+
+/* ─── Y/N 텍스트 ─── */
+.textSuccess {
+    color: #059669;
+    font-weight: 700;
+    font-size: 0.6875rem;
+}
+
+.textTertiary {
+    color: #722b00;
+    font-weight: 700;
+    font-size: 0.6875rem;
+}
+
+.textMuted {
+    color: #94a3b8;
+    font-weight: 700;
+    font-size: 0.6875rem;
+}
+
+/* ─── 빈 행 ─── */
+.emptyRow {
+    text-align: center;
+    padding: 3rem 0 !important;
+    color: #94a3b8;
+    white-space: normal !important;
+}
+
+.emptyRow span {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.emptyRow p {
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* ─── 체크박스 ─── */
+.checkbox {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 0.25rem;
+    border: 1.5px solid #cbd5e1;
+    background-color: #ffffff;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.checkbox:checked {
+    background-color: #003f87;
+    border-color: #003f87;
+}
+
+.checkbox:checked::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 1px;
+    width: 5px;
+    height: 9px;
+    border: 2px solid white;
+    border-top: none;
+    border-left: none;
+    transform: rotate(45deg);
+}
