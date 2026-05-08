@@ -111,7 +111,7 @@
 
 .filterGrid {
     display: grid;
-    grid-template-columns: 300px 300px;
+    grid-template-columns: 1fr 1fr 1fr 1fr 0.8fr;
     gap: 1rem;
 }
 
@@ -150,6 +150,69 @@
 
 .filterSelect:focus {
     border-color: #003f87;
+}
+
+.filterInput {
+    width: 100%;
+    box-sizing: border-box;
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    color: #000000;
+    height: 2.5rem;
+    padding: 0 0.75rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.filterInput:focus {
+    border-color: #003f87;
+}
+
+.filterInputGroup {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.filterInputGroup > input:first-child {
+    flex: 0 0 70px;
+    width: auto;
+}
+
+.filterInputReadonly {
+    flex: 1;
+    min-width: 0;
+    box-sizing: border-box;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    color: #64748b;
+    height: 2.5rem;
+    padding: 0 0.5rem;
+    outline: none;
+    cursor: default;
+}
+
+.filterSearchBtn {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.5rem;
+    background-color: #003f87;
+    border: none;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    color: #ffffff;
+    transition: background-color 0.2s;
+}
+
+.filterSearchBtn:hover {
+    background-color: #002d61;
 }
 
 /* ─── 패널 그리드 ─── */
