@@ -7,7 +7,7 @@ import { getList, saveVehicle, deleteVehicle, getCheckList, type Vehicle, type C
 import Popup from "../../components/common/Popup";
 import { usePopup } from "../../components/common/usePopup";
 import styles from "./cj_wms_master_0010.module.css";
-import { getTonList, type TonCd } from "../../api/common/commonService"
+import { getCommCodeList, type CommCode } from "../../api/common/commonService"
 
 // 화면에서 사용하는 차량타입
 interface VehicleRow extends Vehicle {
@@ -23,7 +23,7 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
     const [searchSrvcCd, setSearchSrvcCd] = useState(selectSrvcCd);
     const [searchWhCd, setSearchWhCd] = useState(selectWhCd);
     // 차량톤급 조회(공통)
-    const [tonList, setTonList] = useState<TonCd[]>([]);
+    const [tonList, setTonList] = useState<CommCode[]>([]);
     // 검색조건
     const [searchVehicleNo, setSearchVehicleNo] = useState("");
     const [searchUseYn, setSearchUseYn] = useState("");
@@ -58,7 +58,9 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
     }, [selectWhCd]);
 
     useEffect(() => {
-        getTonList(
+        
+        getCommCodeList(
+            { sys_grp_cd: 'WM1010', sys_cd: '', sys_cdnm: '' },
             (res) => setTonList(res.data ?? []),
             (err) => console.error("톤급 목록 조회 실패 : ", err)
         );
