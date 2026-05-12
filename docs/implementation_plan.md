@@ -23,8 +23,33 @@
 | Phase 15 | 차량관리 API 연동 및 데이터 바인딩 | ✅ 완료 |
 | Phase 16 | 품목관리 화면 구현 (WMS_MASTER_0030) | ✅ 완료 |
 | Phase 17 | 공통코드 드롭다운 매핑 (품목관리) | 🔲 미완료 |
+| Phase 18 | 존&로케이션 관리 화면 구현 (WMS_MASTER_0040) | ✅ 완료 |
 
 > 완료된 Phase 상세 → [`docs/history/frontend_phases.md`](history/frontend_phases.md)
+
+---
+
+## Phase 18 — 존&로케이션 관리 화면 구현 (WMS_MASTER_0040) ✅
+
+### 구현 내용
+
+#### 프론트엔드
+- `cj_wms_master_0040.tsx` — 조회 · 저장 · 인라인 편집 · 엑셀다운로드 · 양식다운로드 · 엑셀업로드
+- **존 패널 (좌)**: 행추가/삭제, 존코드·존명·사용여부 인라인 편집, 행 클릭 시 로케이션 연동 조회
+- **로케이션 패널 (우)**: 행추가/삭제, 로케이션코드·구분코드·사용여부·비고 인라인 편집
+- `master_0040Service.ts` — `getZoneList` / `getLocList` / `saveInfo` / `getCheckList` API 연동
+- isDirty/isNew 패턴으로 변경 행만 저장 (존·로케이션 개별 추적)
+- 엑셀업로드: `<label>` 감싸기 방식(ref 없이) + XLSX 파싱 → `getCheckList` 백엔드 유효성 검증 연동
+  - `button + ref.current.click()` 방식은 `onChange` 미발화 이슈 존재 → label 방식으로 해결
+- 공통 컴포넌트 `ZoneSearchPopup.tsx` + `ZoneSearchPopup.module.css` 신규 구현
+  - 존코드 입력 · 사용여부 필터 · 조회 버튼 · 더블클릭 선택
+  - 팝업 열릴 때 `initialZoneCd` prop으로 기존 값 자동 채움 및 즉시 조회
+  - Enter 검색 · ESC 닫기 · 배경 클릭 닫기
+
+#### 백엔드
+- `commonCodeMapper.xml` — `selectCommonCodeList` 파라미터 `#{sysGrpCd}` → `#{sys_grp_cd}` 변경 (프론트 snake_case 요청 대응)
+- `WmsMaster0010Service.kt` — `selectCommonCodeCheck` 호출 파라미터 camelCase(`sysGrpCd`, `sysCd`) 유지 (Kotlin Map 방식)
+- `commonService.ts` — `CommCode` 인터페이스 camelCase → snake_case 변경, 공통코드 API 연동 (WM1040: 로케이션구분)
 
 ---
 

@@ -30,7 +30,7 @@ export interface Loc {
 }
 
 // 공통 API 응답
-export interface ApiResponse {
+export interface Response {
     resultCode      : string;
     resultMessage   : string;
     accessToken     : string;
@@ -45,13 +45,21 @@ export interface CheckResult {
     errors      : string[];
 }
 
+export interface CheckResponse {
+    resultCode      : string;
+    resultMessage   : string;
+    accessToken     : string;
+    expireDate      : string;
+    data            : CheckResult[] | null;
+}
+
 // 존 리스트 조회
 export const getZoneList = (
     data        : Record<string, any>,
-    onSuccess   : (res: ApiResponse) => void,
+    onSuccess   : (res: Response) => void,
     onError     : (err: any) => void
 ) => {
-    return request<any, ApiResponse>({
+    return request<any, Response>({
         config : { url : `${API_MASTER_ROOT}/0040/getZoneList`, method : 'POST', data },
         onSuccess,
         onError
@@ -61,10 +69,10 @@ export const getZoneList = (
 // 로케이션 리스트 조회
 export const getLocList = (
     data        : Record<string, any>,
-    onSuccess   : (res: ApiResponse) => void,
+    onSuccess   : (res: Response) => void,
     onError     : (err: any) => void
 ) => {
-    return request<any, ApiResponse>({
+    return request<any, Response>({
         config : { url : `${API_MASTER_ROOT}/0040/getLocList`, method : 'POST', data },
         onSuccess,
         onError
@@ -74,10 +82,10 @@ export const getLocList = (
 // 존&로케이션 저장
 export const saveInfo = (
     data        : Record<string, any>,
-    onSuccess   : (res: ApiResponse) => void,
+    onSuccess   : (res: Response) => void,
     onError     : (err: any) => void
 ) => {
-    return request<any, ApiResponse>({
+    return request<any, Response>({
         config : { url : `${API_MASTER_ROOT}/0040/saveInfo`, method : 'POST', data },
         onSuccess,
         onError
@@ -87,10 +95,10 @@ export const saveInfo = (
 // 엑셀업로드 유효성 체크
 export const getCheckList = (
     data        : Record<string, any>,
-    onSuccess   : (res: ApiResponse) => void,
+    onSuccess   : (res: Response) => void,
     onError     : (err: any) => void
 ) => {
-    return request<any, ApiResponse>({
+    return request<any, Response>({
         config : { url : `${API_MASTER_ROOT}/0040/getCheckList`, method : 'POST', data },
         onSuccess,
         onError
