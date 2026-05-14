@@ -25,18 +25,18 @@ export interface Client {
     updDate         : string;
 }
 
-export interface ClientList {
+export interface ClientRow extends Client {
+    isNew           : boolean;
+    isDirty         : boolean;
+    uploadStatus    : string;
+}
+
+export interface Response {
     resultCode      : string;
     resultMessage   : string;
     accessToken     : string;
     expireDate      : string;
     data            : Client[] | null;
-}
-
-export interface ClientRow extends Client {
-    isNew           : boolean;
-    isDirty         : boolean;
-    uploadStatus    : string;
 }
 
 export interface CheckResult {
@@ -95,11 +95,11 @@ export const deleteClient = (
 // 엑셀업로드
 export const getCheckList = (
     data            : Record<string, any>,
-    onSuccess       : (res: Response) => void,
+    onSuccess       : (res: CheckResponse) => void,
     onError         : (err: any) => void
 ) => {
-    return request<any, Response>({
-        config      : { url : `${API_MASTER_ROOT}/0020/removeClientInfo`, method : 'POST', data},
+    return request<any, CheckResponse>({
+        config      : { url : `${API_MASTER_ROOT}/0020/getCheckList`, method : 'POST', data},
         onSuccess,
         onError
     });
