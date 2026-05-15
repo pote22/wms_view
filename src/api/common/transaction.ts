@@ -1,6 +1,7 @@
 import axios from 'axios';
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { API_BASE_ROOT } from "./index";
+import { useLoadingStore } from '../../store/loadingStore';
 
 // 공통 응답 구조 (서버 규격에 맞춤)
 export interface ApiResponse<T> {
@@ -18,7 +19,7 @@ const transaction: AxiosInstance = axios.create({
     },
 });
 
-// 요청 인터셉터: 토큰 자동 첨부
+// 요청 인터셉터: 토큰 자동 첨부 + 로딩 표시
 transaction.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
         const token = sessionStorage.getItem('accessToken');
@@ -26,15 +27,24 @@ transaction.interceptors.request.use(
             config.headers.Authorization = `Bearer ${token}`;
         }
 
+        useLoadingStore.getState().show();
         return config;
     },
-    (error) => Promise.reject(error)
+    (error) => {
+        useLoadingStore.getState().hide();
+        return Promise.reject(error);
+    }
 );
 
-// 응답 인터셉터: 에러 처리 및 데이터 가공
+// 응답 인터셉터: 에러 처리 및 데이터 가공 + 로딩 해제
 transaction.interceptors.response.use(
-    (response: AxiosResponse) => response.data, // 필요한 데이터만 반환하도록 가공
+    (response: AxiosResponse) => {
+        useLoadingStore.getState().hide();
+        return response.data;
+    },
     (error) => {
+        useLoadingStore.getState().hide();
+
         if (error.response?.status === 401) {
             // 1. 로그인 요청 자체가 401인 경우 (비밀번호 틀림 등)
             // 백엔드에서 보낸 resultCode가 '0002'(로그인 실패)라면 그냥 에러만 반환

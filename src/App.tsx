@@ -2,10 +2,12 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login/Login";
 import Container from "./pages/Container"
 import PrivateRoute from "./components/PrivateRoute";
+import LoadingOverlay from "./components/common/LoadingOverlay";
 
 const App: React.FC = () => {
   return (
     <BrowserRouter>
+      <LoadingOverlay />
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
