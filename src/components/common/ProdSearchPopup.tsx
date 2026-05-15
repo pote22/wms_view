@@ -56,7 +56,7 @@ const ProdSearchPopup: React.FC<Props> = ({ isOpen, srvcCd, whCd, initialProdCd,
     if (!isOpen) return null;
 
     return (
-        <div className={styles.overlay} onClick={onClose}>
+        <div className={styles.overlay}>
             <div className={styles.popup} onClick={e => e.stopPropagation()}>
 
                 {/* 헤더 */}

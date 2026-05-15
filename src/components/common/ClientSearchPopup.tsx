@@ -19,7 +19,6 @@ interface Props {
 
 const ClientSearchPopup: React.FC<Props> = ({ isOpen, srvcCd, whCd, initialClientCd, onSelect, onClose }) => {
     const [searchClientCd, setSearchClientCd] = useState('');
-    const [searchClientNm, setSearchClientNm] = useState('');
     const [searchUseYn,    setSearchUseYn]    = useState('');
     const [clientList,     setClientList]     = useState<ClientResult[]>([]);
     const [searched,       setSearched]       = useState(false);
@@ -29,7 +28,6 @@ const ClientSearchPopup: React.FC<Props> = ({ isOpen, srvcCd, whCd, initialClien
         if (isOpen) {
             const initVal = initialClientCd ?? '';
             setSearchClientCd(initVal);
-            setSearchClientNm('');
             setSearchUseYn('');
             setClientList([]);
             setSearched(false);
@@ -47,7 +45,7 @@ const ClientSearchPopup: React.FC<Props> = ({ isOpen, srvcCd, whCd, initialClien
 
     const handleSearch = () => {
         getList(
-            { srvcCd, whCd, clientCd: searchClientCd, clientNm: searchClientNm, useYn: searchUseYn },
+            { srvcCd, whCd, clientCd: searchClientCd, useYn: searchUseYn },
             (res) => { setClientList((res.data ?? []) as any[]); setSearched(true); },
             () => {}
         );
@@ -66,7 +64,7 @@ const ClientSearchPopup: React.FC<Props> = ({ isOpen, srvcCd, whCd, initialClien
     if (!isOpen) return null;
 
     return (
-        <div className={styles.overlay} onClick={onClose}>
+        <div className={styles.overlay}>
             <div className={styles.popup} onClick={e => e.stopPropagation()}>
 
                 {/* 헤더 */}
@@ -86,14 +84,6 @@ const ClientSearchPopup: React.FC<Props> = ({ isOpen, srvcCd, whCd, initialClien
                         placeholder="거래처코드"
                         value={searchClientCd}
                         onChange={e => setSearchClientCd(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                    />
-                    <input
-                        type="text"
-                        className={styles.input}
-                        placeholder="거래처명"
-                        value={searchClientNm}
-                        onChange={e => setSearchClientNm(e.target.value)}
                         onKeyDown={handleKeyDown}
                     />
                     <select
