@@ -8,14 +8,14 @@ interface WhCdOption   { whCd: string;  whNm: string;  }
 
 // 헤더 컴포넌트
 interface HeaderProps {
-    selectSrvcCd: string;
-    selectWhCd: string;
-    activeMainTab: "home" | "storage" | "common";
-    srvcCdList: SrvcCdOption[];
-    whCdList: WhCdOption[];
-    onSrvcCdChange: (val: string) => void;
-    onWhCdChange: (val: string) => void;
-    onTabChange: (tab: "home" | "storage" | "common") => void;
+    selectSrvcCd        : string;
+    selectWhCd          : string;
+    activeMainTab       : "home" | "storage" | "common";
+    srvcCdList          : SrvcCdOption[];
+    whCdList            : WhCdOption[];
+    onSrvcCdChange      : (val: string) => void;
+    onWhCdChange        : (val: string) => void;
+    onTabChange         : (tab: "home" | "storage" | "common") => void;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -31,14 +31,13 @@ const Header: React.FC<HeaderProps> = ({
     const [openDropdown, setOpenDropdown] = useState<"customer" | "center" | null>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     // 토큰에서 사용자 정보 가져오기
-    const payload = getTokenPayload();           // 페이로드
-    const userId = payload?.userId ?? "";        // 사용자ID
-    const userNm = payload?.userNm ?? "사용자";   // 사용자명
-    const role = payload?.role ?? "";            // 사용자권한
-    const initial = userNm.charAt(0);            // 이니셜 (첫글자)
-    const isAdmin = payload?.adminYn === 'Y';    // 관리자 여부 
+    const payload   = getTokenPayload();            // 페이로드
+    const userNm    = payload?.userNm ?? "사용자";  // 사용자명
+    const role      = payload?.role ?? "";          // 사용자권한
+    const initial   = userNm.charAt(0);             // 이니셜 (첫글자)
+    const isAdmin   = payload?.adminYn === 'Y';     // 관리자 여부 
 
-    const navigate = useNavigate();
+    const navigate  = useNavigate();
 
     // 로그아웃
     const handleLogout = () => {
@@ -46,6 +45,7 @@ const Header: React.FC<HeaderProps> = ({
         navigate("/login", { replace: true });
     }
 
+    // 관리자 라벨 설정
     const getAuthLabel = (role: string): string => {
         if (role == "ADMIN") {
             return "관리자";
@@ -77,7 +77,7 @@ const Header: React.FC<HeaderProps> = ({
                     <div className={styles.dropdownWrap}>
                         <div className={styles.selectorBox} onClick={() => setOpenDropdown(openDropdown === "customer" ? null : "customer")}>
                             <span className={styles.selectorLabel}>고객사</span>
-                            <span className={styles.selectorValue}>{srvcCdList.find(c => c.srvcCd === selectSrvcCd)?.srvcNm ?? ""}</span>
+                            <span className={styles.selectorValue}>{(s => s ? `${s.srvcCd} [${s.srvcNm}]` : "")(srvcCdList.find(c => c.srvcCd === selectSrvcCd))}</span>
                             <span className={`material-symbols-outlined ${styles.selectorArrow} ${openDropdown === "customer" ? styles.selectorArrowOpen : ""}`}>expand_more</span>
                         </div>
                         {openDropdown === "customer" && (
@@ -85,7 +85,7 @@ const Header: React.FC<HeaderProps> = ({
                                 {srvcCdList.map((c) => (
                                     <li key={c.srvcCd} className={`${styles.dropdownItem} ${c.srvcCd === selectSrvcCd ? styles.dropdownItemActive : ""}`}
                                         onClick={() => { onSrvcCdChange(c.srvcCd); setOpenDropdown(null); }}>
-                                        {c.srvcNm}
+                                        {`${c.srvcCd} [${c.srvcNm}]`}
                                     </li>
                                 ))}
                             </ul>
@@ -95,7 +95,7 @@ const Header: React.FC<HeaderProps> = ({
                     <div className={styles.dropdownWrap}>
                         <div className={styles.selectorBox} onClick={() => setOpenDropdown(openDropdown === "center" ? null : "center")}>
                             <span className={styles.selectorLabel}>센터</span>
-                            <span className={styles.selectorValue}>{whCdList.find(c => c.whCd === selectWhCd)?.whNm ?? ""}</span>
+                            <span className={styles.selectorValue}>{(w => w ? `${w.whCd} [${w.whNm}]` : "")(whCdList.find(c => c.whCd === selectWhCd))}</span>
                             <span className={`material-symbols-outlined ${styles.selectorArrow} ${openDropdown === "center" ? styles.selectorArrowOpen : ""}`}>expand_more</span>
                         </div>
                         {openDropdown === "center" && (
@@ -103,7 +103,7 @@ const Header: React.FC<HeaderProps> = ({
                                 {whCdList.map((c) => (
                                     <li key={c.whCd} className={`${styles.dropdownItem} ${c.whCd === selectWhCd ? styles.dropdownItemActive : ""}`}
                                         onClick={() => { onWhCdChange(c.whCd); setOpenDropdown(null); }}>
-                                        {c.whNm}
+                                        {`${c.whCd} [${c.whNm}]`}
                                     </li>
                                 ))}
                             </ul>
