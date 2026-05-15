@@ -40,7 +40,7 @@ const CJ_WMS_MASTER_0020: React.FC = () => {
             else cellRefs.current.delete(`${idx}_${field}`);
     };
 
-    // 로딩바표시
+    // 업로드 표시
     const [isUploading, setIsUploading]                     = useState(false);
     // 공통 팝업
     const { popup, showAlert, showConfirm, closePopup }     = usePopup();
@@ -578,14 +578,14 @@ const CJ_WMS_MASTER_0020: React.FC = () => {
                                 <div className={styles.filterItem}>
                                     <label className={styles.filterLabel}>고객사</label>
                                     <select className={styles.filterSelect} value={searchSrvcCd} onChange={(e) => setSearchSrvcCd(e.target.value)}>
-                                        { srvcList.map( v => <option key={v.srvcCd} value={v.srvcCd}>{v.srvcNm}</option>) }
+                                        { srvcList.map( v => <option key={v.srvcCd} value={v.srvcCd}>{`${v.srvcCd} [${v.srvcNm}]`}</option>) }
                                     </select>
                                 </div>
                                 {/* 센터 */}
                                 <div className={styles.filterItem}>
                                     <label className={styles.filterLabel}>센터</label>
                                     <select className={styles.filterSelect} value={searchWhCd} onChange={(e) => setSearchWhCd(e.target.value)}>
-                                        { whList.map( v => <option key={v.whCd} value={v.whCd}>{v.whNm}</option>)}
+                                        { whList.map( v => <option key={v.whCd} value={v.whCd}>{`${v.whCd} [${v.whNm}]`}</option>)}
                                     </select>
                                 </div>
                                 {/* 거래처 */}
@@ -643,22 +643,39 @@ const CJ_WMS_MASTER_0020: React.FC = () => {
                             <colgroup>
                                 {/* 체크박스 */}
                                 <col style={{ width: '40px' }}/>
+                                {/* 고객사 */}
                                 <col style={{ width: '120px' }}/>
+                                {/* 센터 */}
                                 <col style={{ width: '140px' }}/>
+                                {/* 거래처코드 */}
                                 <col style={{ width: '180px' }}/>
+                                {/* 거래처명 */}
                                 <col style={{ width: '250px' }}/>
+                                {/* 사업자번호 */}
                                 <col style={{ width: '200px' }}/>
+                                {/* 거래처주소 */}
                                 <col style={{ width: '500px' }}/>
+                                {/* 국가코드 */}
                                 <col style={{ width: '100px' }}/>
+                                {/* 대표자명 */}
                                 <col style={{ width: '180px' }}/>
+                                {/* 이메일주소 */}
                                 <col style={{ width: '200px' }}/>
+                                {/* 연락처 */}
                                 <col style={{ width: '180px' }}/>
+                                {/* 사용여부 */}
                                 <col style={{ width: '90px' }}/>
+                                {/* 종목명 */}
                                 <col style={{ width: '180px' }}/>
+                                {/* 등록자 */}
                                 <col style={{ width: '90px' }}/>
+                                {/* 등록일자 */}
                                 <col style={{ width: '120px' }}/>
+                                {/* 수정자 */}
                                 <col style={{ width: '90px' }}/>
+                                {/* 수정일자 */}
                                 <col style={{ width: '120px' }}/>
+                                {/* 업로드결과 */}
                                 <col style={{ width: '300px' }}/>
                             </colgroup>
                             <thead className={styles.thead}>
@@ -700,10 +717,10 @@ const CJ_WMS_MASTER_0020: React.FC = () => {
                                         <input type="checkbox" className={styles.checkbox} onChange={() => {}} checked={v.chk === '1'}/>
                                     </td>
                                     <td className={styles.cellCenter}>
-                                        { srvcList.find( s => s.srvcCd === v.srvcCd)?.srvcNm ?? v.srvcCd }
+                                        { (s => s ? `${s.srvcCd} [${s.srvcNm}]` : v.srvcCd)(srvcList.find( s => s.srvcCd === v.srvcCd)) }
                                     </td>
                                     <td className={styles.cellCenter}>
-                                        { whList.find( w => w.whCd === v.whCd)?.whNm ?? v.whCd }
+                                        { (w => w ? `${w.whCd} [${w.whNm}]` : v.whCd)(whList.find( w => w.whCd === v.whCd)) }
                                     </td>
                                     <td className={styles.cellCenter}>
                                         { 
