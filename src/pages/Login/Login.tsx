@@ -159,7 +159,7 @@ const Login: React.FC = () => {
                   </span>
                   <input
                     type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
+                    placeholder=""
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     autoComplete="current-password"

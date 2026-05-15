@@ -280,8 +280,33 @@
 .remember-row input[type='checkbox'] {
   width: 16px;
   height: 16px;
-  accent-color: #003f87;
   cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: #ffffff;
+  border: 1.5px solid #c2c6d4;
+  border-radius: 3px;
+  flex-shrink: 0;
+  position: relative;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.remember-row input[type='checkbox']:checked {
+  background-color: #003f87;
+  border-color: #003f87;
+}
+
+.remember-row input[type='checkbox']:checked::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 5px;
+  height: 9px;
+  border: 2px solid #ffffff;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
 }
 
 .remember-row label {
