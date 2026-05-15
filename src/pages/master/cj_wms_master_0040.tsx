@@ -550,14 +550,14 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
                                 <div className={styles.filterItem}>
                                     <label className={styles.filterLabel}>고객사</label>
                                     <select className={styles.filterSelect} value={searchSrvcCd} onChange={e => setSearchSrvcCd(e.target.value)}>
-                                        {srvcList.map(s => <option key={s.srvcCd} value={s.srvcCd}>{s.srvcNm}</option>)}
+                                        {srvcList.map(s => <option key={s.srvcCd} value={s.srvcCd}>{`${s.srvcCd} [${s.srvcNm}]`}</option>)}
                                     </select>
                                 </div>
                                 {/* 센터 */}
                                 <div className={styles.filterItem}>
                                     <label className={styles.filterLabel}>센터</label>
                                     <select className={styles.filterSelect} value={searchWhCd} onChange={e => setSearchWhCd(e.target.value)}>
-                                        {whList.map(w => <option key={w.whCd} value={w.whCd}>{w.whNm}</option>)}
+                                        {whList.map(w => <option key={w.whCd} value={w.whCd}>{`${w.whCd} [${w.whNm}]`}</option>)}
                                     </select>
                                 </div>
                                 {/* 존 */}
@@ -635,6 +635,7 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
                                         <col style={{ width: '120px' }} />
                                         <col style={{ width: '100px' }} />
                                         <col style={{ width: '120px' }} />
+                                        <col style={{ width: '300px' }} />
                                     </colgroup>
                                     <thead className={styles.thead}>
                                         <tr>
@@ -646,6 +647,7 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
                                             <th>등록일자</th>
                                             <th>수정자</th>
                                             <th>수정일자</th>
+                                            <th>업로드결과</th>
                                         </tr>
                                     </thead>
                                     <tbody className={styles.tbody}>
@@ -661,7 +663,7 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
                                                 onClick={() => handleZoneSelect(item)}
                                                 className={selectedZoneCd === item.zoneCd ? styles.selectedRow : ''}>
                                                 <td className={styles.cellCenter}>
-                                                    {whList.find(w => w.whCd === item.whCd)?.whNm ?? item.whCd}
+                                                    {(w => w ? `${w.whCd} [${w.whNm}]` : item.whCd)(whList.find(w => w.whCd === item.whCd))}
                                                 </td>
                                                 <td className={styles.cellCenter}>
                                                     { 
@@ -689,6 +691,23 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
                                                 <td className={styles.cellCenter}>{item.regDate}</td>
                                                 <td className={styles.cellCenter}>{item.updId}</td>
                                                 <td className={styles.cellCenter}>{item.updDate}</td>
+                                                <td className={styles.cellCenter}>
+                                                    {item.uploadStatus === 'OK' ? (
+                                                        <span className={styles.chipOk}>
+                                                            <span className="material-symbols-outlined" style={{ fontSize: '11px' }}>check_circle</span>
+                                                            OK
+                                                        </span>
+                                                    ) : item.uploadStatus && item.uploadStatus !== '검증중...' ? (
+                                                        <div className={styles.chipGroup}>
+                                                            {item.uploadStatus.split(' / ').filter(Boolean).map((err, i) => (
+                                                                <span key={i} className={styles.chipError}>
+                                                                    <span className="material-symbols-outlined" style={{ fontSize: '11px' }}>error</span>
+                                                                    {err.trim()}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    ) : item.uploadStatus}
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>

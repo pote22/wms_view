@@ -426,6 +426,38 @@
     display: inline-block;
 }
 
+.chipGroup {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    justify-content: center;
+}
+
+.chipError {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.15rem 0.5rem;
+    background-color: #ba1a1a;
+    color: #ffffff;
+    border-radius: 9999px;
+    font-size: 0.625rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.chipOk {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.15rem 0.5rem;
+    background-color: #1a6e1a;
+    color: #ffffff;
+    border-radius: 9999px;
+    font-size: 0.625rem;
+    font-weight: 700;
+}
+
 .locTypeBadge {
     padding: 0.2rem 0.5rem;
     border-radius: 0.25rem;

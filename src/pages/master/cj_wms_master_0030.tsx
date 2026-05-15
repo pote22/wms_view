@@ -95,31 +95,31 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
             },
             (res) => {
                 const rows : ItemRow[] = (res.data ?? []).map((v: any) => ({
-                    chk         : v.chk             ?? '0',
-                    srvcCd      : v.srvc_cd         ?? '',
-                    whCd        : v.wh_cd           ?? '',
-                    prodCd      : v.prod_cd         ?? '',
-                    prodNm      : v.prod_nm         ?? '',
-                    steitemNo   : v.steitem_no      ?? '',
-                    prodCategory: v.prod_category   ?? '',
-                    prodShape   : v.prod_shape      ?? '',
-                    prodType    : v.prod_type       ?? '',
-                    createTime  : v.create_time     ?? '',
-                    useYn       : v.use_yn          ?? '',
-                    fifoYn      : v.fifo_yn         ?? '',
-                    price       : v.price           ?? '',
-                    innerpack   : v.innerpack       ?? '',
-                    prodUnit    : v.prod_unit       ?? '',
-                    weight      : v.weight          ?? '',
-                    realWeight  : v.real_weight     ?? '',
-                    weightUnit  : v.weight_unit     ?? '',
-                    regId       : v.reg_id          ?? '',
-                    regDate     : v.reg_date        ?? '',
-                    updId       : v.upd_id          ?? '',
-                    updDate     : v.upd_date        ?? '',
-                    isNew       : false,
-                    isDirty     : false,
-                    uploadStatus: '',
+                    chk             : v.chk             ?? '0',
+                    srvcCd          : v.srvc_cd         ?? '',
+                    whCd            : v.wh_cd           ?? '',
+                    prodCd          : v.prod_cd         ?? '',
+                    prodNm          : v.prod_nm         ?? '',
+                    steitemNo       : v.steitem_no      ?? '',
+                    prodCategory    : v.prod_category   ?? '',
+                    prodShape       : v.prod_shape      ?? '',
+                    prodType        : v.prod_type       ?? '',
+                    createTime      : v.create_time     ?? '',
+                    useYn           : v.use_yn          ?? '',
+                    fifoYn          : v.fifo_yn         ?? '',
+                    price           : v.price           ?? '',
+                    innerpack       : v.innerpack       ?? '',
+                    prodUnit        : v.prod_unit       ?? '',
+                    weight          : v.weight          ?? '',
+                    realWeight      : v.real_weight     ?? '',
+                    weightUnit      : v.weight_unit     ?? '',
+                    regId           : v.reg_id          ?? '',
+                    regDate         : v.reg_date        ?? '',
+                    updId           : v.upd_id          ?? '',
+                    updDate         : v.upd_date        ?? '',
+                    isNew           : false,
+                    isDirty         : false,
+                    uploadStatus    : '',
                 }));
                 setItems(rows);
                 setSearched(true);
@@ -145,18 +145,22 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
             showAlert("품목번호를 입력해주세요.", () => el?.focus());
             return; 
         }
-
+        
         // 단가 정수체크
         const invalidPriceIdx = items.findIndex(v => v.chk === '1' && v.price !== '' && !INT_REGEX.test(v.price));
+        // 용기수량 정수체크
+        const invalidInnerpackIdx = items.findIndex(v => v.chk === '1' && v.innerpack !== '' && !INT_REGEX.test(v.innerpack));
+        // 중량 실수체크
+        const invalidWeightIdx = items.findIndex(v => v.chk === '1' && v.weight !== '' && !FLOAT_REGEX.test(v.weight));
+        // 실중량 실수체크
+        const invalidRealWeightIdx = items.findIndex(v => v.chk == '1' && v.realWeight !== '' && !FLOAT_REGEX.test(v.realWeight));
 
+        
         if (invalidPriceIdx !== -1) {
             const el = cellRefs.current.get(`${invalidPriceIdx}_price`);
             showAlert("단가는 정수만 입력 가능합니다.", () => el?.focus());
             return;
         }
-
-        // 용기수량 정수체크
-        const invalidInnerpackIdx = items.findIndex(v => v.chk === '1' && v.innerpack !== '' && !INT_REGEX.test(v.innerpack));
 
         if (invalidInnerpackIdx !== -1) {
             const el = cellRefs.current.get(`${invalidInnerpackIdx}_price`);
@@ -164,17 +168,11 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
             return;
         }
 
-        // 중량 실수체크
-        const invalidWeightIdx = items.findIndex(v => v.chk === '1' && v.weight !== '' && !FLOAT_REGEX.test(v.weight));
-
         if (invalidWeightIdx !== -1) {
             const el = cellRefs.current.get(`${invalidWeightIdx}_weight`);
             showAlert("중량은 숫자(소수점 허용)만 입력 가능합니다.", () => el?.focus());
             return;
         }
-
-        // 실중량 실수체크
-        const invalidRealWeightIdx = items.findIndex(v => v.chk == '1' && v.realWeight !== '' && !FLOAT_REGEX.test(v.realWeight));
 
         if (invalidRealWeightIdx !== -1) {
             const el = cellRefs.current.get(`${invalidRealWeightIdx}_realWeight`);
@@ -357,31 +355,31 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
     // 행추가
     const handleAddRow = () => {
         setItems(prev => [...prev, {
-            chk         : '1',
-            srvcCd      : selectSrvcCd,
-            whCd        : selectWhCd,
-            prodCd      : '',
-            prodNm      : '',
-            steitemNo   : '',
-            prodCategory: '',
-            prodShape   : '',
-            prodType    : '',
-            createTime  : '',
-            useYn       : 'Y',
-            fifoYn      : 'Y',
-            price       : '',
-            innerpack   : '',
-            prodUnit    : '',
-            weight      : '',
-            realWeight  : '',
-            weightUnit  : '',
-            regId       : '',
-            regDate     : '',
-            updId       : '',
-            updDate     : '',
-            isNew       : true,
-            isDirty     : false,
-            uploadStatus: '',
+            chk             : '1',
+            srvcCd          : selectSrvcCd,
+            whCd            : selectWhCd,
+            prodCd          : '',
+            prodNm          : '',
+            steitemNo       : '',
+            prodCategory    : '',
+            prodShape       : '',
+            prodType        : '',
+            createTime      : '',
+            useYn           : 'Y',
+            fifoYn          : 'Y',
+            price           : '',
+            innerpack       : '',
+            prodUnit        : '',
+            weight          : '',
+            realWeight      : '',
+            weightUnit      : '',
+            regId           : '',
+            regDate         : '',
+            updId           : '',
+            updDate         : '',
+            isNew           : true,
+            isDirty         : false,
+            uploadStatus    : '',
         }]);
     };
 
@@ -615,14 +613,14 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
                                 <div className={styles.filterItem}>
                                     <label className={styles.filterLabel}>고객사</label>
                                     <select className={styles.filterSelect} value={searchSrvcCd} onChange={(e) => setSearchSrvcCd(e.target.value)}>
-                                        { srvcList.map( s => <option key={s.srvcCd} value={s.srvcCd}>{s.srvcNm}</option>)}
+                                        { srvcList.map( s => <option key={s.srvcCd} value={s.srvcCd}>{`${s.srvcCd} [${s.srvcNm}]`}</option>)}
                                     </select>
                                 </div>
                                 {/* 센터 */}
                                 <div className={styles.filterItem}>
                                     <label className={styles.filterLabel}>센터</label>
                                     <select className={styles.filterSelect} value={searchWhCd} onChange={(e) => setSearchWhCd(e.target.value)}>
-                                        { whList.map( w => <option key={w.whCd} value={w.whCd}>{w.whNm}</option>)}
+                                        { whList.map( w => <option key={w.whCd} value={w.whCd}>{`${w.whCd} [${w.whNm}]`}</option>)}
                                     </select>
                                 </div>
                                 {/* 품목코드 */}
@@ -788,9 +786,13 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
                                         <td className={styles.cellCenter}>
                                             <input type="checkbox" className={styles.checkbox} onChange={() => {}} checked={item.chk === '1'}/>
                                         </td>
-                                        <td className={styles.cellCenter}>{item.srvcCd}</td>
-                                        <td className={styles.cellCenter}>{item.whCd}</td>
-                                        <td className={styles.cellBold}>
+                                        <td className={styles.cellCenter}>
+                                            { (s => s ? `${s.srvcCd} [${s.srvcNm}]` : item.srvcCd)(srvcList.find( s => s.srvcCd === item.srvcCd)) }
+                                        </td>
+                                        <td className={styles.cellCenter}>
+                                            { (w => w ? `${w.whCd} [${w.whNm}]` : item.whCd)(whList.find( w => w.whCd === item.whCd)) }
+                                        </td>
+                                        <td className={styles.cellCenter}>
                                             {item.isNew 
                                                 ? <input type="text" className={styles.cellInput} value={item.prodCd}
                                                    onChange={e => handleCellChange(index, "prodCd", e.target.value)}
@@ -878,7 +880,23 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
                                         <td className={styles.cellCenter}>{item.regDate}</td>
                                         <td className={styles.cellCenter}>{item.updId}</td>
                                         <td className={styles.cellCenter}>{item.updDate}</td>
-                                        <td className={styles.cellCenter}>{item.uploadStatus}</td>
+                                        <td className={styles.cellCenter}>
+                                            {item.uploadStatus === 'OK' ? (
+                                                <span className={styles.chipOk}>
+                                                    <span className="material-symbols-outlined" style={{ fontSize: '11px' }}>check_circle</span>
+                                                    OK
+                                                </span>
+                                            ) : item.uploadStatus && item.uploadStatus !== '검증중...' ? (
+                                                <div className={styles.chipGroup}>
+                                                    {item.uploadStatus.split(' / ').filter(Boolean).map((err, i) => (
+                                                        <span key={i} className={styles.chipError}>
+                                                            <span className="material-symbols-outlined" style={{ fontSize: '11px' }}>error</span>
+                                                            {err.trim()}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            ) : item.uploadStatus}
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
