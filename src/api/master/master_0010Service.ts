@@ -2,6 +2,7 @@ import { request } from "../common/transaction";
 import { API_MASTER_ROOT } from "../common/index";
 
 export interface Vehicle {
+    chk             : string;
     srvcCd          : string;
     whCd            : string;
     vehicleNo       : string;
@@ -13,6 +14,21 @@ export interface Vehicle {
     regDate?        : string;
     updId?          : string;
     updDate?        : string;
+}
+
+// 화면에서 사용하는 차량타입
+export interface VehicleRow extends Vehicle {
+    isNew           : boolean;          // 신규여부
+    isDirty         : boolean;          // 수정여부
+    uploadStatus    : string;           // 엑셀업로드 상태
+}
+
+export interface Response {
+    resultCode      : string;
+    resultMessage   : string;
+    accessToken     : string;
+    expireDate      : string;
+    data            : Vehicle[] | null;
 }
 
 export interface CheckResult {
@@ -29,15 +45,6 @@ export interface CheckResponse {
     data            : CheckResult[] | null;
 }
 
-export interface Response {
-    resultCode      : string;
-    resultMessage   : string;
-    accessToken     : string;
-    expireDate      : string;
-    data            : Vehicle[] | null;
-}
-
-
 // 차량조회
 export const getList = (
     data            : Record<string, any>,
@@ -46,7 +53,7 @@ export const getList = (
 ) => {
     return request<any, Response>({
         config: {
-            url: `${API_MASTER_ROOT}/vehicle/getList`,
+            url: `${API_MASTER_ROOT}/0010/getList`,
             method: 'POST',
             data
         },
@@ -63,7 +70,7 @@ export const saveVehicle = (
 ) => {
     return request<any, Response>({
         config: {
-            url: `${API_MASTER_ROOT}/vehicle/saveVehicle`,
+            url: `${API_MASTER_ROOT}/0010/saveVehicle`,
             method: 'POST',
             data
         },
@@ -80,7 +87,7 @@ export const deleteVehicle = (
 ) => {
     return request<any, Response>({
         config: {
-            url: `${API_MASTER_ROOT}/vehicle/removeVehicle`,
+            url: `${API_MASTER_ROOT}/0010/removeVehicle`,
             method: 'POST',
             data
         },
@@ -97,7 +104,7 @@ export const getCheckList = (
 ) => {
     return request<any, CheckResponse>({
         config: {
-            url: `${API_MASTER_ROOT}/vehicle/getCheckList`,
+            url: `${API_MASTER_ROOT}/0010/getCheckList`,
             method: 'POST',
             data
         },
