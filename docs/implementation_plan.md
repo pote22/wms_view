@@ -24,8 +24,177 @@
 | Phase 16 | 품목관리 화면 구현 (WMS_MASTER_0030) | ✅ 완료 |
 | Phase 17 | 공통코드 드롭다운 매핑 (품목관리) | 🔲 미완료 |
 | Phase 18 | 존&로케이션 관리 화면 구현 (WMS_MASTER_0040) | ✅ 완료 |
+| Phase 19 | 거래처관리 화면 구현 (WMS_MASTER_0020) | ✅ 완료 |
+| Phase 20 | 입고등록 화면 UI 구현 (WMS_RECEIPT_0010) | 🔲 미완료 |
+| Phase 21 | 입고예정&확정 화면 UI 구현 (WMS_RECEIPT_0020) | 🔲 미완료 |
 
 > 완료된 Phase 상세 → [`docs/history/frontend_phases.md`](history/frontend_phases.md)
+
+---
+
+## Phase 20 — 입고등록 화면 UI 구현 (WMS_RECEIPT_0010) 🔲
+
+### 작업 파일
+- `src/pages/Receipt/cj_wms_receipt_0010.tsx`
+- `src/pages/Receipt/cj_wms_receipt_0010.module.css`
+- 디자인 참조: `src/design/cj_wms_receipt_0010_design.html`
+
+### 구현 범위 (UI 레이아웃)
+
+#### 상단 영역
+- **타이틀**: 입고 등록 + 부제
+- **액션 버튼**: 조회(primary), 신규(outline), 저장(outline), 엑셀(outline)
+
+#### 검색 필터 (4컬럼 × 2행)
+| 항목 | 컨트롤 |
+|------|--------|
+| 고객사 | select (useCommonWhList) |
+| 센터 | select (useCommonWhList) |
+| 입고번호 | text input |
+| 입고구분 | select (전체 / 일반입고 / 반품입고) |
+| 매입처 | text input |
+| 차량번호 | text input |
+| 입고예정일 | date input |
+| 수불유형 | select (이관오더 / 구매오더 / 판매오더) |
+
+#### 툴바 (2분할)
+- 좌: 행추가 / 행삭제
+- 우: 양식다운로드 / 엑셀업로드
+
+#### 테이블 컬럼
+| 컬럼 | 너비 | 비고 |
+|------|------|------|
+| 체크박스 | 40px | 전체선택 |
+| 고객사 | 120px |  |
+| 센터 | 120px | |
+| 품목코드 | 200px | |
+| 품명 (ITEM NAME) | 220px | |
+| 존 | 120px | |
+| 존명 | 150px | |
+| 로케이션 | 150px | |
+| 입고예정량 | 150px | |
+| 입고일자 | 100px | |
+| 비고 (REMARKS) | 100px | |
+| 입고상태 | 100px | |
+| 등록자 | 90px | |
+| 등록일자 | 120px | |
+| 수정자 | 90px | |
+| 수정일자 | 120px | |
+
+#### 페이지네이션
+- 총 N건 표시 + 이전/다음 버튼 + 페이지 번호
+
+### 미구현 (API 연동 — 별도 Phase)
+- 조회 / 저장 / 입고지시 API 연동
+- 엑셀업로드 파싱 및 유효성 검증
+- 엑셀다운로드
+
+---
+
+## Phase 21 — 입고예정&확정 화면 UI 구현 (WMS_RECEIPT_0020) 🔲
+
+### 작업 파일
+- `src/pages/Receipt/cj_wms_receipt_0020.tsx`
+- `src/pages/Receipt/cj_wms_receipt_0020.module.css`
+- 디자인 참조: `src/design/cj_wms_receipt_0020_design.html`
+
+### 구현 범위 (UI 레이아웃)
+
+#### 상단 영역
+- **타이틀**: 입고예정/입고확정 + 부제
+- **액션 버튼**: 조회(primary), 엑셀다운로드(outline), 입고예정리스트발행(outline), 입고확정(blue outline)
+
+#### 검색 필터 (6컬럼 grid)
+| 항목 | 컨트롤 |
+|------|--------|
+| 고객사 | select (useCommonWhList) |
+| 센터 | select (useCommonWhList) |
+| 입고구분 | select (전체 / 일반입고 / 반품입고) |
+| 수불유형 | select (이관오더 / 구매오더 / 판매오더) |
+| 입고상태 | select (전체 / 입고예정 / 부분입고 / 입고확정) |
+| 입고번호 | text input |
+| 품번 | text input |
+| 차량번호 | text input |
+
+#### 테이블 컬럼
+| 컬럼 | 너비 | 비고 |
+|------|------|------|
+| 체크박스 | 40px | 전체선택 |
+| 고객사 | 150px | center |
+| 센터 | 150px | center |
+| 입고예정일 | 110px | center |
+| 입고번호 | 150px | center |
+| 입고순번 | 150px | center |
+| 입고상태 | 150px | center |
+| 입고구분 | 120px | center|
+| 수불유형 | 120px | center|
+| 입고완료일 | 130px | center |
+| 매입처코드 | 120px | center|
+| 매입처명 | 120px | center|
+| 품번 | 120px | center |
+| 품명 | 180px | center |
+| 존 | 180px | center |
+| 존명 | 180px | center |
+| 로케이션 | 180px | center |
+| 수량:원주문량 | 150px | center |
+| 수량:예정수량 | 150px | center |
+| 수량:확정수량 | 150px | center |
+| 스캔정보:스캔수량 | 150px | center |
+| 스캔정보:스캔건수 | 150px | center |
+| 수량:총중량 | 150px | center |
+| 미입고사유 | 150px | center |
+| 업체주소 | 150px | center |
+| 우편번호 | 150px | center |
+| 담당자 | 150px | center |
+| 연락처 | 150px | center |
+| 차량번호 | 150px | center |
+| 기사명 | 150px | center |
+| PDA작업여부 | 150px | center |
+| 비고 | 150px | center |
+| 등록자 | 150px | center |
+| 등록일자 | 150px | center |
+| 수정자 | 150px | center |
+| 수정일자 | 150px | center |
+
+#### 상태 뱃지 색상
+| 상태 | 배경 | 텍스트 |
+|------|------|--------|
+| 입고예정 | white (#ffffff) / border | #374151 |
+| 부분입고 | purple (#f3e8ff) | #6b21a8 |
+| 입고확정 | emerald (#d1fae5) | #065f46 |
+
+#### 페이지네이션
+- 총 N건 표시 + 이전/다음 버튼 + 페이지 번호
+
+### 미구현 (API 연동 — 별도 Phase)
+- 조회 / 입고확정 / 입고예정리스트발행 API 연동
+- 엑셀다운로드
+
+#### 툴바
+- 우: 예정수량 '0'일괄적용 / 미입고사유 / 비고저장
+
+---
+
+## Phase 19 — 거래처관리 화면 구현 (WMS_MASTER_0020) ✅
+
+### 구현 내용
+
+#### 프론트엔드
+- `cj_wms_master_0020.tsx` — 조회 · 저장 · 삭제 · 인라인 편집 · 엑셀다운로드 · 양식다운로드 · 엑셀업로드
+- `master_0020Service.ts` — getList / saveClient / deleteClient / getCheckList API 연동
+- 저장 유효체크: 거래처코드 필수, 사업자번호 10자리, 연락처 정규식, 이메일 정규식 + cellRef 포커스 이동
+- 엑셀업로드: fileInputRef 방식 + XLSX 파싱 → getCheckList 백엔드 유효성 검증 → chipOk/chipError 뱃지 표시
+- isDirty/isNew 패턴으로 변경 행 추적, 행추가/행삭제(isNew 기준 마지막 행 삭제)
+- 공통 컴포넌트 `ClientSearchPopup.tsx` + `ClientSearchPopup.module.css` 신규 구현
+  - 거래처코드 · 사용여부 필터 · 조회 버튼 · 더블클릭 선택
+  - 팝업 열릴 때 `initialClientCd` prop으로 기존 값 자동 채움 및 즉시 조회
+  - Enter 검색 · ESC 닫기 · X 버튼으로만 닫기 (배경 클릭 닫기 비활성화)
+
+#### 백엔드
+- `WmsMaster0020Controller.kt` — POST `/getList` · `/saveClientInfo` · `/removeClientInfo` · `/getCheckList`
+- `WmsMaster0020Service.kt` — getList / saveClientInfo / removeClientInfo / getCheckList(엑셀 업로드 유효성 검증)
+- `WmsMaster0020Mapper.kt` / `wmsMaster0020Mapper.xml` — selectClientList / mergeClientInfo(UPSERT) / deleteClientInfo
+- 엑셀 업로드 유효성 검증 규칙: 거래처코드 필수, 사업자번호 10자리, 연락처 정규식, 이메일 정규식
 
 ---
 
