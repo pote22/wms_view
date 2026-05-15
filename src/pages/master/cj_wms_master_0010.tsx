@@ -3,19 +3,11 @@ import React, { useState, useEffect, useRef } from "react";
 import * as XLSX from "xlsx";
 import { useCommonWhList } from "../../api/common/commonWhList";
 import { getTokenPayload } from "../../utils/auth";
-import { getList, saveVehicle, deleteVehicle, getCheckList, type Vehicle, type CheckResult } from "../../api/master/master_0010Service";
+import { getList, saveVehicle, deleteVehicle, getCheckList, type VehicleRow, type CheckResult } from "../../api/master/master_0010Service";
 import Popup from "../../components/common/Popup";
 import { usePopup } from "../../components/common/usePopup";
 import styles from "./cj_wms_master_0010.module.css";
 import { getCommCodeList, type CommCode } from "../../api/common/commonService"
-
-// 화면에서 사용하는 차량타입
-interface VehicleRow extends Vehicle {
-    chk             : string;      // 체크박스 ('0'=미선택, '1'=선택)
-    isNew           : boolean;     // 신규여부
-    isDirty         : boolean;     // 수정여부
-    uploadStatus    : string;      // 엑셀업로드 상태
-}
 
 const CJ_WMS_MASTER_0010: React.FC = () => {
     // 권한센터 목록 조회(공통)
@@ -58,18 +50,25 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
     }, [selectWhCd]);
 
     useEffect(() => {
-        
         getCommCodeList(
-            { sys_grp_cd: 'WM1010', sys_cd: '', sys_cdnm: '' },
+            {  
+                  sys_grp_cd    : 'WM1010'
+                , sys_cd        : ''
+                , sys_cdnm      : '' 
+            },
             (res) => setTonList(res.data ?? []),
             (err) => console.error("톤급 목록 조회 실패 : ", err)
         );
     }, []);
 
-    // 조회
+    // 차량목록 조회
     const handleSearch = () => {
         getList(
-            { srvcCd: searchSrvcCd, whCd: searchWhCd, vehicleNo: searchVehicleNo, useYn: searchUseYn },
+            {     srvcCd    : searchSrvcCd
+                , whCd      : searchWhCd
+                , vehicleNo : searchVehicleNo
+                , useYn     : searchUseYn 
+            },
             (res) => {
                 const rows: VehicleRow[] = (res.data ?? []).map((v: any) => ({
                     chk         : v.chk ?? '0',
@@ -103,25 +102,22 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
             return;
         }
 
-        const inValidVNoIdx = vehicleIds.findIndex(v => v.chk === '1' && !v.vehicleNo.trim());
+        const inValidVNoIdx     = vehicleIds.findIndex(v => v.chk === '1' && !v.vehicleNo.trim());
+        const vehicleTonCdList  = tonList.map(t => t.sys_cd)
+        const inValidIdx        = vehicleIds.findIndex(v => v.chk === '1' && v.tonClsCd && !vehicleTonCdList.includes(v.tonClsCd));
+        const inValidHpNoIdx    = vehicleIds.findIndex(v => v.chk === '1' && v.hpNo && !HP_NO_REGEX.test(v.hpNo));
 
         if (inValidVNoIdx !== -1) {
-            
             const el = cellRefs.current.get(`${inValidVNoIdx}_vehicleNo`);
             showAlert("차량번호를 입력하세요.", () => el?.focus());
             return;
         }
 
-        const vehicleTonCdList = tonList.map(t => t.sys_cd)
-        const inValidIdx = vehicleIds.findIndex(v => v.chk === '1' && v.tonClsCd && !vehicleTonCdList.includes(v.tonClsCd));
-        
         if (inValidIdx !== -1) {
             const el = cellRefs.current.get(`${inValidIdx}_tonClsCd`);
             showAlert(`차량번호 : ${vehicleIds[inValidIdx].vehicleNo}의 톤급이 올바르지 않습니다.`, () => el?.focus());
             return;
         }
-
-        const inValidHpNoIdx = vehicleIds.findIndex(v => v.chk === '1' && v.hpNo && !HP_NO_REGEX.test(v.hpNo));
 
         if (inValidHpNoIdx !== -1) {
             const el = cellRefs.current.get(`${inValidHpNoIdx}_hpNo`);
@@ -132,8 +128,7 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
         showConfirm(`저장하시겠습니까?`, () => {
             closePopup();
             setIsSaving(true);
-
-            const userId        = payload?.userId ?? "";
+            
             const vehicleList   = saveRows.map(v => ({
                 srvcCd      : v.srvcCd ? v.srvcCd : searchSrvcCd,
                 whCd        : v.whCd ? v.whCd : searchWhCd,
@@ -142,7 +137,7 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
                 hpNo        : v.hpNo,
                 tonClsCd    : v.tonClsCd,
                 useYn       : v.useYn,
-                userId,
+                userId      : payload?.userId ?? ""
             }));
             
             saveVehicle(
@@ -191,6 +186,8 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
 
         // 컬럼 정의
         ws.columns = [
+            { header: "고객사",     key: "srvcCd",      width: 20 },
+            { header: "센터",       key: "whCd",        width: 20 },
             { header: "차량번호",   key: "vehicleNo",   width: 20 },
             { header: "기사명",     key: "drvNm",       width: 15 },
             { header: "톤급",       key: "tonClsCd",    width: 10 },
@@ -209,7 +206,7 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
             cell.fill = {
                 type: "pattern",
                 pattern: "solid",
-                fgColor: { argb: "FF003F87" },
+                fgColor: { argb: "0080B2Fd" },
             };
 
             cell.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 11 };
@@ -225,6 +222,8 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
         // 데이터 행 추가
         vehicleIds.forEach(v => {
             const row = ws.addRow({
+                srvcCd      : v.srvcCd,
+                whCd        : v.whCd,
                 vehicleNo   : v.vehicleNo,
                 drvNm       : v.drvNm,
                 tonClsCd    : v.tonClsCd,
@@ -277,13 +276,13 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
     const handleAddRow = () => {
         setVehicleIds(prev => [...prev, {
             chk             : '1',
+            srvcCd          : selectSrvcCd,
+            whCd            : selectWhCd,
             vehicleNo       : "",
             drvNm           : "",
             hpNo            : "",
             tonClsCd        : "",
             useYn           : "Y",
-            srvcCd          : "",
-            whCd            : "",
             isNew           : true,
             isDirty         : false,
             uploadStatus    : "",
@@ -478,7 +477,7 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
                                     <label className={styles.filterLabel}>고객사</label>
                                     <select className={styles.filterSelect} value={searchSrvcCd} onChange={(e) => setSearchSrvcCd(e.target.value)}>
                                         {srvcList.map(s => (
-                                            <option key={s.srvcCd} value={s.srvcCd}>{s.srvcNm}</option>
+                                            <option key={s.srvcCd} value={s.srvcCd}>{`${s.srvcCd} [${s.srvcNm}]`}</option>
                                         ))}
                                     </select>
                                 </div>
@@ -486,7 +485,7 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
                                     <label className={styles.filterLabel}>센터</label>
                                     <select className={styles.filterSelect} value={searchWhCd} onChange={(e) => setSearchWhCd(e.target.value)}>
                                         {whList.map(w => (
-                                            <option key={w.whCd} value={w.whCd}>{w.whNm}</option>
+                                            <option key={w.whCd} value={w.whCd}>{`${w.whCd} [${w.whNm}]`}</option>
                                         ))}
                                     </select>
                                 </div>
@@ -538,17 +537,32 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
                     <div className={styles.tableWrapper}>
                         <table className={styles.table}>
                             <colgroup>
-                                <col style={{ width: '50px' }} />
-                                <col style={{ width: '110px' }} />
-                                <col style={{ width: '100px' }} />
-                                <col style={{ width: '70px' }} />
-                                <col style={{ width: '120px' }} />
-                                <col style={{ width: '60px' }} />
-                                <col style={{ width: '80px' }} />
-                                <col style={{ width: '100px' }} />
-                                <col style={{ width: '80px' }} />
-                                <col style={{ width: '100px' }} />
+                                {/* 체크박스 */}
+                                <col style={{ width: '40px' }} />
+                                {/* 고객사 */}
+                                <col style={{ width: '180px' }} />
+                                {/* 센터 */}
+                                <col style={{ width: '180px' }} />
+                                {/* 차량번호 */}
                                 <col style={{ width: '150px' }} />
+                                {/* 기사명 */}
+                                <col style={{ width: '150px' }} />
+                                {/* 차량톤급 */}
+                                <col style={{ width: '130px' }} />
+                                {/* H.P번호 */}
+                                <col style={{ width: '200px' }} />
+                                {/* 사용여부 */}
+                                <col style={{ width: '120px' }} />
+                                {/* 등록자 */}
+                                <col style={{ width: '120px' }} />
+                                {/* 등록일자 */}
+                                <col style={{ width: '150px' }} />
+                                {/* 수정자 */}
+                                <col style={{ width: '120px' }} />
+                                {/* 수정일자 */}
+                                <col style={{ width: '150px' }} />
+                                {/* 업로드결과 */}
+                                <col style={{ width: '300px' }} />
                             </colgroup>
                             <thead className={styles.thead}>
                                 <tr>
@@ -557,11 +571,13 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
                                             onChange={handleSelectAll}
                                             checked={vehicleIds.length > 0 && vehicleIds.every(v => v.chk === '1')} />
                                     </th>
+                                    <th>고객사</th>
+                                    <th>센터</th>
                                     <th>차량번호</th>
                                     <th>기사명</th>
                                     <th>톤급</th>
                                     <th>H.P 번호</th>
-                                    <th className={styles.cellCenter}>사용</th>
+                                    <th className={styles.cellCenter}>사용여부</th>
                                     <th>등록자</th>
                                     <th>등록일자</th>
                                     <th>수정자</th>
@@ -578,7 +594,13 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
                                                 checked={v.chk === '1'}
                                                 onChange={() => { }} />
                                         </td>
-                                        <td className={styles.cellBold}>
+                                        <td className={styles.cellCenter}>
+                                            { (s => s ? `${s.srvcCd} [${s.srvcNm}]` : v.srvcCd)(srvcList.find( s => s.srvcCd === v.srvcCd)) }
+                                        </td>
+                                        <td className={styles.cellCenter}>
+                                            { (w => w ? `${w.whCd} [${w.whNm}]` : v.whCd)(whList.find( w => w.whCd === v.whCd)) }
+                                        </td>
+                                        <td className={styles.cellCenter}>
                                             {v.isNew
                                                 ? <input type="text" className={styles.cellInput} value={v.vehicleNo}
                                                     onChange={e => handleCellChange(idx, "vehicleNo", e.target.value)}
@@ -586,12 +608,12 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
                                                     ref={setCellRef(idx, "vehicleNo") as any}/>
                                                 : v.vehicleNo}
                                         </td>
-                                        <td className={styles.cellMedium}>
+                                        <td className={styles.cellCenter}>
                                             <input type="text" className={styles.cellInput} value={v.drvNm}
                                                 onChange={e => handleCellChange(idx, "drvNm", e.target.value)}
                                                 onClick={e => e.stopPropagation()} placeholder="기사명" />
                                         </td>
-                                        <td className={styles.cellDim}>
+                                        <td className={styles.cellCenter}>
                                             <select className={styles.cellInput} value={v.tonClsCd} 
                                                 onChange={e => handleCellChange(idx, "tonClsCd", e.target.value)}
                                                 onClick={e => e.stopPropagation()}
@@ -602,31 +624,40 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
                                                 ))}
                                             </select>
                                         </td>
-                                        <td className={styles.cellMono}>
+                                        <td className={styles.cellCenter}>
                                             <input type="text" className={styles.cellInput} value={v.hpNo}
                                                 onChange={e => handleCellChange(idx, "hpNo", e.target.value)}
                                                 onClick={e => e.stopPropagation()} placeholder="휴대전화번호" 
                                                 ref={setCellRef(idx, "hpNo") as any}/>
                                         </td>
                                         <td className={styles.cellCenter}>
-                                            <span className={`${styles.badge} ${v.useYn === 'Y' ? styles.badgeSuccess : styles.badgeError}`}>
-                                                {v.useYn}
-                                            </span>
+                                            <select className={styles.cellInput} value={v.useYn}
+                                                onChange={e => handleCellChange(idx, "useYn", e.target.value)}
+                                                onClick={e => e.stopPropagation()}>
+                                                <option value="Y">사용</option>
+                                                <option value="N">미사용</option>
+                                            </select>
                                         </td>
-                                        <td className={styles.cellDim}>{v.regId}</td>
-                                        <td className={styles.cellDim}>{v.regDate}</td>
-                                        <td className={styles.cellDim}>{v.updId}</td>
-                                        <td className={styles.cellDim}>{v.updDate}</td>
-                                        <td>
-                                            {v.uploadStatus && (
-                                                <span className={`${styles.badge} ${
-                                                    v.uploadStatus === '검증중...' ? styles.badgeInfo :
-                                                    v.uploadStatus === 'OK'        ? styles.badgeSuccess :
-                                                    styles.badgeError
-                                                }`}>
-                                                    {v.uploadStatus}
+                                        <td className={styles.cellCenter}>{v.regId}</td>
+                                        <td className={styles.cellCenter}>{v.regDate}</td>
+                                        <td className={styles.cellCenter}>{v.updId}</td>
+                                        <td className={styles.cellCenter}>{v.updDate}</td>
+                                        <td className={styles.cellCenter}>
+                                            {v.uploadStatus === 'OK' ? (
+                                                <span className={styles.chipOk}>
+                                                    <span className="material-symbols-outlined" style={{ fontSize: '11px' }}>check_circle</span>
+                                                    OK
                                                 </span>
-                                            )}
+                                            ) : v.uploadStatus && v.uploadStatus !== '검증중...' ? (
+                                                <div className={styles.chipGroup}>
+                                                    {v.uploadStatus.split(' / ').filter(Boolean).map((err, i) => (
+                                                        <span key={i} className={styles.chipError}>
+                                                            <span className="material-symbols-outlined" style={{ fontSize: '11px' }}>error</span>
+                                                            {err.trim()}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            ) : v.uploadStatus}
                                         </td>
                                     </tr>
                                 ))}
