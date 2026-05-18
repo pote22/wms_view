@@ -155,6 +155,18 @@
     border-color: #003f87;
 }
 
+.filterInput:disabled,
+.filterSelect:disabled {
+    background-color: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+.filterSearchBtn:disabled {
+    background-color: #cbd5e1;
+    cursor: not-allowed;
+}
+
 .filterItemWide {
     display: flex;
     flex-direction: column;

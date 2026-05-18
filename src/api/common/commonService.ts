@@ -28,6 +28,12 @@ export interface CommCode {
     sys_grp_cd  : string;
     sys_cd      : string;
     sys_cdnm    : string;
+    srvc_cd     : string;
+    sys_etc1    : string;
+    sys_etc2    : string;
+    sys_etc3    : string;
+    sys_etc4    : string;
+    sys_etc5    : string;
 }
 
 // 공통코드 리스트
