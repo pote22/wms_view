@@ -495,7 +495,16 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
 
     useEffect(() => {
         getCommCodeList(
-            { sys_grp_cd : 'WM1040', sys_cd : '', sys_cdnm : ''},
+            {     sys_grp_cd    : 'WM1040'
+                , sys_cd        : ''
+                , sys_cdnm      : ''
+                , srvc_cd       : ''
+                , sys_etc1      : ''
+                , sys_etc2      : ''
+                , sys_etc3      : ''
+                , sys_etc4      : ''
+                , sys_etc5      : '' 
+            },
             (res) => setLocClsList(res.data ?? []),
             (err) => showAlert("공통코드 조회 실패 : " + err?.message)
         );
