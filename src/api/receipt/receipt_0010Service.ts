@@ -6,7 +6,7 @@ export interface ReceiptH {
     whCd            : string;
     inNo            : string;
     inExpectedDate  : string;
-    inAsnNo         : string;
+    inExpectedNo    : string;
     vendorCd        : string;
     vendorNm        : string;
     receiptClsCd    : string;
@@ -19,7 +19,6 @@ export interface ReceiptH {
     inVNo           : string;
     inVId           : string;
     inVNm           : string;
-    vendorAddress   : string;
     receiptType     : string;
 }
 
@@ -29,7 +28,7 @@ export interface ReceiptD {
     inNo            : string;
     inExpectedSeq   : number;
     inExpectedDate  : string;
-    inAsnNo         : string;
+    inExpectedNo    : string;
     vendorCd        : string;
     vendorNm        : string;
     prodCd          : string;

@@ -125,31 +125,27 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
 
         // 2.입고헤더 행추가
         setReceiptHdrList([{
-          srvcCd          : searchSrvcCd,
-          whCd            : searchWhCd,
-          inNo            : '',
-          inExpectedDate  : '',
-          inAsnNo         : '',
-          vendorCd        : '',
-          vendorNm        : '',
-          receiptClsCd    : '',
-          totline         : 0,
-          originalQty     : 0,
-          expectedQty     : 0,
-          openQty         : 0,
-          receivedQty     : 0,
-          status          : '',
-          rmk             : '',
-          receiptDate     : '',
-          receiptNo       : 0,
-          inVNo           : '',
-          inVId           : '',
-          inVNm           : '',
-          vendorAddress   : '',
-          receiptType     : '',
-          isNew           : true,
-          isDirty         : false,
-          uploadStatus    : '', 
+            srvcCd          : searchSrvcCd,
+            whCd            : searchWhCd,
+            inNo            : '',
+            inExpectedDate  : '',
+            inExpectedNo    : '',
+            vendorCd        : '',
+            vendorNm        : '',
+            receiptClsCd    : '',
+            totline         : 0,
+            originalQty     : 0,
+            status          : '',
+            rmk             : '',
+            receiptDate     : '',
+            receiptNo       : 0,
+            inVNo           : '',
+            inVId           : '',
+            inVNm           : '',
+            receiptType     : '',
+            isNew           : true,
+            isDirty         : false,
+            uploadStatus    : '', 
         }]);
 
         // 3. 조회조건 필터 활성화
@@ -157,12 +153,28 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
         setSearchInNo('');
         setSearchInCategory('1');
         setSearchInType(receiptType[0]?.sys_cd ?? '');
+        setKeyInfo({ inNoSeq : '', today : '' });
 
         // 4. 키값 발급
         getKeyInfo(
             {},
             (res) => {
-                setKeyInfo(res.data ?? null);
+                const keyData = res.data[0];
+                
+                // 키값 저장
+                setKeyInfo({
+                    inNoSeq : keyData.in_no_seq ?? '',
+                    today   : keyData.today     ?? ''
+                });
+
+                // 입고번호 생성
+                const inNo = searchWhCd + "" + keyInfo?.today + "" + keyInfo?.inNoSeq
+
+                setReceiptHdrList(prev => prev.map(row => ({
+                    ...row,
+                    inNo            : inNo,
+                    inExpectedNo    : keyInfo?.inNoSeq ?? ''
+                })));
             },
             (err) => showAlert("조회 실패: " + err?.message)
         )
@@ -180,10 +192,31 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
 
     // 행추가
     const handleAddRow = () => {
-        const inNo          = searchInNo;
-        const clientCd      = searchClientCd;
-        const vehicleNo     = searchVehicleNo;
-        const inExptDate    = searchInExptDate;
+         setReceiptDtlList(prev => [...prev, {
+            srvcCd          : '',
+            whCd            : '',
+            inNo            : '',
+            inExpectedSeq   : 0,
+            inExpectedDate  : '',
+            inExpectedNo    : '',
+            vendorCd        : '',
+            vendorNm        : '',
+            prodCd          : '',
+            prodNm          : '',
+            originalQty     : 0,
+            status          : '',
+            rmk             : '',
+            inZoneCd        : '',
+            inZoneNm        : '',
+            inLocCd         : '',
+            regId           : '',
+            regDate         : '',
+            updId           : '',
+            updDate         : '',
+            isNew           : true,
+            isDirty         : false,
+            uploadStatus    : ''
+         }]);
     }
     
     // 행삭제
