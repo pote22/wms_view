@@ -1,4 +1,4 @@
-import { request } from "../common/transaction";
+﻿import { request } from "../common/transaction";
 import { API_MASTER_ROOT, API_RECEIPT_ROOT } from "../common/index";
 
 export interface ReceiptH {
@@ -70,7 +70,7 @@ export interface Response {
     data            : any;
 }
 
-// 엑셀업로드 유효성 체크 결과
+// ?묒??낅줈???좏슚??泥댄겕 寃곌낵
 export interface CheckResult {
     rowIndex        : number;
     isValid         : boolean;
@@ -85,41 +85,42 @@ export interface CheckResponse {
     data            : CheckResult[] | null;
 }
 
-// 입고조회
+// ?낃퀬議고쉶
 export const getList = (
     data        : Record<string, any>,
     onSuccess   : (res: Response) => void,
     onError     : (err: any) => void
 ) => {
-    return request<any, Response>({
+    return request<Response>({
         config : { url : `${API_RECEIPT_ROOT}/0010/getList`, method : 'POST', data },
         onSuccess,
         onError
     });
 };
 
-// 키값정보 조회
+// ?ㅺ컪?뺣낫 議고쉶
 export const getKeyInfo = (
     data        : Record<string, any>,
     onSuccess   : (res: Response) => void,
     onError     : (err: any) => void
 ) => {
-    return request<any, Response>({
+    return request<Response>({
         config : { url : `${API_RECEIPT_ROOT}/0010/getKeyInfo`, method : 'POST', data },
         onSuccess,
         onError
     });
 };
 
-// 입고저장
+// ?낃퀬???
 export const saveReceipt = (
     data        : Record<string, any>,
     onSuccess   : (res: Response) => void,
     onError     : (err: any) => void
 ) => {
-    return request<any, Response>({
+    return request<Response>({
         config : { url : `${API_RECEIPT_ROOT}/0010/saveReceipt`, method : 'POST', data },
         onSuccess,
         onError
     });
 };
+

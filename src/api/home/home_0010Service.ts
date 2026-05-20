@@ -1,4 +1,4 @@
-import { request } from "../common/transaction";
+﻿import { request } from "../common/transaction";
 import transaction from "../common/transaction";
 import { API_HOME_ROOT } from "../common/index";
 
@@ -35,13 +35,13 @@ export interface FileResponse {
     data: AttachedFile[] | null;
 }
 
-// 리스트 조회
+// 由ъ뒪??議고쉶
 export const getList = (
     data: Record<string, any>,
     onSuccess: (res: Response) => void,
     onError: (err: any) => void
 ) => {
-    return request<any, Response>({
+    return request<Response>({
         config: {
             url: `${API_HOME_ROOT}/getList`,
             method: 'POST',
@@ -52,13 +52,13 @@ export const getList = (
     });
 };
 
-// 공지사항 정보 저장&수정
+// 怨듭??ы빆 ?뺣낫 ????섏젙
 export const saveNotice = (
     data: Record<string, any>,
     onSuccess: (res: Response) => void,
     onError: (err: any) => void
 ) => {
-    return request<any, Response>({
+    return request<Response>({
         config: {
             url: `${API_HOME_ROOT}/saveList`,
             method: 'POST',
@@ -69,26 +69,26 @@ export const saveNotice = (
     });
 };
 
-// 파일 목록 조회
+// ?뚯씪 紐⑸줉 議고쉶
 export const getFileList = (
     data: Record<string, any>,
     onSuccess: (res: FileResponse) => void,
     onError: (err: any) => void
 ) => {
-    return request<any, FileResponse>({
+    return request<FileResponse>({
         config: { url: `${API_HOME_ROOT}/getFileList`, method: 'POST', data },
         onSuccess,
         onError,
     });
 };
 
-// 파일 업로드
+// ?뚯씪 ?낅줈??
 export const uploadFile = (
     formData: FormData,
     onSuccess: (res: Response) => void,
     onError: (err: any) => void
 ) => {
-    return request<any, Response>({
+    return request<Response>({
         config: {
             url: `${API_HOME_ROOT}/uploadFile`,
             method: 'POST',
@@ -100,7 +100,7 @@ export const uploadFile = (
     });
 };
 
-// 파일 다운로드
+// ?뚯씪 ?ㅼ슫濡쒕뱶
 export const downloadFile = async (fileId: number, fileName: string): Promise<void> => {
     const blob = await transaction.get(`${API_HOME_ROOT}/downloadFile/${fileId}`, {
         responseType: 'blob',
@@ -115,26 +115,26 @@ export const downloadFile = async (fileId: number, fileName: string): Promise<vo
     window.URL.revokeObjectURL(url);
 };
 
-// 파일 삭제
+// ?뚯씪 ??젣
 export const deleteFile = (
     data: Record<string, any>,
     onSuccess: (res: Response) => void,
     onError: (err: any) => void
 ) => {
-    return request<any, Response>({
+    return request<Response>({
         config: { url: `${API_HOME_ROOT}/deleteFile`, method: 'POST', data },
         onSuccess,
         onError,
     });
 };
 
-// 공지사항 정보 삭제
+// 怨듭??ы빆 ?뺣낫 ??젣
 export const deleteNotice = (
     data: Record<string, any>,
     onSuccess: (res: Response) => void,
     onError: (err: any) => void
 ) => {
-    return request<any, Response>({
+    return request<Response>({
         config: {
             url: `${API_HOME_ROOT}/deleteList`,
             method: 'POST',

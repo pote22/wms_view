@@ -1,4 +1,4 @@
-import { request } from "../common/transaction";
+﻿import { request } from "../common/transaction";
 import { API_MASTER_ROOT } from "../common/index";
 
 export interface Vehicle {
@@ -16,11 +16,11 @@ export interface Vehicle {
     updDate?        : string;
 }
 
-// 화면에서 사용하는 차량타입
+// ?붾㈃?먯꽌 ?ъ슜?섎뒗 李⑤웾???
 export interface VehicleRow extends Vehicle {
-    isNew           : boolean;          // 신규여부
-    isDirty         : boolean;          // 수정여부
-    uploadStatus    : string;           // 엑셀업로드 상태
+    isNew           : boolean;          // ?좉퇋?щ?
+    isDirty         : boolean;          // ?섏젙?щ?
+    uploadStatus    : string;           // ?묒??낅줈???곹깭
 }
 
 export interface Response {
@@ -45,13 +45,13 @@ export interface CheckResponse {
     data            : CheckResult[] | null;
 }
 
-// 차량조회
+// 李⑤웾議고쉶
 export const getList = (
     data            : Record<string, any>,
     onSuccess       : (res: Response) => void,
     onError         : (err: any) => void
 ) => {
-    return request<any, Response>({
+    return request<Response>({
         config: {
             url: `${API_MASTER_ROOT}/0010/getList`,
             method: 'POST',
@@ -62,13 +62,13 @@ export const getList = (
     });
 }
 
-// 차량저장
+// 李⑤웾???
 export const saveVehicle = (
     data           : Record<string, any>,
     onSuccess      : (res: Response) => void,
     onError        : (err: any) => void
 ) => {
-    return request<any, Response>({
+    return request<Response>({
         config: {
             url: `${API_MASTER_ROOT}/0010/saveVehicle`,
             method: 'POST',
@@ -79,13 +79,13 @@ export const saveVehicle = (
     });
 }
 
-// 차량삭제
+// 李⑤웾??젣
 export const deleteVehicle = (
     data            : Record<string, any>,
     onSuccess       : (res: Response) => void,
     onError         : (err: any) => void
 ) => {
-    return request<any, Response>({
+    return request<Response>({
         config: {
             url: `${API_MASTER_ROOT}/0010/removeVehicle`,
             method: 'POST',
@@ -96,13 +96,13 @@ export const deleteVehicle = (
     });
 }
 
-// 엑셀 업로드 (유효체크)
+// ?묒? ?낅줈??(?좏슚泥댄겕)
 export const getCheckList = (
     data        : Record<string, any>,
     onSuccess   : (res: CheckResponse) => void,
     onError     : (err: any) => void
 ) => {
-    return request<any, CheckResponse>({
+    return request<CheckResponse>({
         config: {
             url: `${API_MASTER_ROOT}/0010/getCheckList`,
             method: 'POST',
@@ -112,3 +112,4 @@ export const getCheckList = (
         onError
     });
 }
+

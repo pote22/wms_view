@@ -1,7 +1,7 @@
-import { request } from "../common/transaction";
+﻿import { request } from "../common/transaction";
 import { API_MASTER_ROOT } from "../common/index";
 
-// 존 데이터 인터페이스
+// 議??곗씠???명꽣?섏씠??
 export interface Zone {
     srvcCd  : string;
     whCd    : string;
@@ -14,7 +14,7 @@ export interface Zone {
     updDate : string;
 }
 
-// 로케이션 데이터 인터페이스
+// 濡쒖??댁뀡 ?곗씠???명꽣?섏씠??
 export interface Loc {
     srvcCd      : string;
     whCd        : string;
@@ -29,7 +29,7 @@ export interface Loc {
     updDate     : string;
 }
 
-// 공통 API 응답
+// 怨듯넻 API ?묐떟
 export interface Response {
     resultCode      : string;
     resultMessage   : string;
@@ -38,7 +38,7 @@ export interface Response {
     data            : any;
 }
 
-// 엑셀업로드 유효성 체크 결과
+// ?묒??낅줈???좏슚??泥댄겕 寃곌낵
 export interface CheckResult {
     rowIndex    : number;
     isValid     : boolean;
@@ -53,54 +53,55 @@ export interface CheckResponse {
     data            : CheckResult[] | null;
 }
 
-// 존 리스트 조회
+// 議?由ъ뒪??議고쉶
 export const getZoneList = (
     data        : Record<string, any>,
     onSuccess   : (res: Response) => void,
     onError     : (err: any) => void
 ) => {
-    return request<any, Response>({
+    return request<Response>({
         config : { url : `${API_MASTER_ROOT}/0040/getZoneList`, method : 'POST', data },
         onSuccess,
         onError
     });
 };
 
-// 로케이션 리스트 조회
+// 濡쒖??댁뀡 由ъ뒪??議고쉶
 export const getLocList = (
     data        : Record<string, any>,
     onSuccess   : (res: Response) => void,
     onError     : (err: any) => void
 ) => {
-    return request<any, Response>({
+    return request<Response>({
         config : { url : `${API_MASTER_ROOT}/0040/getLocList`, method : 'POST', data },
         onSuccess,
         onError
     });
 };
 
-// 존&로케이션 저장
+// 議?濡쒖??댁뀡 ???
 export const saveInfo = (
     data        : Record<string, any>,
     onSuccess   : (res: Response) => void,
     onError     : (err: any) => void
 ) => {
-    return request<any, Response>({
+    return request<Response>({
         config : { url : `${API_MASTER_ROOT}/0040/saveInfo`, method : 'POST', data },
         onSuccess,
         onError
     });
 };
 
-// 엑셀업로드 유효성 체크
+// ?묒??낅줈???좏슚??泥댄겕
 export const getCheckList = (
     data        : Record<string, any>,
     onSuccess   : (res: Response) => void,
     onError     : (err: any) => void
 ) => {
-    return request<any, Response>({
+    return request<Response>({
         config : { url : `${API_MASTER_ROOT}/0040/getCheckList`, method : 'POST', data },
         onSuccess,
         onError
     });
 };
+

@@ -117,7 +117,7 @@ const CJ_WMS_MASTER_0020: React.FC = () => {
         }
 
         var clientCdIdx         = clientList.findIndex(v => v.chk === '1' && !v.clientCd?.trim());
-        var businessNoIdx       = clientList.findIndex(v => v.chk === '1' && v.businessNo.length < 10);
+        var businessNoIdx       = clientList.findIndex(v => v.chk === '1' && v.businessNo && v.businessNo.length < 10);
         var presidentHpIdx      = clientList.findIndex(v => v.chk === '1' && v.presidentHp && !hpNoRegx.test(v.presidentHp));
         var presidentEmailIdx   = clientList.findIndex(v => v.chk === '1' && v.presidentEmail && !emailRegx.test(v.presidentEmail));
 

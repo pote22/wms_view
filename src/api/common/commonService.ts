@@ -1,8 +1,8 @@
-import { request } from "./transaction";
+﻿import { request } from "./transaction";
 import { API_USER_ROOT } from "./index";
 import { API_COMMON_ROOT } from "./index";
 
-// 사용자 권한별 고객사 센터 조회 데이터
+// ?ъ슜??沅뚰븳蹂?怨좉컼???쇳꽣 議고쉶 ?곗씠??
 export interface UserAuthSrvcWh {
     srvc_cd         : string;
     srvc_nm         : string;
@@ -11,19 +11,19 @@ export interface UserAuthSrvcWh {
     base_yn         : string;
 }
 
-// 사용자 권한별 고객사 센터 조회
+// ?ъ슜??沅뚰븳蹂?怨좉컼???쇳꽣 議고쉶
 export interface UserSrvcWhRequest {
     userId          : string;
 }
 
-// 사용자 권한별 고객사 센터 조회 응답
+// ?ъ슜??沅뚰븳蹂?怨좉컼???쇳꽣 議고쉶 ?묐떟
 export interface UserSrvcWhResponse {
     resultCode      : string;
     resultMessage   : string;
     data            : UserAuthSrvcWh[];
 }
 
-// 공통코드
+// 怨듯넻肄붾뱶
 export interface CommCode {
     sys_grp_cd  : string;
     sys_cd      : string;
@@ -36,7 +36,7 @@ export interface CommCode {
     sys_etc5    : string;
 }
 
-// 공통코드 리스트
+// 怨듯넻肄붾뱶 由ъ뒪??
 export interface CommCodeList {
     resultCode      : string;
     resultMessage   : string;
@@ -45,7 +45,7 @@ export interface CommCodeList {
     data            : CommCode[] | null;
 }
 
-// 품목 검색 팝업 결과
+// ?덈ぉ 寃???앹뾽 寃곌낵
 export interface ProdSearch {
     prod_cd         : string;
     prod_nm         : string;
@@ -59,7 +59,7 @@ export interface ProdSearchResponse {
     data            : ProdSearch[] | null;
 }
 
-// 사용자 권한별 고객사 센터 조회 API 호출
+// ?ъ슜??沅뚰븳蹂?怨좉컼???쇳꽣 議고쉶 API ?몄텧
 export const getUserAuthSrvcWhList = (
     data        : UserSrvcWhRequest,
     onSuccess   : (res: UserSrvcWhResponse) => void,
@@ -76,7 +76,7 @@ export const getUserAuthSrvcWhList = (
     });
 };
 
-// 공통코드 리스트 조회
+// 怨듯넻肄붾뱶 由ъ뒪??議고쉶
 export const getCommCodeList = (
     data        : CommCode,
     onSuccess   : (res: CommCodeList) => void,
@@ -93,15 +93,16 @@ export const getCommCodeList = (
     });
 };
 
-// 품목 검색 팝업 조회
+// ?덈ぉ 寃???앹뾽 議고쉶
 export const getProdSearchList = (
     data        : Record<string, any>,
     onSuccess   : (res: ProdSearchResponse) => void,
     onError     : (err: any) => void
 ) => {
-    return request<any, ProdSearchResponse>({
+    return request<ProdSearchResponse>({
         config: { url: `${API_COMMON_ROOT}/getProdSearchList`, method: 'POST', data },
         onSuccess,
         onError
     });
 };
+

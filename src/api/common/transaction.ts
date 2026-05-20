@@ -13,7 +13,7 @@ export interface ApiResponse<T> {
 // Axios 인스턴스 생성
 const transaction: AxiosInstance = axios.create({
     baseURL: API_BASE_ROOT,
-    timeout: 10000,
+    timeout: 30000,
     headers: {
         'Content-Type': 'application/json',
     },
@@ -64,17 +64,17 @@ transaction.interceptors.response.use(
 );
 
 // 공통 API 요청 함수
-interface RequestParam<T, R> {
+interface RequestParam<R> {
     // Axios 요청 설정
     config: AxiosRequestConfig;
-    // 성공 콜백        
+    // 성공 콜백
     onSuccess?: (data: R) => void;
-    // 에러 콜백    
+    // 에러 콜백
     onError?: (error: any) => void;
 }
 
 // API 요청 함수
-export const request = async <T, R>({ config, onSuccess, onError }: RequestParam<T, R>) => {
+export const request = async <R>({ config, onSuccess, onError }: RequestParam<R>) => {
     try {
         const response: any = await transaction(config);
 

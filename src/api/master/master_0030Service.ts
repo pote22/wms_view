@@ -1,7 +1,7 @@
-import { request } from "../common/transaction";
+﻿import { request } from "../common/transaction";
 import { API_MASTER_ROOT } from "../common/index";
 
-// 품목관리 요청객체
+// ?덈ぉ愿由??붿껌媛앹껜
 export interface Item {
     srvcCd          : string;
     whCd            : string;
@@ -26,7 +26,7 @@ export interface Item {
     updDate         : string;
 }
 
-// 품목관리 조회결과
+// ?덈ぉ愿由?議고쉶寃곌낵
 export interface Response {
     resultCode      : string;
     resultMessage   : string;
@@ -35,7 +35,7 @@ export interface Response {
     data            : Item[] | null;
 }
 
-// 엑셀업로드 유효성 체크 결과
+// ?묒??낅줈???좏슚??泥댄겕 寃곌낵
 export interface CheckResult {
     rowIndex        : number;
     isValid         : boolean;
@@ -50,52 +50,52 @@ export interface CheckResponse {
     data            : CheckResult[] | null;
 }
 
-// 품목조회
+// ?덈ぉ議고쉶
 export const getList = (
     data        : Record<string, any>,
     onSuccess   : (res: Response) => void,
     onError     : (err: any) => void
 ) => {
-    return request<any, Response>({
+    return request<Response>({
         config : { url : `${API_MASTER_ROOT}/part/getList`, method : 'POST', data},
         onSuccess,
         onError
     });
 };
 
-// 품목정보 저장
+// ?덈ぉ?뺣낫 ???
 export const saveProdInfo = (
     data        : Record<string, any>,
     onSuccess   : (res: Response) => void,
     onError     : (err: any) => void
 ) => {
-    return request<any, Response>({
+    return request<Response>({
         config : { url : `${API_MASTER_ROOT}/part/saveProdInfo`, method : 'POST', data},
         onSuccess,
         onError
     });
 }
 
-// 품목정보 삭제
+// ?덈ぉ?뺣낫 ??젣
 export const deleteProdInfo = (
     data        : Record<string, any>,
     onSuccess   : (res: Response) => void,
     onError     : (err: any) => void
 ) => {
-    return request<any, Response>({
+    return request<Response>({
         config : { url : `${API_MASTER_ROOT}/part/removeProdInfo`, method : 'POST', data},
         onSuccess,
         onError
     });
 }
 
-// 엑셀업로드 유효성 체크
+// ?묒??낅줈???좏슚??泥댄겕
 export const getCheckList = (
     data        : Record<string, any>,
     onSuccess   : (res: CheckResponse) => void,
     onError     : (err: any) => void
 ) => {
-    return request<any, CheckResponse>({
+    return request<CheckResponse>({
         config : { url : `${API_MASTER_ROOT}/part/getCheckList`, method : 'POST', data},
         onSuccess,
         onError
