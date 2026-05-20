@@ -12,11 +12,11 @@ import { getCommCodeList, type CommCode } from "../../api/common/commonService"
 const CJ_WMS_MASTER_0010: React.FC = () => {
     // 권한센터 목록 조회(공통)
     const { srvcList, whList, selectSrvcCd, selectWhCd } = useCommonWhList();
-    const [searchSrvcCd, setSearchSrvcCd] = useState(selectSrvcCd);
-    const [searchWhCd, setSearchWhCd] = useState(selectWhCd);
     // 차량톤급 조회(공통)
     const [tonList, setTonList] = useState<CommCode[]>([]);
     // 검색조건
+    const [searchSrvcCd, setSearchSrvcCd] = useState(selectSrvcCd);
+    const [searchWhCd, setSearchWhCd] = useState(selectWhCd);
     const [searchVehicleNo, setSearchVehicleNo] = useState("");
     const [searchUseYn, setSearchUseYn] = useState("");
     // 공통팝업
@@ -54,13 +54,19 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
             {  
                   sys_grp_cd    : 'WM1010'
                 , sys_cd        : ''
-                , sys_cdnm      : '' 
+                , sys_cdnm      : ''
+                , srvc_cd       : ''
+                , sys_etc1      : ''
+                , sys_etc2      : ''
+                , sys_etc3      : ''
+                , sys_etc4      : ''
+                , sys_etc5      : ''
             },
             (res) => setTonList(res.data ?? []),
             (err) => console.error("톤급 목록 조회 실패 : ", err)
         );
     }, []);
-
+    
     // 차량목록 조회
     const handleSearch = () => {
         getList(
@@ -313,7 +319,7 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
         ];
 
         const exampleRows = [
-            { srvcCd: "1201", whCd: "C102", vehicleNo: "서울12가 1234", drvNm: "홍길동", tonClsCd: "5", hpNo: "010-1234-5678" },
+            { srvcCd: "1201", whCd: "C102", vehicleNo: "", drvNm: "홍길동", tonClsCd: "5", hpNo: "010-1234-5678" },
             { srvcCd: "1201", whCd: "C102", vehicleNo: "경기34나 5678", drvNm: "김철수", tonClsCd: "1.5", hpNo: "010-1234-5678" },
         ];
 
