@@ -192,31 +192,7 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
 
     // 행추가
     const handleAddRow = () => {
-         setReceiptDtlList(prev => [...prev, {
-            srvcCd          : '',
-            whCd            : '',
-            inNo            : '',
-            inExpectedSeq   : 0,
-            inExpectedDate  : '',
-            inExpectedNo    : '',
-            vendorCd        : '',
-            vendorNm        : '',
-            prodCd          : '',
-            prodNm          : '',
-            originalQty     : 0,
-            status          : '',
-            rmk             : '',
-            inZoneCd        : '',
-            inZoneNm        : '',
-            inLocCd         : '',
-            regId           : '',
-            regDate         : '',
-            updId           : '',
-            updDate         : '',
-            isNew           : true,
-            isDirty         : false,
-            uploadStatus    : ''
-         }]);
+    
     }
     
     // 행삭제
