@@ -1,42 +1,37 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getZoneSearchList } from '../../api/common/commonService';
-import styles from './ZoneSearchPopup.module.css';
-
-interface ZoneResult {
-    zone_cd : string;
-    zone_nm : string;
-    use_yn  : string;
-}
+import { getLocSearchList, type LocSearch } from '../../api/common/commonService';
+import styles from './LocSearchPopup.module.css';
 
 interface Props {
     isOpen          : boolean;
     srvcCd          : string;
     whCd            : string;
-    initialZoneCd?  : string;
-    onSelect        : (zoneCd: string, zoneNm: string) => void;
+    zoneCd?         : string;
+    initialLocCd?   : string;
+    onSelect        : (locCd: string) => void;
     onClose         : () => void;
 }
 
-const ZoneSearchPopup: React.FC<Props> = ({ isOpen, srvcCd, whCd, initialZoneCd, onSelect, onClose }) => {
-    const [searchZoneCd, setSearchZoneCd] = useState('');
-    const [searchUseYn,  setSearchUseYn]  = useState('');
-    const [zoneList,     setZoneList]     = useState<ZoneResult[]>([]);
-    const [searched,     setSearched]     = useState(false);
+const LocSearchPopup: React.FC<Props> = ({ isOpen, srvcCd, whCd, zoneCd, initialLocCd, onSelect, onClose }) => {
+    const [searchLocCd, setSearchLocCd] = useState('');
+    const [searchUseYn, setSearchUseYn] = useState('');
+    const [locList,     setLocList]     = useState<LocSearch[]>([]);
+    const [searched,    setSearched]    = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (isOpen) {
-            const initVal = initialZoneCd ?? '';
-            setSearchZoneCd(initVal);
+            const initVal = initialLocCd ?? '';
+            setSearchLocCd(initVal);
             setSearchUseYn('');
-            setZoneList([]);
+            setLocList([]);
             setSearched(false);
             setTimeout(() => inputRef.current?.focus(), 50);
 
             if (initVal) {
-                getZoneSearchList(
-                    { srvcCd, whCd, zoneCd: initVal, zoneNm: '', locCd: '', useYn: '' },
-                    (res) => { setZoneList(res.data ?? []); setSearched(true); },
+                getLocSearchList(
+                    { srvcCd, whCd, zoneCd: zoneCd ?? '', locCd: initVal, useYn: '' },
+                    (res) => { setLocList(res.data ?? []); setSearched(true); },
                     () => {}
                 );
             }
@@ -44,9 +39,9 @@ const ZoneSearchPopup: React.FC<Props> = ({ isOpen, srvcCd, whCd, initialZoneCd,
     }, [isOpen]);
 
     const handleSearch = () => {
-        getZoneSearchList(
-            { srvcCd, whCd, zoneCd: searchZoneCd, zoneNm: '', locCd: '', useYn: searchUseYn },
-            (res) => { setZoneList(res.data ?? []); setSearched(true); },
+        getLocSearchList(
+            { srvcCd, whCd, zoneCd: zoneCd ?? '', locCd: searchLocCd, useYn: searchUseYn },
+            (res) => { setLocList(res.data ?? []); setSearched(true); },
             () => {}
         );
     };
@@ -56,8 +51,8 @@ const ZoneSearchPopup: React.FC<Props> = ({ isOpen, srvcCd, whCd, initialZoneCd,
         if (e.key === 'Escape') onClose();
     };
 
-    const handleSelect = (zoneCd: string, zoneNm: string) => {
-        onSelect(zoneCd, zoneNm);
+    const handleSelect = (locCd: string) => {
+        onSelect(locCd);
         onClose();
     };
 
@@ -69,7 +64,7 @@ const ZoneSearchPopup: React.FC<Props> = ({ isOpen, srvcCd, whCd, initialZoneCd,
 
                 {/* 헤더 */}
                 <div className={styles.header}>
-                    <h4 className={styles.title}>존 검색</h4>
+                    <h4 className={styles.title}>로케이션 검색</h4>
                     <button className={styles.closeBtn} onClick={onClose}>
                         <span className="material-symbols-outlined">close</span>
                     </button>
@@ -81,9 +76,9 @@ const ZoneSearchPopup: React.FC<Props> = ({ isOpen, srvcCd, whCd, initialZoneCd,
                         ref={inputRef}
                         type="text"
                         className={styles.input}
-                        placeholder="존코드"
-                        value={searchZoneCd}
-                        onChange={e => setSearchZoneCd(e.target.value)}
+                        placeholder="로케이션코드"
+                        value={searchLocCd}
+                        onChange={e => setSearchLocCd(e.target.value)}
                         onKeyDown={handleKeyDown}
                     />
                     <select
@@ -105,23 +100,23 @@ const ZoneSearchPopup: React.FC<Props> = ({ isOpen, srvcCd, whCd, initialZoneCd,
                     <table className={styles.table}>
                         <thead className={styles.thead}>
                             <tr>
-                                <th style={{ width: '40%' }}>존코드</th>
-                                <th>존명</th>
+                                <th style={{ width: '45%' }}>로케이션코드</th>
+                                <th style={{ width: '30%' }}>존코드</th>
                                 <th>사용여부</th>
                             </tr>
                         </thead>
                         <tbody className={styles.tbody}>
-                            {searched && zoneList.length === 0 ? (
+                            {searched && locList.length === 0 ? (
                                 <tr>
-                                    <td colSpan={2} className={styles.empty}>
+                                    <td colSpan={3} className={styles.empty}>
                                         <span className="material-symbols-outlined">inbox</span>
                                         <p>조회된 데이터가 없습니다.</p>
                                     </td>
                                 </tr>
-                            ) : zoneList.map((v, i) => (
-                                <tr key={i} onDoubleClick={() => handleSelect(v.zone_cd, v.zone_nm)}>
-                                    <td className={styles.zoneCd}>{v.zone_cd}</td>
-                                    <td>{v.zone_nm}</td>
+                            ) : locList.map((v, i) => (
+                                <tr key={i} onDoubleClick={() => handleSelect(v.loc_cd)}>
+                                    <td className={styles.locCd}>{v.loc_cd}</td>
+                                    <td>{v.zone_cd}</td>
                                     <td>{v.use_yn}</td>
                                 </tr>
                             ))}
@@ -135,4 +130,4 @@ const ZoneSearchPopup: React.FC<Props> = ({ isOpen, srvcCd, whCd, initialZoneCd,
     );
 };
 
-export default ZoneSearchPopup;
+export default LocSearchPopup;

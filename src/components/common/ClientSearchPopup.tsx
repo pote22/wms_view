@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getList } from '../../api/master/master_0020Service';
+import { getClientSearchList } from '../../api/common/commonService';
 import styles from './ClientSearchPopup.module.css';
 
 interface ClientResult {
@@ -34,7 +34,7 @@ const ClientSearchPopup: React.FC<Props> = ({ isOpen, srvcCd, whCd, initialClien
             setTimeout(() => inputRef.current?.focus(), 50);
 
             if (initVal) {
-                getList(
+                getClientSearchList(
                     { srvcCd, whCd, clientCd: initVal, clientNm: '', useYn: '' },
                     (res) => { setClientList((res.data ?? []) as any[]); setSearched(true); },
                     () => {}
@@ -44,7 +44,7 @@ const ClientSearchPopup: React.FC<Props> = ({ isOpen, srvcCd, whCd, initialClien
     }, [isOpen]);
 
     const handleSearch = () => {
-        getList(
+        getClientSearchList(
             { srvcCd, whCd, clientCd: searchClientCd, useYn: searchUseYn },
             (res) => { setClientList((res.data ?? []) as any[]); setSearched(true); },
             () => {}
@@ -105,8 +105,8 @@ const ClientSearchPopup: React.FC<Props> = ({ isOpen, srvcCd, whCd, initialClien
                     <table className={styles.table}>
                         <thead className={styles.thead}>
                             <tr>
-                                <th style={{ width: '35%' }}>거래처코드</th>
-                                <th>거래처명</th>
+                                <th style={{ width: '20%' }}>거래처코드</th>
+                                <th style={{ width: '65%' }}>거래처명</th>
                                 <th style={{ width: '15%' }}>사용여부</th>
                             </tr>
                         </thead>
