@@ -29,6 +29,7 @@ export interface ReceiptD {
     inExpectedSeq   : number;
     inExpectedDate  : string;
     inExpectedNo    : string;
+    lotNo           : string;
     vendorCd        : string;
     vendorNm        : string;
     prodCd          : string;
