@@ -58,9 +58,10 @@ export interface ReceiptDtlRow extends ReceiptD {
     uploadStatus    : string;
 }
 
-export interface RcptKeyInfo {
-    inNoSeq         : string;
-    today           : string;
+export interface KeyInfo {
+    inNo            : string | null;
+    inNoSeq         : string | null;
+    today           : string | null;
 }
 
 export interface Response {
@@ -113,13 +114,13 @@ export const getKeyInfo = (
 };
 
 // ?낃퀬???
-export const saveReceipt = (
+export const saveReceiptList = (
     data        : Record<string, any>,
     onSuccess   : (res: Response) => void,
     onError     : (err: any) => void
 ) => {
     return request<Response>({
-        config : { url : `${API_RECEIPT_ROOT}/0010/saveReceipt`, method : 'POST', data },
+        config : { url : `${API_RECEIPT_ROOT}/0010/saveReceiptList`, method : 'POST', data },
         onSuccess,
         onError
     });

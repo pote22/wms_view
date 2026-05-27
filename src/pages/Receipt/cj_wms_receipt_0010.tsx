@@ -16,7 +16,7 @@ import ExcelJS from 'exceljs';
 import * as XLSX from 'xlsx';
 // 공통서비스
 import { getCommCodeList, type CommCode } from '../../api/common/commonService';
-import { getList, saveReceipt, type ReceiptHdrRow, type ReceiptDtlRow, type RcptKeyInfo, getKeyInfo } from '../../api/receipt/receipt_0010Service'
+import { getList, getKeyInfo, saveReceiptList, type ReceiptHdrRow, type ReceiptDtlRow, type KeyInfo } from '../../api/receipt/receipt_0010Service'
 // 검색팝업(거래처, 차량, 품목, 존)
 import ClientSearchPopup from '../../components/common/ClientSearchPopup';
 import VehicleSearchPopup from '../../components/common/VehicleSearchPopup';
@@ -52,11 +52,18 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
     const [receiptHdrList, setReceiptHdrList]               = useState<ReceiptHdrRow[]>([]);        // 입고리스트(헤더)
     const [receiptDtlList, setReceiptDtlList]               = useState<ReceiptDtlRow[]>([]);        // 입고리스트(디테일)
     const [isSearched, setIsSearched]                       = useState(false);                      
-    // 키값정보
-    const [keyInfo, setKeyInfo]                             = useState<RcptKeyInfo>();
     // 팝업
     const [isClientSearchOpen,  setIsClientSearchOpen]      = useState(false);
     const [isVehicleSearchOpen, setIsVehicleSearchOpen]     = useState(false);
+    // 키값정보
+    const [keyInfo, setKeyInfo]                             = useState<KeyInfo>();
+
+    const cellRefs = useRef<Map<string, HTMLInputElement | HTMLSelectElement>>(new Map());
+    const setCellRef = (idx: number, field: string) => (
+        el: HTMLInputElement | HTMLSelectElement | null) => {
+            if (el) cellRefs.current.set(`${idx}_${field}`, el);
+            else cellRefs.current.delete(`${idx}_${field}`);
+    };
 
     const [isProdSearchOpen,  setIsProdSearchOpen]          = useState(false);
     const [activeProdRowIdx,  setActiveProdRowIdx]          = useState<number>(-1);
@@ -127,7 +134,80 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
     
     // 조회
     const handleSearch = () => {
-        showAlert("조회");
+        getList(
+          { srvcCd: searchSrvcCd, whCd: searchWhCd, inNo: searchInNo },
+          (res) => {
+              const hdrList: ReceiptHdrRow[] = (res.data?.receiptHdrList ?? []).map((h: any) => ({
+                  srvcCd          : h.srvc_cd           ?? '',
+                  whCd            : h.wh_cd             ?? '',
+                  inNo            : h.in_no             ?? '',
+                  inExpectedDate  : h.in_expected_date  ?? '',
+                  inExpectedNo    : h.in_expected_no    ?? '',
+                  vendorCd        : h.vendor_cd         ?? '',
+                  vendorNm        : h.vendor_nm         ?? '',
+                  receiptClsCd    : h.receipt_cls_cd    ?? '',
+                  totline         : h.totline           ?? 0,
+                  originalQty     : h.original_qty      ?? 0,
+                  status          : h.status            ?? '',
+                  rmk             : h.rmk               ?? '',
+                  receiptDate     : h.receipt_date      ?? '',
+                  receiptNo       : h.receipt_no        ?? 0,
+                  inVNo           : h.in_v_no           ?? '',
+                  inVId           : h.in_v_id           ?? '',
+                  inVNm           : h.in_v_nm           ?? '',
+                  receiptType     : h.receipt_type      ?? '',
+                  isNew           : false,
+                  isDirty         : false,
+                  uploadStatus    : '',
+              }));
+
+              const dtlList: ReceiptDtlRow[] = (res.data?.receiptDtlList ?? []).map((d: any) => ({
+                  srvcCd          : d.srvc_cd           ?? '',
+                  whCd            : d.wh_cd             ?? '',
+                  inNo            : d.in_no             ?? '',
+                  inExpectedSeq   : d.in_expected_seq   ?? 0,
+                  inExpectedDate  : d.in_expected_date  ?? '',
+                  inExpectedNo    : d.in_expected_no    ?? '',
+                  lotNo           : d.lot_no            ?? '',
+                  vendorCd        : d.vendor_cd         ?? '',
+                  vendorNm        : d.vendor_nm         ?? '',
+                  prodCd          : d.prod_cd           ?? '',
+                  prodNm          : d.prod_nm           ?? '',
+                  originalQty     : d.original_qty      ?? 0,
+                  status          : d.status            ?? '',
+                  rmk             : d.rmk               ?? '',
+                  inZoneCd        : d.in_zone_cd        ?? '',
+                  inZoneNm        : d.in_zone_nm        ?? '',
+                  inLocCd         : d.in_loc_cd         ?? '',
+                  regId           : d.reg_id            ?? '',
+                  regDate         : d.reg_date          ?? '',
+                  updId           : d.upd_id            ?? '',
+                  updDate         : d.upd_date          ?? '',
+                  isNew           : false,
+                  isDirty         : false,
+                  uploadStatus    : '',
+              }));
+
+              setReceiptHdrList(hdrList);
+              setReceiptDtlList(dtlList);
+              setIsSearched(true);
+              setIsNewMode(false);
+
+              // 헤더 정보로 필터 동기화
+              if (hdrList.length > 0) {
+                  const hdr = hdrList[0];
+                  setSearchInNo(hdr.inNo);
+                  setSearchInCategory(hdr.receiptClsCd);
+                  setSearchClientCd(hdr.vendorCd);
+                  setSearchClientNm(hdr.vendorNm);
+                  setSearchVehicleNo(hdr.inVNo);
+                  setSearchVehicleNm(hdr.inVNm);
+                  setSearchInExptDate(hdr.inExpectedDate);
+                  setSearchInType(hdr.receiptType);
+              }
+          },
+          (err) => showAlert('조회 실패: ' + err?.message)
+      );
     }
 
     // 신규
@@ -165,29 +245,34 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
         setIsNewMode(true);
         setSearchInNo('');
         setSearchInCategory('1');
+        setSearchClientCd('');
+        setSearchClientNm('');
+        setSearchVehicleNo('');
+        setSearchVehicleNm('');
         setSearchInExptDate(formatDate(new Date()));
         setSearchInType(receiptType[0]?.sys_cd ?? '');
-        setKeyInfo({ inNoSeq : '', today : '' });
-
         // 4. 키값 발급
         getKeyInfo(
             {},
             (res) => {
                 const keyData = res.data[0];
-                
-                // 키값 저장
-                setKeyInfo({
-                    inNoSeq : keyData.in_no_seq ?? '',
-                    today   : keyData.today     ?? ''
-                });
-
                 // 입고번호 생성
-                const inNo = searchWhCd + "" + keyInfo?.today + "" + keyInfo?.inNoSeq
+                const inNo = searchWhCd + "" + keyData.today + "" + keyData.in_no_seq;
+
+                //console.log("---> in_no_seq : " + keyData.in_no_seq);
+
+                // keyInfo state에 Set
+                setKeyInfo({
+                    inNo    : inNo,
+                    inNoSeq : keyData.in_no_seq,
+                    today   : keyData.today
+                });
 
                 setReceiptHdrList(prev => prev.map(row => ({
                     ...row,
                     inNo            : inNo,
-                    inExpectedNo    : keyInfo?.inNoSeq ?? ''
+                    inExpectedNo    : keyData?.in_no_seq ?? '',
+                    status          : '0'
                 })));
             },
             (err) => showAlert("조회 실패: " + err?.message)
@@ -196,7 +281,119 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
 
     // 저장
     const handleSave = () => {
-        showAlert("저장");
+        // 1. 상세 0건
+        if (receiptDtlList.length === 0) {
+            showAlert('품목을 추가하세요.');
+            return;
+        }
+
+        // 2. 고객사/센터 유효성
+        const validSrvc = srvcList.some(s => s.srvcCd === searchSrvcCd);
+        const validWh   = whList.some(w => w.whCd === searchWhCd);
+        if (!validSrvc || !validWh) {
+            showAlert('해당되지 않는 고객사 또는 센터입니다.');
+            return;
+        }
+
+        // 3. 입고상태 체크
+        const statusIdx = receiptDtlList.findIndex(row => row.status !== '0');
+        if (statusIdx !== -1) {
+            showAlert('해당 입고오더는 작업한 상태입니다.');
+            return;
+        }
+
+        // 4. 필수항목 체크 + 포커싱
+        const prodCdIdx = receiptDtlList.findIndex(row => !row.prodCd?.trim());
+        if (prodCdIdx !== -1) {
+            const el = cellRefs.current.get(`${prodCdIdx}_prodCd`);
+            showAlert('품목코드를 입력해주세요.', () => el?.focus());
+            return;
+        }
+
+        const zoneCdIdx = receiptDtlList.findIndex(row => !row.inZoneCd?.trim());
+        if (zoneCdIdx !== -1) {
+            const el = cellRefs.current.get(`${zoneCdIdx}_inZoneCd`);
+            showAlert('존코드를 입력해주세요.', () => el?.focus());
+            return;
+        }
+
+        const locCdIdx = receiptDtlList.findIndex(row => !row.inLocCd?.trim());
+        if (locCdIdx !== -1) {
+            const el = cellRefs.current.get(`${locCdIdx}_inLocCd`);
+            showAlert('로케이션을 입력해주세요.', () => el?.focus());
+            return;
+        }
+
+        const qtyIdx = receiptDtlList.findIndex(row => row.originalQty <= 0);
+        if (qtyIdx !== -1) {
+            const el = cellRefs.current.get(`${qtyIdx}_originalQty`);
+            showAlert('입고예정 수량은 0이상 입력가능합니다.', () => el?.focus());
+            return;
+        }
+
+        const lotNoIdx = receiptDtlList.findIndex(row => !row.lotNo?.trim());
+        if (lotNoIdx !== -1) {
+            const el = cellRefs.current.get(`${lotNoIdx}_lotNo`);
+            showAlert('입고일자를 입력해주세요.', () => el?.focus());
+            return;
+        }
+
+        // 5. 중복 품목(prodCd + inZoneCd + inLocCd) 체크
+        const seen = new Set<string>();
+        let dupIdx = -1;
+        
+        for (let idx = 0; idx < receiptDtlList.length; idx++) {
+            const key = `${receiptDtlList[idx].prodCd}|${receiptDtlList[idx].inZoneCd}|${receiptDtlList[idx].inLocCd}`;
+            if (seen.has(key)) { dupIdx = idx; break; }
+            seen.add(key);
+        }
+
+        if (dupIdx !== -1) {
+            const el = cellRefs.current.get(`${dupIdx}_prodCd`);
+            showAlert('중복된 품목정보가 있습니다.', () => el?.focus());
+            return;
+        }
+
+        // 저장 confirm
+        showConfirm('저장하시겠습니까?', () => {
+            closePopup();
+
+            const totalQty = receiptDtlList.reduce((sum, d) => sum + d.originalQty, 0);
+
+            const hdrList = receiptHdrList.map(({ isNew, isDirty, uploadStatus, ...h }) => ({
+                ...h,
+                totline         : receiptDtlList.length,
+                originalQty     : totalQty,
+                receiptType     : searchInType,
+                userId          : payload?.userId ?? '',
+            }));
+
+            const dtlList = receiptDtlList.map(({ isNew, isDirty, uploadStatus, ...d }) => ({
+                ...d,
+                inExpectedNo    : keyInfo?.inNoSeq ?? '',
+                userId          : payload?.userId ?? '',
+            }));
+
+            //console.log(hdrList);
+            //console.log(dtlList);
+
+            // 입고등록
+            saveReceiptList(
+                { hdrList, dtlList },
+                () => {
+                    setSearchInNo(keyInfo?.inNo ?? '');
+                    setSearchInCategory('');
+                    setSearchClientCd('');
+                    setSearchClientNm('');
+                    setSearchVehicleNo('');
+                    setSearchVehicleNm('');
+                    handleSearch();
+                    showAlert('저장 되었습니다.');
+                },
+                (err) => showAlert('저장 실패: ' + err?.message)
+            );
+
+        });
     }
 
     // 엑셀다운로드
@@ -216,13 +413,27 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
             return;
         }
 
+        setIsNewMode(false);
+
+        //입고헤더 set
+        setReceiptHdrList(prev => prev.map(row => ({
+            ...row,
+            receiptClsCd    : inCategory,
+            vendorCd        : searchClientCd,
+            vendorNm        : searchClientNm,
+            inVNo           : searchVehicleNo,
+            inVNm           : searchVehicleNm,
+            inExpectedDate  : searchInExptDate
+        })));
+
+        //입고상세 set
         setReceiptDtlList(prev => [...prev, {
             srvcCd          : searchSrvcCd,
             whCd            : searchWhCd,
             inNo            : receiptHdrList[0].inNo,
             inExpectedSeq   : 0,
-            inExpectedDate  : '',
-            inExpectedNo    : '',
+            inExpectedDate  : searchInExptDate,
+            inExpectedNo    : receiptHdrList[0].inExpectedNo,
             lotNo           : searchInExptDate,
             vendorCd        : searchClientCd,
             vendorNm        : searchClientNm,
@@ -337,6 +548,11 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
         setReceiptDtlList(prev => prev.map((row, i) =>
             i === idx ? { ...row, [field]: value, isDirty: true } : row
         ));
+    };
+
+    // 인라인 컬럼 편집
+    const handleCellChange = (idx: number, field: keyof ReceiptDtlRow, value: string) => {
+        setReceiptDtlList(prev => prev.map((v, i) => i === idx ? { ...v, [field]: value, isDirty: true } : v));
     };
 
     return (
@@ -623,7 +839,9 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
                                         </td>
                                         <td className={styles.cellCenter}>
                                             <div className={styles.cellInputGroup}>
-                                                <input type='text' className={styles.cellInput} value={v.prodCd} readOnly />
+                                                <input type='text' className={styles.cellInput} value={v.prodCd} 
+                                                       onChange={e => handleCellChange(idx, "prodCd", e.target.value)} 
+                                                       ref={setCellRef(idx, "prodCd") as any}/>
                                                 <button className={styles.cellSearchBtn} onClick={() => {setActiveProdRowIdx(idx);setIsProdSearchOpen(true);}}>
                                                     <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>search</span>
                                                 </button>
@@ -632,7 +850,9 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
                                         <td className={styles.cellCenter}>{v.prodNm}</td>
                                         <td className={styles.cellCenter}>
                                             <div className={styles.cellInputGroup}>
-                                                <input type='text' className={styles.cellInput} value={v.inZoneCd} readOnly />
+                                                <input type='text' className={styles.cellInput} value={v.inZoneCd}
+                                                       onChange={e => handleCellChange(idx, "inZoneCd", e.target.value)}   
+                                                       ref={setCellRef(idx, "inZoneCd") as any}/>
                                                 <button className={styles.cellSearchBtn} onClick={() => { setActiveZoneRowIdx(idx);setIsZoneSearchOpen(true);}}>
                                                     <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>search</span>
                                                 </button>
@@ -641,7 +861,9 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
                                         <td className={styles.cellCenter}>{v.inZoneNm}</td>
                                         <td className={styles.cellCenter}>
                                             <div className={styles.cellInputGroup}>
-                                                <input type='text' className={styles.cellInput} value={v.inLocCd} readOnly />
+                                                <input type='text' className={styles.cellInput} value={v.inLocCd}
+                                                       onChange={e => handleCellChange(idx, "inLocCd", e.target.value)} 
+                                                       ref={setCellRef(idx, "inLocCd") as any}/>
                                                 <button className={styles.cellSearchBtn} onClick={() => { if (!v.inZoneCd) { showAlert('존코드를 먼저 검색하세요.'); return; } setActiveLocRowIdx(idx); setIsLocSearchOpen(true); }}>
                                                     <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>search</span>
                                                 </button>
@@ -654,6 +876,7 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
                                                 value={v.originalQty}
                                                 onChange={e => handleDtlChange(idx, 'originalQty', Number(e.target.value))}
                                                 min={0}
+                                                ref={setCellRef(idx, "originalQty") as any}
                                             />
                                         </td>
                                         <td className={styles.cellCenter}>
@@ -667,11 +890,12 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
                                                     placeholderText=""
                                                     isClearable
                                                     popperPlacement="bottom-end"
+                                                    ref={setCellRef(idx, "lotNo") as any}
                                                 />
                                             </div>
                                         </td>
                                         <td className={styles.cellCenter}>
-                                            <input type='text' className={styles.cellInput} value={v.rmk}/>
+                                            <input type='text' className={styles.cellInput} value={v.rmk} onChange={e => handleDtlChange(idx, 'rmk', e.target.value)}/>
                                         </td>
                                         <td className={styles.cellCenter}>
                                             { receiptStatus.find(s => s.sys_cd === v.status) ?.sys_cdnm ?? v.status }
@@ -690,28 +914,6 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
                     {/* Pagination */}
                     <div className={styles.pagination}>
                         <span className={styles.pageInfo}>총 {receiptDtlList.length} 건</span>
-
-                        {/* 페이징 기능 주석화 
-                        <div className={styles.pageList}>
-                            <button className={`${styles.btnPage} ${styles.btnPageNav}`}
-                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                disabled={currentPage === 1}>
-                                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>chevron_left</span>
-                            </button>
-                            {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-                                <button key={p}
-                                    className={`${styles.btnPage} ${p === currentPage ? styles.btnPageActive : ''}`}
-                                    onClick={() => setCurrentPage(p)}>
-                                    {p}
-                                </button>
-                            ))}
-                            <button className={`${styles.btnPage} ${styles.btnPageNav}`}
-                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                disabled={currentPage === totalPages}>
-                                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>chevron_right</span>
-                            </button>
-                        </div>
-                        */}
                     </div>
                 </div>
             </div>
