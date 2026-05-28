@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { ko } from 'date-fns/locale';
 import { useCommonWhList } from '../../api/common/commonWhList';
-import styles from './cj_wms_receipt_0020.module.css';
+import styles            from './cj_wms_receipt_0020.module.css';
+import ClientSearchPopup  from '../../components/common/ClientSearchPopup';
+import ProdSearchPopup    from '../../components/common/ProdSearchPopup';
+import VehicleSearchPopup from '../../components/common/VehicleSearchPopup';
+import { formatDate } from '../../utils/dateUtils';
 
 interface InbRow {
     chk         : string;
@@ -43,14 +50,25 @@ interface InbRow {
 
 const CJ_WMS_RECEIPT_0020: React.FC = () => {
     const { srvcList, whList, selectSrvcCd, selectWhCd } = useCommonWhList();
-    const [searchSrvcCd,    setSearchSrvcCd]    = useState(selectSrvcCd);
-    const [searchWhCd,      setSearchWhCd]      = useState(selectWhCd);
-    const [searchInbType,   setSearchInbType]   = useState('');
-    const [searchTranType,  setSearchTranType]  = useState('');
-    const [searchStatus,    setSearchStatus]    = useState('');
-    const [searchInbNo,     setSearchInbNo]     = useState('');
-    const [searchProdCd,    setSearchProdCd]    = useState('');
-    const [searchVehicleNo, setSearchVehicleNo] = useState('');
+    const [searchSrvcCd,         setSearchSrvcCd]         = useState(selectSrvcCd);
+    const [searchWhCd,           setSearchWhCd]           = useState(selectWhCd);
+    const [searchInbType,        setSearchInbType]        = useState('');
+    const [searchStatus,         setSearchStatus]         = useState('');
+    const [searchInbNo,          setSearchInbNo]          = useState('');
+    const [searchTranType,       setSearchTranType]       = useState('');
+    const [searchDateType,       setSearchDateType]       = useState('PLAN');
+    const [searchInExptDateFrom, setSearchInExptDateFrom] = useState('');
+    const [searchInExptDateTo,   setSearchInExptDateTo]   = useState('');
+    const [searchSupplierCd,     setSearchSupplierCd]     = useState('');
+    const [searchProdCd,         setSearchProdCd]         = useState('');
+    const [searchProdNm,         setSearchProdNm]         = useState('');
+    const [searchVehicleNo,      setSearchVehicleNo]      = useState('');
+    const [searchDrvNm,          setSearchDrvNm]          = useState('');
+    const [searchSupplierNm,     setSearchSupplierNm]     = useState('');
+    const [isClientPopupOpen,    setIsClientPopupOpen]    = useState(false);
+    const [isProdPopupOpen,      setIsProdPopupOpen]      = useState(false);
+    const [isVehiclePopupOpen,   setIsVehiclePopupOpen]   = useState(false);
+    const [noInbReasonSel,       setNoInbReasonSel]       = useState('');
     const [rows,        setRows]        = useState<InbRow[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
     const rowsPerPage = 20;
@@ -72,6 +90,21 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
         setRows(prev => prev.map((r, i) => i === idx ? { ...r, chk: r.chk === '1' ? '0' : '1' } : r));
     };
 
+    const handleClientSelect = (clientCd: string, clientNm: string) => {
+        setSearchSupplierCd(clientCd);
+        setSearchSupplierNm(clientNm);
+    };
+
+    const handleProdSelect = (prodCd: string, prodNm: string) => {
+        setSearchProdCd(prodCd);
+        setSearchProdNm(prodNm);
+    };
+
+    const handleVehicleSelect = (vehicleNo: string, drvNm: string) => {
+        setSearchVehicleNo(vehicleNo);
+        setSearchDrvNm(drvNm);
+    };
+
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'PLAN': return <span className={styles.badgePlan}>입고예정</span>;
@@ -85,6 +118,7 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
     const pagedRows  = rows.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
 
     return (
+        <>
         <div className={styles.pageContainer}>
             <div className={styles.contentWrapper}>
                 <div className={styles.sectionCard}>
@@ -102,7 +136,7 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                 </button>
                                 <button className={`${styles.btn} ${styles.btnOutline}`}>
                                     <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span>
-                                    엑셀다운로드
+                                    엑셀
                                 </button>
                                 <button className={`${styles.btn} ${styles.btnOutline}`}>
                                     <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>print</span>
@@ -115,9 +149,10 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Filter — 4컬럼 × 2행 */}
+                        {/* Filter — 4컬럼 × 4행 */}
                         <div className={styles.filterBox}>
                             <div className={styles.filterGrid}>
+                                {/* 1행 */}
                                 <div className={styles.filterItem}>
                                     <label className={styles.filterLabel}>고객사</label>
                                     <select className={styles.filterSelect} value={searchSrvcCd} onChange={e => setSearchSrvcCd(e.target.value)}>
@@ -143,15 +178,6 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                     </select>
                                 </div>
                                 <div className={styles.filterItem}>
-                                    <label className={styles.filterLabel}>수불유형</label>
-                                    <select className={styles.filterSelect} value={searchTranType} onChange={e => setSearchTranType(e.target.value)}>
-                                        <option value="">전체</option>
-                                        <option value="T">이관오더</option>
-                                        <option value="P">구매오더</option>
-                                        <option value="S">판매오더</option>
-                                    </select>
-                                </div>
-                                <div className={styles.filterItem}>
                                     <label className={styles.filterLabel}>입고상태</label>
                                     <select className={styles.filterSelect} value={searchStatus} onChange={e => setSearchStatus(e.target.value)}>
                                         <option value="">전체</option>
@@ -160,18 +186,88 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                         <option value="CONF">입고확정</option>
                                     </select>
                                 </div>
+                                {/* 2행 */}
                                 <div className={styles.filterItem}>
                                     <label className={styles.filterLabel}>입고번호</label>
                                     <input type="text" className={styles.filterInput} placeholder="입고번호" value={searchInbNo} onChange={e => setSearchInbNo(e.target.value)} />
                                 </div>
                                 <div className={styles.filterItem}>
+                                    <label className={styles.filterLabel}>수불유형</label>
+                                    <select className={styles.filterSelect} value={searchTranType} onChange={e => setSearchTranType(e.target.value)}>
+                                        <option value="">전체</option>
+                                        <option value="T">이관오더</option>
+                                        <option value="P">구매오더</option>
+                                        <option value="S">판매오더</option>
+                                    </select>
+                                </div>
+                                <div className={styles.filterItemDate}>
+                                    <label className={styles.filterLabel}>기간</label>
+                                    <div className={styles.filterDateGroup}>
+                                        <select className={styles.filterSelectNarrow} value={searchDateType} onChange={e => setSearchDateType(e.target.value)}>
+                                            <option value="PLAN">입고예정일</option>
+                                            <option value="COMP">입고완료일</option>
+                                        </select>
+                                        <div className={styles.filterDateRange}>
+                                            <div className={styles.filterDateWrapper}>
+                                                <span className={`material-symbols-outlined ${styles.filterDateIcon}`}>calendar_today</span>
+                                                <DatePicker
+                                                    selected={searchInExptDateFrom ? new Date(`${searchInExptDateFrom.slice(0,4)}-${searchInExptDateFrom.slice(4,6)}-${searchInExptDateFrom.slice(6,8)}`) : null}
+                                                    onChange={(date: Date | null) => setSearchInExptDateFrom(date ? formatDate(date) : '')}
+                                                    dateFormat="yyyy-MM-dd"
+                                                    locale={ko}
+                                                    placeholderText="시작일"
+                                                    isClearable
+                                                />
+                                            </div>
+                                            <span className={styles.filterDateSep}>~</span>
+                                            <div className={styles.filterDateWrapper}>
+                                                <span className={`material-symbols-outlined ${styles.filterDateIcon}`}>calendar_today</span>
+                                                <DatePicker
+                                                    selected={searchInExptDateTo ? new Date(`${searchInExptDateTo.slice(0,4)}-${searchInExptDateTo.slice(4,6)}-${searchInExptDateTo.slice(6,8)}`) : null}
+                                                    onChange={(date: Date | null) => setSearchInExptDateTo(date ? formatDate(date) : '')}
+                                                    dateFormat="yyyy-MM-dd"
+                                                    locale={ko}
+                                                    placeholderText="종료일"
+                                                    isClearable
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {/* 3행 */}
+                                <div className={styles.filterItemWide}>
+                                    <label className={styles.filterLabel}>매입처</label>
+                                    <div className={styles.filterInputGroup}>
+                                        <input type="text" className={styles.filterInput} value={searchSupplierCd} placeholder="매입처코드" />
+                                        <button className={styles.filterSearchBtn} onClick={() => setIsClientPopupOpen(true)}>
+                                            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>search</span>
+                                        </button>
+                                        <input type="text" className={styles.filterInputReadonly} value={searchSupplierNm} readOnly placeholder="" />
+                                    </div>
+                                </div>
+                                <div className={styles.filterItemWide}>
                                     <label className={styles.filterLabel}>품번</label>
-                                    <input type="text" className={styles.filterInput} placeholder="품번" value={searchProdCd} onChange={e => setSearchProdCd(e.target.value)} />
+                                    <div className={styles.filterInputGroup}>
+                                        <input type="text" className={styles.filterInput} value={searchProdCd} placeholder="품번" />
+                                        <button className={styles.filterSearchBtn} onClick={() => setIsProdPopupOpen(true)}>
+                                            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>search</span>
+                                        </button>
+                                        <input type="text" className={styles.filterInputReadonly} value={searchProdNm} readOnly placeholder="" />
+                                    </div>
                                 </div>
-                                <div className={styles.filterItem}>
+                                {/* 4행 */}
+                                <div className={styles.filterItemWide}>
                                     <label className={styles.filterLabel}>차량번호</label>
-                                    <input type="text" className={styles.filterInput} placeholder="차량번호" value={searchVehicleNo} onChange={e => setSearchVehicleNo(e.target.value)} />
+                                    <div className={styles.filterInputGroup}>
+                                        <input type="text" className={styles.filterInput} value={searchVehicleNo} placeholder="차량번호" />
+                                        <button className={styles.filterSearchBtn} onClick={() => setIsVehiclePopupOpen(true)}>
+                                            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>search</span>
+                                        </button>
+                                        <input type="text" className={styles.filterInputReadonly} value={searchDrvNm} readOnly placeholder="" />
+                                    </div>
                                 </div>
+                                <div className={styles.filterItem} />
+                                <div className={styles.filterItem} />
                             </div>
                         </div>
 
@@ -182,10 +278,19 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                     <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>format_list_numbered</span>
                                     예정수량 '0' 일괄적용
                                 </button>
-                                <button className={styles.btnToolbar}>
-                                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>report</span>
-                                    미입고사유
-                                </button>
+                                <select
+                                    className={styles.selectToolbar}
+                                    value={noInbReasonSel}
+                                    onChange={e => setNoInbReasonSel(e.target.value)}
+                                >
+                                    <option value="">미입고사유 선택</option>
+                                    <option value="01">물량부족</option>
+                                    <option value="02">품질불량</option>
+                                    <option value="03">배송지연</option>
+                                    <option value="04">차량미도착</option>
+                                    <option value="05">고객요청</option>
+                                    <option value="06">기타</option>
+                                </select>
                                 <button className={styles.btnToolbar}>
                                     <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>save</span>
                                     비고저장
@@ -340,33 +445,35 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                             </tbody>
                         </table>
                     </div>
-
-                    {/* Pagination */}
-                    <div className={styles.pagination}>
-                        <span className={styles.pageInfo}>총 {rows.length}건</span>
-                        <div className={styles.pageList}>
-                            <button className={`${styles.btnPage} ${styles.btnPageNav}`}
-                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                disabled={currentPage === 1}>
-                                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>chevron_left</span>
-                            </button>
-                            {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-                                <button key={p}
-                                    className={`${styles.btnPage} ${p === currentPage ? styles.btnPageActive : ''}`}
-                                    onClick={() => setCurrentPage(p)}>
-                                    {p}
-                                </button>
-                            ))}
-                            <button className={`${styles.btnPage} ${styles.btnPageNav}`}
-                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                disabled={currentPage === totalPages}>
-                                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>chevron_right</span>
-                            </button>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
+
+        <ClientSearchPopup
+            isOpen={isClientPopupOpen}
+            srvcCd={searchSrvcCd}
+            whCd={searchWhCd}
+            initialClientCd={searchSupplierCd}
+            onSelect={handleClientSelect}
+            onClose={() => setIsClientPopupOpen(false)}
+        />
+        <ProdSearchPopup
+            isOpen={isProdPopupOpen}
+            srvcCd={searchSrvcCd}
+            whCd={searchWhCd}
+            initialProdCd={searchProdCd}
+            onSelect={handleProdSelect}
+            onClose={() => setIsProdPopupOpen(false)}
+        />
+        <VehicleSearchPopup
+            isOpen={isVehiclePopupOpen}
+            srvcCd={searchSrvcCd}
+            whCd={searchWhCd}
+            initialVehicleNo={searchVehicleNo}
+            onSelect={handleVehicleSelect}
+            onClose={() => setIsVehiclePopupOpen(false)}
+        />
+        </>
     );
 };
 
