@@ -126,3 +126,15 @@ export const saveReceiptList = (
     });
 };
 
+// 엑셀업로드 유효성 검증
+export const getCheckList = (
+    data        : Record<string, any>,
+    onSuccess   : (res: CheckResponse) => void,
+    onError     : (err: any) => void
+) => {
+    return request<CheckResponse>({
+        config : { url : `${API_RECEIPT_ROOT}/0010/getCheckList`, method : 'POST', data },
+        onSuccess,
+        onError
+    });
+};

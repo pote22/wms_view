@@ -25,69 +25,82 @@
 | Phase 17 | 공통코드 드롭다운 매핑 (품목관리) | 🔲 미완료 |
 | Phase 18 | 존&로케이션 관리 화면 구현 (WMS_MASTER_0040) | ✅ 완료 |
 | Phase 19 | 거래처관리 화면 구현 (WMS_MASTER_0020) | ✅ 완료 |
-| Phase 20 | 입고등록 화면 UI 구현 (WMS_RECEIPT_0010) | 🔲 미완료 |
+| Phase 20 | 입고등록 화면 전체 구현 (WMS_RECEIPT_0010) | ✅ 완료 |
 | Phase 21 | 입고예정&확정 화면 UI 구현 (WMS_RECEIPT_0020) | 🔲 미완료 |
 
 > 완료된 Phase 상세 → [`docs/history/frontend_phases.md`](history/frontend_phases.md)
 
 ---
 
-## Phase 20 — 입고등록 화면 UI 구현 (WMS_RECEIPT_0010) 🔲
+## Phase 20 — 입고등록 화면 전체 구현 (WMS_RECEIPT_0010) ✅
 
 ### 작업 파일
 - `src/pages/Receipt/cj_wms_receipt_0010.tsx`
 - `src/pages/Receipt/cj_wms_receipt_0010.module.css`
-- 디자인 참조: `src/design/cj_wms_receipt_0010_design.html`
+- `src/api/receipt/receipt_0010Service.ts`
 
-### 구현 범위 (UI 레이아웃)
+### 구현 내용
 
-#### 상단 영역
-- **타이틀**: 입고 등록 + 부제
-- **액션 버튼**: 조회(primary), 신규(outline), 저장(outline), 엑셀(outline)
+#### 화면 구조
+- 헤더/디테일 2-tier 구조 (`ReceiptHdrRow` + `ReceiptDtlRow`)
+- 신규 시 `getKeyInfo` API로 입고번호 자동 채번 (SEQ 기반)
+- 검색 필터: 고객사·센터·입고번호(1행) / 입고구분·매입처·차량번호·입고예정일·수불유형(2행)
+- 툴바: 행추가 / 행삭제 / 양식다운로드 / 엑셀업로드
 
-#### 검색 필터 (4컬럼 × 2행)
-| 항목 | 컨트롤 |
-|------|--------|
-| 고객사 | select (useCommonWhList) |
-| 센터 | select (useCommonWhList) |
-| 입고번호 | text input |
-| 입고구분 | select (전체 / 일반입고 / 반품입고) |
-| 매입처 | text input |
-| 차량번호 | text input |
-| 입고예정일 | date input |
-| 수불유형 | select (이관오더 / 구매오더 / 판매오더) |
+#### 인라인 편집 (디테일 테이블)
+| 컬럼 | 편집 방식 |
+|------|-----------|
+| 품목코드 | text input + ProdSearchPopup 연동 |
+| 존 | text input + ZoneSearchPopup 연동 |
+| 로케이션 | text input + LocSearchPopup 연동 |
+| 입고예정량 | number input |
+| 입고일자 | DatePicker (yyyyMMdd 형식) |
+| 비고 | text input |
 
-#### 툴바 (2분할)
-- 좌: 행추가 / 행삭제
-- 우: 양식다운로드 / 엑셀업로드
+#### 검색 팝업 연동
+- `ClientSearchPopup` — 매입처 검색
+- `VehicleSearchPopup` — 차량번호 검색
+- `ProdSearchPopup` — 품목코드 검색 (행별 `activeProdRowIdx` 관리)
+- `ZoneSearchPopup` — 존코드 검색 (행별 `activeZoneRowIdx` 관리)
+- `LocSearchPopup` — 로케이션 검색 (행별 `activeLocRowIdx` 관리, 존코드 선행 필수)
 
-#### 테이블 컬럼
-| 컬럼 | 너비 | 비고 |
+#### 행추가 유효성 검증 + 포커싱
+- 입고구분 필수 → `filterInCategoryRef` 포커스
+- 매입처 필수 → `filterClientCdRef` 포커스
+- 차량번호 필수 → `filterVehicleNoRef` 포커스
+- 입고예정일 필수 → `filterInExptDateRef` (div wrapper) → `querySelector('input')` 포커스
+
+#### 저장 유효성 검증 + 포커싱
+- 디테일 0건 차단
+- 고객사/센터 유효성 (srvcList/whList 대조)
+- 입고상태 ≠ '0' 차단 (이미 작업된 오더)
+- 품목코드 필수, 존코드 필수, 로케이션 필수, 수량 > 0, 입고일자 필수 (cellRef 포커스)
+- 품목코드 + 존코드 + 로케이션 중복 행 차단
+
+#### 엑셀 업로드
+- `fileInputRef` 방식 + XLSX `readAsArrayBuffer` 파싱
+- 컬럼 매핑: `row[0]`srvcCd · `row[1]`whCd · `row[2]`prodCd · `row[3]`inZoneCd · `row[4]`inLocCd · `row[5]`originalQty · `row[6]`lotNo · `row[7]`rmk
+- `getCheckList` API 호출 → 검증 결과 chipOk(녹색) / chipError(빨간색) 뱃지 표시
+- 업로드 중 버튼 `disabled` + "업로드 중..." 텍스트 표시
+
+#### API 서비스 (`receipt_0010Service.ts`)
+| 함수 | 엔드포인트 | 설명 |
+|------|-----------|------|
+| `getList` | POST `/api/receipt/0010/getList` | 헤더+디테일 조회 |
+| `getKeyInfo` | POST `/api/receipt/0010/getKeyInfo` | 입고번호 채번 |
+| `saveReceiptList` | POST `/api/receipt/0010/saveReceiptList` | 헤더+디테일 저장 |
+| `getCheckList` | POST `/api/receipt/0010/getCheckList` | 엑셀업로드 유효성 검증 |
+
+#### CSS 추가 (module.css)
+- `.chipOk` — 초록 배경, 검증 성공 표시
+- `.chipError` — 빨간 배경, 검증 실패 표시
+- `.chipGroup` — 복수 에러 뱃지 flex 배치
+
+#### 버그 수정 이력
+| 증상 | 원인 | 해결 |
 |------|------|------|
-| 체크박스 | 40px | 전체선택 |
-| 고객사 | 120px |  |
-| 센터 | 120px | |
-| 품목코드 | 200px | |
-| 품명 (ITEM NAME) | 220px | |
-| 존 | 120px | |
-| 존명 | 150px | |
-| 로케이션 | 150px | |
-| 입고예정량 | 150px | |
-| 입고일자 | 100px | |
-| 비고 (REMARKS) | 100px | |
-| 입고상태 | 100px | |
-| 등록자 | 90px | |
-| 등록일자 | 120px | |
-| 수정자 | 90px | |
-| 수정일자 | 120px | |
-
-#### 페이지네이션
-- 총 N건 표시 + 이전/다음 버튼 + 페이지 번호
-
-### 미구현 (API 연동 — 별도 Phase)
-- 조회 / 저장 / 입고지시 API 연동
-- 엑셀업로드 파싱 및 유효성 검증
-- 엑셀다운로드
+| 저장 후 조회 시 이전 입고번호로 조회됨 | `setSearchInNo` 비동기로 `handleSearch` 실행 시점에 state 미갱신 | `handleSearch(inNo?: string)` 파라미터 추가, 저장 콜백에서 `handleSearch(newInNo)` 직접 전달 |
+| 조회 버튼 클릭 시 Circular JSON 오류 | `onClick={handleSearch}` 시 MouseEvent가 `inNo`에 전달됨 | `onClick={() => handleSearch()}` 래핑으로 수정 |
 
 ---
 

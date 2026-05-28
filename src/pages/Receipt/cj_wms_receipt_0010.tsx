@@ -16,7 +16,7 @@ import ExcelJS from 'exceljs';
 import * as XLSX from 'xlsx';
 // 공통서비스
 import { getCommCodeList, type CommCode } from '../../api/common/commonService';
-import { getList, getKeyInfo, saveReceiptList, type ReceiptHdrRow, type ReceiptDtlRow, type KeyInfo } from '../../api/receipt/receipt_0010Service'
+import { getList, getKeyInfo, saveReceiptList, getCheckList, type ReceiptHdrRow, type ReceiptDtlRow, type KeyInfo, type CheckResult } from '../../api/receipt/receipt_0010Service'
 // 검색팝업(거래처, 차량, 품목, 존)
 import ClientSearchPopup from '../../components/common/ClientSearchPopup';
 import VehicleSearchPopup from '../../components/common/VehicleSearchPopup';
@@ -57,6 +57,14 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
     const [isVehicleSearchOpen, setIsVehicleSearchOpen]     = useState(false);
     // 키값정보
     const [keyInfo, setKeyInfo]                             = useState<KeyInfo>();
+
+    const fileInputRef          = useRef<HTMLInputElement>(null);
+    const [isUploading, setIsUploading] = useState(false);
+
+    const filterInCategoryRef   = useRef<HTMLSelectElement>(null);
+    const filterClientCdRef     = useRef<HTMLInputElement>(null);
+    const filterVehicleNoRef    = useRef<HTMLInputElement>(null);
+    const filterInExptDateRef   = useRef<HTMLDivElement>(null);
 
     const cellRefs = useRef<Map<string, HTMLInputElement | HTMLSelectElement>>(new Map());
     const setCellRef = (idx: number, field: string) => (
@@ -133,9 +141,9 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
     }, []);
     
     // 조회
-    const handleSearch = () => {
+    const handleSearch = (inNo?: string) => {
         getList(
-          { srvcCd: searchSrvcCd, whCd: searchWhCd, inNo: searchInNo },
+          { srvcCd: searchSrvcCd, whCd: searchWhCd, inNo: inNo ?? searchInNo },
           (res) => {
               const hdrList: ReceiptHdrRow[] = (res.data?.receiptHdrList ?? []).map((h: any) => ({
                   srvcCd          : h.srvc_cd           ?? '',
@@ -381,13 +389,14 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
             saveReceiptList(
                 { hdrList, dtlList },
                 () => {
-                    setSearchInNo(keyInfo?.inNo ?? '');
+                    const inNo = keyInfo?.inNo ?? '';
+                    setSearchInNo(inNo);
                     setSearchInCategory('');
                     setSearchClientCd('');
                     setSearchClientNm('');
                     setSearchVehicleNo('');
                     setSearchVehicleNm('');
-                    handleSearch();
+                    handleSearch(inNo);
                     showAlert('저장 되었습니다.');
                 },
                 (err) => showAlert('저장 실패: ' + err?.message)
@@ -413,12 +422,42 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
             return;
         }
 
+        if (!searchSrvcCd) {
+            showAlert('고객사를 선택하세요.');
+            return;
+        }
+
+        if (!searchWhCd) {
+            showAlert('센터를 선택하세요.');
+            return;
+        }
+
+        if (!searchInCategory) {
+            showAlert('입고구분을 선택하세요.', () => filterInCategoryRef.current?.focus());
+            return;
+        }
+
+        if (!searchClientCd) {
+            showAlert('매입처를 입력하세요.', () => filterClientCdRef.current?.focus());
+            return;
+        }
+
+        if (!searchVehicleNo) {
+            showAlert('차량번호를 입력하세요.', () => filterVehicleNoRef.current?.focus());
+            return;
+        }
+
+        if (!searchInExptDate) {
+            showAlert('입고예정일을 입력하세요.', () => filterInExptDateRef.current?.querySelector('input')?.focus());
+            return;
+        }
+
         setIsNewMode(false);
 
         //입고헤더 set
         setReceiptHdrList(prev => prev.map(row => ({
             ...row,
-            receiptClsCd    : inCategory,
+            receiptClsCd    : searchInCategory,
             vendorCd        : searchClientCd,
             vendorNm        : searchClientNm,
             inVNo           : searchVehicleNo,
@@ -477,12 +516,12 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
             { header: "로케이션",   key: "inLocCd",         width: 25 },
             { header: "수량",       key: "originalQty",     width: 18 },
             { header: "입고일자",   key: "lotNo",           width: 18 },
-            { header: "비고",       key: "rmk",             width: 25 },
+            { header: "비고",       key: "rmk",             width: 35 },
         ];
 
         const exampleRows = [
-            { srvcCd: selectSrvcCd, whCd: selectWhCd, prodCd: '02-1602', inZoneCd: 'A', inLocCd : 'A-1-01', originalQty : '100', lotNo : '20260521', rmk : '입고예정정보 엑셀 업로드 입니다' },
-            { srvcCd: selectSrvcCd, whCd: selectWhCd, prodCd: '02-1663', inZoneCd: 'A', inLocCd : 'A-1-02', originalQty : '101', lotNo : '20260521', rmk : '입고예정정보 엑셀 업로드 입니다' }
+            { srvcCd: selectSrvcCd, whCd: selectWhCd, prodCd: '02-1602', inZoneCd: 'A', inLocCd : 'A-1-01', originalQty : '100', lotNo : '20260528', rmk : '입고예정정보 엑셀 업로드 입니다' },
+            { srvcCd: selectSrvcCd, whCd: selectWhCd, prodCd: '02-1663', inZoneCd: 'A', inLocCd : 'A-1-02', originalQty : '101', lotNo : '20260528', rmk : '입고예정정보 엑셀 업로드 입니다' }
         ];
 
         // 헤더 행 스타일
@@ -540,8 +579,140 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
 
     // 엑셀업로드
     const handleExcelUpload = () => {
-        showAlert("엑셀업로드");
-    }
+        if (receiptHdrList.length === 0) {
+            showAlert('신규 버튼을 먼저 눌러주세요.');
+            return;
+        }
+
+        if (!searchSrvcCd) {
+            showAlert('고객사를 선택하세요.');
+            return;
+        }
+
+        if (!searchWhCd) {
+            showAlert('센터를 선택하세요.');
+            return;
+        }
+
+        if (!searchInCategory) {
+            showAlert('입고구분을 선택하세요.', () => filterInCategoryRef.current?.focus());
+            return;
+        }
+
+        if (!searchClientCd) {
+            showAlert('매입처를 입력하세요.', () => filterClientCdRef.current?.focus());
+            return;
+        }
+
+        if (!searchVehicleNo) {
+            showAlert('차량번호를 입력하세요.', () => filterVehicleNoRef.current?.focus());
+            return;
+        }
+
+        if (!searchInExptDate) {
+            showAlert('입고예정일을 입력하세요.', () => filterInExptDateRef.current?.querySelector('input')?.focus());
+            return;
+        }
+
+        fileInputRef.current?.click();
+    };
+
+    const handleExcelFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            const data = evt.target?.result;
+            const wb = XLSX.read(new Uint8Array(data as ArrayBuffer), { type: 'array' });
+            const ws = wb.Sheets[wb.SheetNames[0]];
+            const rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
+
+            const newItems: ReceiptDtlRow[] = rows.slice(1)
+                .filter(row => row.some(cell => cell !== null && cell !== undefined && cell !== ''))
+                .map(row => ({
+                    srvcCd          : String(row[0] ?? searchSrvcCd).trim(),
+                    whCd            : String(row[1] ?? searchWhCd).trim(),
+                    inNo            : receiptHdrList[0]?.inNo ?? '',
+                    inExpectedSeq   : 0,
+                    inExpectedDate  : searchInExptDate,
+                    inExpectedNo    : receiptHdrList[0]?.inExpectedNo ?? '',
+                    lotNo           : String(row[6] ?? searchInExptDate).trim(),
+                    vendorCd        : searchClientCd,
+                    vendorNm        : searchClientNm,
+                    prodCd          : String(row[2] ?? '').trim(),
+                    prodNm          : '',
+                    originalQty     : Number(row[5] ?? 0),
+                    status          : '0',
+                    rmk             : String(row[7] ?? '').trim(),
+                    inZoneCd        : String(row[3] ?? '').trim(),
+                    inZoneNm        : '',
+                    inLocCd         : String(row[4] ?? '').trim(),
+                    regId           : '',
+                    regDate         : '',
+                    updId           : '',
+                    updDate         : '',
+                    isNew           : true,
+                    isDirty         : false,
+                    uploadStatus    : '검증중...',
+                }));
+
+            setReceiptDtlList(newItems);
+
+            getCheckList(
+                {
+                    dtlList: newItems.map((v, i) => ({
+                        rowIndex    : i,
+                        srvcCd      : v.srvcCd,
+                        whCd        : v.whCd,
+                        prodCd      : v.prodCd,
+                        inZoneCd    : v.inZoneCd,
+                        inLocCd     : v.inLocCd,
+                        originalQty : v.originalQty,
+                        lotNo       : v.lotNo,
+                    }))
+                },
+                (res) => {
+                    const results: CheckResult[] = res.data ?? [];
+                    //입고헤더 set
+                    setReceiptHdrList(prev => prev.map(row => ({
+                        ...row,
+                        receiptClsCd    : searchInCategory,
+                        vendorCd        : searchClientCd,
+                        vendorNm        : searchClientNm,
+                        inVNo           : searchVehicleNo,
+                        inVNm           : searchVehicleNm,
+                        inExpectedDate  : searchInExptDate
+                    })));
+                    
+                    // 입고상세 set
+                    setReceiptDtlList(prev => prev.map((v, i) => {
+                        const r = results.find(r => r.rowIndex === i);
+                        return {
+                            ...v,
+                            uploadStatus: r ? (r.isValid ? 'OK' : r.errors.join(' / ')) : v.uploadStatus
+                        };
+                    }));
+                    setIsUploading(false);
+                },
+                (err) => {
+                    setReceiptDtlList([]);
+                    showAlert('유효성 검증 실패: ' + err?.message);
+                    setIsUploading(false);
+                }
+            );
+        };
+
+        reader.onerror = () => {
+            showAlert('엑셀 파일 업로드 실패');
+            setIsUploading(false);
+        };
+
+        reader.readAsArrayBuffer(file);
+        e.target.value = '';
+    };
 
     // 디테일 행 필드 변경
     const handleDtlChange = (idx: number, field: keyof ReceiptDtlRow, value: any) => {
@@ -628,7 +799,7 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
                                 <p>신규 입고 정보를 시스템에 등록합니다.</p>
                             </div>
                             <div className={styles.mainActions}>
-                                <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleSearch}>
+                                <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => handleSearch()}>
                                     <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>search</span>
                                     조회
                                 </button>
@@ -677,7 +848,7 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
                             <div className={styles.filterGrid}>
                                 <div className={styles.filterItem}>
                                     <label className={styles.filterLabel}>입고구분</label>
-                                    <select className={styles.filterSelect} disabled={!isNewMode} value={searchInCategory} onChange={e => setSearchInCategory(e.target.value)}>
+                                    <select className={styles.filterSelect} disabled={!isNewMode} value={searchInCategory} onChange={e => setSearchInCategory(e.target.value)} ref={filterInCategoryRef}>
                                         <option value="">-- 선택 --</option>
                                         {
                                             receiptCategory.map( t => (
@@ -689,7 +860,7 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
                                 <div className={styles.filterItemWide}>
                                     <label className={styles.filterLabel}>매입처</label>
                                     <div className={styles.filterInputGroup}>
-                                        <input type="text" className={styles.filterInput} disabled={!isNewMode} value={searchClientCd} onChange={e => setSearchClientCd(e.target.value)} placeholder=""/>
+                                        <input type="text" className={styles.filterInput} disabled={!isNewMode} value={searchClientCd} onChange={e => setSearchClientCd(e.target.value)} placeholder="" ref={filterClientCdRef}/>
                                         <button className={styles.filterSearchBtn} disabled={!isNewMode} onClick={() => {setIsClientSearchOpen(true)}}>
                                             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>search</span>
                                         </button>
@@ -699,7 +870,7 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
                                 <div className={styles.filterItemWide}>
                                     <label className={styles.filterLabel}>차량번호</label>
                                     <div className={styles.filterInputGroup}>
-                                        <input type="text" className={styles.filterInput} disabled={!isNewMode} value={searchVehicleNo} onChange={e => setSearchVehicleNo(e.target.value)} placeholder=""/>
+                                        <input type="text" className={styles.filterInput} disabled={!isNewMode} value={searchVehicleNo} onChange={e => setSearchVehicleNo(e.target.value)} placeholder="" ref={filterVehicleNoRef}/>
                                         <button className={styles.filterSearchBtn} disabled={!isNewMode} onClick={() => {setIsVehicleSearchOpen(true)}}>
                                             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>search</span>
                                         </button>
@@ -708,7 +879,7 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
                                 </div>
                                 <div className={styles.filterItem}>
                                     <label className={styles.filterLabel}>입고예정일</label>
-                                    <div className={styles.filterDateWrapper}>
+                                    <div className={styles.filterDateWrapper} ref={filterInExptDateRef}>
                                         <span className={`material-symbols-outlined ${styles.filterDateIcon}`}>calendar_today</span>
                                         <DatePicker
                                             selected={searchInExptDate ? new Date(searchInExptDate.slice(0,4) + '-' + searchInExptDate.slice(4,6) + '-' + searchInExptDate.slice(6,8)) : null}
@@ -725,12 +896,11 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
                                 <div className={styles.filterItem}>
                                     <label className={styles.filterLabel}>수불유형</label>
                                     <select className={styles.filterSelect} disabled={!isNewMode} value={searchInType} onChange={e => setSearchInType(e.target.value)}>
-                                        <option value="">-- 선택 --</option>
                                          {
                                             receiptType.map( t => (
                                                 <option key={t.sys_cd} value={t.sys_cd}>{t.sys_cdnm}</option>
                                             ))
-                                        }
+                                         }
                                     </select>
                                 </div>
                             </div>
@@ -753,10 +923,11 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
                                     <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>description</span>
                                     양식다운로드
                                 </button>
-                                <button className={styles.btnToolbar} onClick={handleExcelUpload}>
+                                <button className={styles.btnToolbar} onClick={handleExcelUpload} disabled={isUploading}>
                                     <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>upload_file</span>
-                                    엑셀업로드
+                                    {isUploading ? '업로드 중...' : '엑셀업로드'}
                                 </button>
+                                <input type="file" ref={fileInputRef} accept=".xlsx,.xls" style={{ display: 'none' }} onChange={handleExcelFileChange} />
                             </div>
                         </div>
                     </div>
@@ -904,7 +1075,23 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
                                         <td className={styles.cellCenter}>{v.regDate}</td>
                                         <td className={styles.cellCenter}>{v.updId}</td>
                                         <td className={styles.cellCenter}>{v.updDate}</td>
-                                        <td className={styles.cellCenter}>{v.uploadStatus}</td>
+                                        <td className={styles.cellCenter}>
+                                            {v.uploadStatus === 'OK' ? (
+                                                <span className={styles.chipOk}>
+                                                    <span className="material-symbols-outlined">check_circle</span>
+                                                    OK
+                                                </span>
+                                            ) : v.uploadStatus && v.uploadStatus !== '검증중...' ? (
+                                                <div className={styles.chipGroup}>
+                                                    {v.uploadStatus.split(' / ').filter(Boolean).map((err, i) => (
+                                                        <span key={i} className={styles.chipError}>
+                                                            <span className="material-symbols-outlined">error</span>
+                                                            {err.trim()}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            ) : v.uploadStatus}
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
