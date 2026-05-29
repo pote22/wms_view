@@ -107,9 +107,9 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
 
     const getStatusBadge = (status: string) => {
         switch (status) {
-            case 'PLAN': return <span className={styles.badgePlan}>입고예정</span>;
-            case 'PART': return <span className={styles.badgePartial}>부분입고</span>;
-            case 'CONF': return <span className={styles.badgeConf}>입고확정</span>;
+            case '00': return <span className={styles.badgePlan}>입고예정</span>;
+            case '01': return <span className={styles.badgePartial}>부분입고</span>;
+            case '09': return <span className={styles.badgeConf}>입고확정</span>;
             default:     return <span>{status}</span>;
         }
     };
@@ -181,9 +181,9 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                     <label className={styles.filterLabel}>입고상태</label>
                                     <select className={styles.filterSelect} value={searchStatus} onChange={e => setSearchStatus(e.target.value)}>
                                         <option value="">전체</option>
-                                        <option value="PLAN">입고예정</option>
-                                        <option value="PART">부분입고</option>
-                                        <option value="CONF">입고확정</option>
+                                        <option value="00">입고예정</option>
+                                        <option value="01">부분입고</option>
+                                        <option value="09">입고확정</option>
                                     </select>
                                 </div>
                                 {/* 2행 */}
@@ -289,7 +289,7 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                     <option value="03">배송지연</option>
                                     <option value="04">차량미도착</option>
                                     <option value="05">고객요청</option>
-                                    <option value="06">기타</option>
+                                    <option value="06">기타</option>    
                                 </select>
                                 <button className={styles.btnToolbar}>
                                     <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>save</span>
