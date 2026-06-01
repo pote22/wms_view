@@ -2,120 +2,410 @@ import React, { useState, useEffect } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { ko } from 'date-fns/locale';
-import { useCommonWhList } from '../../api/common/commonWhList';
-import styles            from './cj_wms_receipt_0020.module.css';
+// JWT 토큰 정보
+import { getTokenPayload } from '../../utils/auth';
+// 모듈 CSS
+import styles from './cj_wms_receipt_0020.module.css';
+// 공통서비스
+import { getCommCodeList, type CommCode } from '../../api/common/commonService';
+// 공통 컴포넌트
 import ClientSearchPopup  from '../../components/common/ClientSearchPopup';
+import Popup from '../../components/common/Popup';
 import ProdSearchPopup    from '../../components/common/ProdSearchPopup';
 import VehicleSearchPopup from '../../components/common/VehicleSearchPopup';
 import { formatDate } from '../../utils/dateUtils';
-
-interface InbRow {
-    chk         : string;
-    srvcCd      : string;
-    whCd        : string;
-    inbPlanDate : string;
-    inbNo       : string;
-    inbSeq      : string;
-    inbStatus   : string;
-    inbType     : string;
-    tranType    : string;
-    inbCmpDate  : string;
-    supplierCd  : string;
-    supplierNm  : string;
-    prodCd      : string;
-    prodNm      : string;
-    zoneCd      : string;
-    zoneNm      : string;
-    locCd       : string;
-    ordQty      : string;
-    planQty     : string;
-    confQty     : string;
-    scanQty     : string;
-    scanCnt     : string;
-    totalWeight : string;
-    noInbReason : string;
-    addr        : string;
-    zipCd       : string;
-    manager     : string;
-    tel         : string;
-    vehicleNo   : string;
-    drvNm       : string;
-    pdaYn       : string;
-    remark      : string;
-    regId       : string;
-    regDate     : string;
-    updId       : string;
-    updDate     : string;
-}
+import { useCommonWhList } from '../../api/common/commonWhList';
+import { usePopup } from '../../components/common/usePopup';
+// API
+import { getList, saveReceiptConfirm, saveRemarkInfo, type ReceiptRow } from '../../api/receipt/receipt_0020Service'
+// 엑셀
+import ExcelJS from 'exceljs';
+import * as XLSX from 'xlsx';
 
 const CJ_WMS_RECEIPT_0020: React.FC = () => {
-    const { srvcList, whList, selectSrvcCd, selectWhCd } = useCommonWhList();
-    const [searchSrvcCd,         setSearchSrvcCd]         = useState(selectSrvcCd);
-    const [searchWhCd,           setSearchWhCd]           = useState(selectWhCd);
-    const [searchInbType,        setSearchInbType]        = useState('');
-    const [searchStatus,         setSearchStatus]         = useState('');
-    const [searchInbNo,          setSearchInbNo]          = useState('');
-    const [searchTranType,       setSearchTranType]       = useState('');
-    const [searchDateType,       setSearchDateType]       = useState('PLAN');
-    const [searchInExptDateFrom, setSearchInExptDateFrom] = useState('');
-    const [searchInExptDateTo,   setSearchInExptDateTo]   = useState('');
-    const [searchSupplierCd,     setSearchSupplierCd]     = useState('');
-    const [searchProdCd,         setSearchProdCd]         = useState('');
-    const [searchProdNm,         setSearchProdNm]         = useState('');
-    const [searchVehicleNo,      setSearchVehicleNo]      = useState('');
-    const [searchDrvNm,          setSearchDrvNm]          = useState('');
-    const [searchSupplierNm,     setSearchSupplierNm]     = useState('');
-    const [isClientPopupOpen,    setIsClientPopupOpen]    = useState(false);
-    const [isProdPopupOpen,      setIsProdPopupOpen]      = useState(false);
-    const [isVehiclePopupOpen,   setIsVehiclePopupOpen]   = useState(false);
-    const [noInbReasonSel,       setNoInbReasonSel]       = useState('');
-    const [rows,        setRows]        = useState<InbRow[]>([]);
-    const [currentPage, setCurrentPage] = useState(1);
-    const rowsPerPage = 20;
+    // 공통
+    const { srvcList, whList, selectSrvcCd, selectWhCd }    = useCommonWhList();
+    const { popup, showAlert, showConfirm, closePopup }     = usePopup();
+    // 검색조건
+    const [searchSrvcCd,        setSearchSrvcCd]            = useState(selectSrvcCd);
+    const [searchWhCd,          setSearchWhCd]              = useState(selectWhCd);
+    const [searchInCategory,    setSearchInCategory]        = useState('');
+    const [searchStatus,        setSearchStatus]            = useState('');
+    const [searchInNo,          setSearchInNo]              = useState('');
+    const [searchInType,        setSearchInType]            = useState('');
+    const [searchDateType,      setSearchDateType]          = useState('00');
+    const [searchStrDate,       setSearchStrDate]           = useState(formatDate(new Date()));
+    const [searchEndDate,       setSearchEndDate]           = useState(formatDate(new Date()));
+    const [searchClientCd,      setSearchClientCd]          = useState('');
+    const [searchClientNm,      setSearchClientNm]          = useState('');
+    const [searchProdCd,        setSearchProdCd]            = useState('');
+    const [searchProdNm,        setSearchProdNm]            = useState('');
+    const [searchVehicleNo,     setSearchVehicleNo]         = useState('');
+    const [searchDrvNm,         setSearchDrvNm]             = useState('');
 
-    useEffect(() => { setSearchSrvcCd(selectSrvcCd); }, [selectSrvcCd]);
-    useEffect(() => { setSearchWhCd(selectWhCd); }, [selectWhCd]);
+    // 공통코드 
+    const [receiptCategory,     setReceiptCategory]         = useState<CommCode[]>([]);         // 입고구분 리스트
+    const [receiptStatus,       setReceiptStatus]           = useState<CommCode[]>([]);         // 입고상태 리스트
+    const [receiptType,         setReceiptType]             = useState<CommCode[]>([]);         // 수불유형 리스트
+    const [inNotRsnCd,          setInNotRsnCd]              = useState<CommCode[]>([]);         // 미입고사유 리스트
 
+    // 팝업관리
+    const [isClientPopupOpen,    setIsClientPopupOpen]      = useState(false);
+    const [isProdPopupOpen,      setIsProdPopupOpen]        = useState(false);
+    const [isVehiclePopupOpen,   setIsVehiclePopupOpen]     = useState(false);
+
+    const [receiptList,         setReceiptList]             = useState<ReceiptRow[]>([]);       // 입고예정리스트
+    const [notRsnCd,            setNotRsnCd]                = useState('');                     // 미입고사유
+
+    useEffect(() => {
+        setSearchSrvcCd(selectSrvcCd);
+    }, [selectSrvcCd]);
+    
+    useEffect(() => {
+        setSearchWhCd(selectWhCd)
+    }, [selectWhCd]);
+    
+    useEffect(() => {
+        // 입고유형
+        getCommCodeList(
+            { 
+                  sys_grp_cd    : 'WM0020'
+                , sys_cd        : ''
+                , sys_cdnm      : ''
+                , srvc_cd       : ''
+                , sys_etc1      : ''
+                , sys_etc2      : ''
+                , sys_etc3      : ''
+                , sys_etc4      : ''
+                , sys_etc5      : ''
+            },
+            (res) => setReceiptCategory(res.data ?? []),
+            (err) => showAlert('공통코드 조회 실패 : ' + err?.message)
+        );
+
+        // 입고상태
+        getCommCodeList(
+            {
+                  sys_grp_cd    : 'WM0010'
+                , sys_cd        : ''
+                , sys_cdnm      : ''
+                , srvc_cd       : ''
+                , sys_etc1      : ''
+                , sys_etc2      : ''
+                , sys_etc3      : ''
+                , sys_etc4      : ''
+                , sys_etc5      : ''
+            },
+            (res) => setReceiptStatus(res.data ?? []),
+            (err) => showAlert('공통코드 조회 실패 : ' + err?.message)
+        );
+
+        // 수불유형
+        getCommCodeList(
+            {
+                  sys_grp_cd    : 'WM0030'
+                , sys_cd        : ''
+                , sys_cdnm      : ''
+                , srvc_cd       : '1201'
+                , sys_etc1      : ''
+                , sys_etc2      : ''
+                , sys_etc3      : ''
+                , sys_etc4      : ''
+                , sys_etc5      : ''
+            },
+            (res) => setReceiptType(res.data ?? []),
+            (err) => showAlert('공통코드 조회 실패 : ' + err?.message)
+        );
+
+        // 수불유형
+        getCommCodeList(
+            {
+                  sys_grp_cd    : 'WM1090'
+                , sys_cd        : ''
+                , sys_cdnm      : ''
+                , srvc_cd       : ''
+                , sys_etc1      : ''
+                , sys_etc2      : ''
+                , sys_etc3      : ''
+                , sys_etc4      : ''
+                , sys_etc5      : ''
+            },
+            (res) => setInNotRsnCd(res.data ?? []),
+            (err) => showAlert('공통코드 조회 실패 : ' + err?.message)
+        );
+    }, []);
+
+    // 조회
     const handleSearch = () => {
-        // TODO: API 연동
-        setRows([]);
-    };
+        getList(
+            {
+                srvcCd          : searchSrvcCd,
+                whCd            : searchWhCd,
+                receiptClsCd    : searchInCategory,
+                status          : searchStatus,
+                inNo            : searchInNo,
+                receiptType     : searchInType,
+                dateType        : searchDateType,
+                strDate         : searchStrDate,
+                endDate         : searchEndDate,
+                vendorCd        : searchClientCd,
+                vendorNm        : searchClientNm,
+                prodCd          : searchProdCd,
+                prodNm          : searchProdNm,
+                vehicleNo       : searchVehicleNo,
+                drvNm           : searchDrvNm
+            },
+            (res) => {
+                const row : ReceiptRow[] = (res.data ?? []).map((v : any) => ({
+                    chk             : v.chk                 ?? '0',
+                    srvcCd          : v.srvc_cd             ?? '',
+                    whCd            : v.wh_cd               ?? '',
+                    inNo            : v.in_no               ?? '',
+                    inExpectedDate  : v.in_expected_date    ?? '',
+                    inExpectedNo    : v.in_expected_no      ?? '',
+                    inExpectedSeq   : v.in_expected_seq     ?? '',
+                    status          : v.status              ?? '',
+                    receiptClsCd    : v.receipt_cls_cd      ?? '',
+                    receiptType     : v.receipt_type        ?? '',
+                    receiptDate     : v.receipt_date        ?? '',
+                    vendorCd        : v.vendor_cd           ?? '',
+                    vendorNm        : v.vendor_nm           ?? '',
+                    prodCd          : v.prod_cd             ?? '',
+                    prodNm          : v.prod_nm             ?? '',
+                    inZoneCd        : v.in_zone_cd          ?? '',
+                    inZoneNm        : v.in_zone_nm          ?? '',
+                    inLocCd         : v.in_loc_cd           ?? '',
+                    originalQty     : v.original_qty        ?? '',
+                    expectedQty     : v.expected_qty        ?? '',
+                    receivedQty     : v.received_qty        ?? '',
+                    totInWeight     : v.tot_in_weight       ?? '',
+                    pdaScanQty      : v.pda_scan_qty        ?? '',
+                    pdaScanCnt      : v.pda_scan_cnt        ?? '',
+                    notRsnCd        : v.not_rsn_cd          ?? '',
+                    vendorAddress   : v.vendor_address      ?? '',
+                    zipCd           : v.zip_cd              ?? '',
+                    managerNm       : v.manager_nm          ?? '',
+                    telNo           : v.tel_no              ?? '',
+                    inVNo           : v.in_v_no             ?? '',
+                    inVNm           : v.in_v_nm             ?? '',
+                    pdaYn           : v.pda_yn              ?? '',
+                    rmk             : v.rmk                 ?? '',
+                    regId           : v.reg_id              ?? '',
+                    regDate         : v.reg_date            ?? '',
+                    updId           : v.upd_id              ?? '',
+                    updDate         : v.upd_date            ?? ''
+                }));
 
-    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const val = e.target.checked ? '1' : '0';
-        setRows(prev => prev.map(r => ({ ...r, chk: val })));
-    };
+                setReceiptList(row);
+            },
+            (err) => showAlert('조회 실패: ' + err?.message)
+        );
+    }
 
-    const handleSelectRow = (idx: number) => {
-        setRows(prev => prev.map((r, i) => i === idx ? { ...r, chk: r.chk === '1' ? '0' : '1' } : r));
-    };
+    // 엑셀출력
+    const handleExcel = async () => {
+        if (receiptList.length === 0) {
+            showAlert("다운로드할 데이터가 없습니다.");
+            return;
+        }
 
+        const wb = new ExcelJS.Workbook();
+        const ws = wb.addWorksheet("입고예정확정");
+
+        ws.columns = [
+            { header: "고객사",       key: "srvcCd",          width: 22 },
+            { header: "센터",         key: "whCd",            width: 22 },
+            { header: "입고예정일",   key: "inExpectedDate",  width: 14 },
+            { header: "입고번호",     key: "inNo",            width: 20 },
+            { header: "입고순번",     key: "inExpectedSeq",   width: 10 },
+            { header: "입고상태",     key: "status",          width: 12 },
+            { header: "입고구분",     key: "receiptClsCd",    width: 12 },
+            { header: "수불유형",     key: "receiptType",     width: 12 },
+            { header: "입고완료일",   key: "receiptDate",     width: 14 },
+            { header: "매입처코드",   key: "vendorCd",        width: 15 },
+            { header: "매입처명",     key: "vendorNm",        width: 20 },
+            { header: "품번",         key: "prodCd",          width: 20 },
+            { header: "품명",         key: "prodNm",          width: 25 },
+            { header: "존",           key: "inZoneCd",        width: 10 },
+            { header: "존명",         key: "inZoneNm",        width: 15 },
+            { header: "로케이션",     key: "inLocCd",         width: 15 },
+            { header: "원주문량",     key: "originalQty",     width: 12 },
+            { header: "예정수량",     key: "expectedQty",     width: 12 },
+            { header: "확정수량",     key: "receivedQty",     width: 12 },
+            { header: "총중량",       key: "totInWeight",     width: 12 },
+            { header: "스캔수량",     key: "pdaScanQty",      width: 12 },
+            { header: "스캔건수",     key: "pdaScanCnt",      width: 12 },
+            { header: "미입고사유",   key: "notRsnCd",        width: 18 },
+            { header: "업체주소",     key: "vendorAddress",   width: 30 },
+            { header: "우편번호",     key: "zipCd",           width: 12 },
+            { header: "담당자",       key: "managerNm",       width: 15 },
+            { header: "연락처",       key: "telNo",           width: 15 },
+            { header: "차량번호",     key: "inVNo",           width: 15 },
+            { header: "기사명",       key: "inVNm",           width: 15 },
+            { header: "PDA작업여부",  key: "pdaYn",           width: 12 },
+            { header: "비고",         key: "rmk",             width: 25 },
+            { header: "등록자",       key: "regId",           width: 12 },
+            { header: "등록일자",     key: "regDate",         width: 14 },
+            { header: "수정자",       key: "updId",           width: 12 },
+            { header: "수정일자",     key: "updDate",         width: 14 },
+        ];
+
+        const headerRow = ws.getRow(1);
+        headerRow.eachCell((cell) => {
+            cell.fill      = { type: "pattern", pattern: "solid", fgColor: { argb: "FF003F87" } };
+            cell.font      = { bold: true, color: { argb: "FFFFFFFF" }, size: 11 };
+            cell.alignment = { vertical: "middle", horizontal: "center" };
+            cell.border    = {
+                top: { style: "thin" }, left: { style: "thin" },
+                bottom: { style: "thin" }, right: { style: "thin" },
+            };
+        });
+        headerRow.height = 22;
+
+        const getStatusNm = (code: string) => {
+            switch (code) {
+                case '00': return '입고예정';
+                case '01': return '부분입고';
+                case '09': return '입고완료';
+                default:   return code;
+            }
+        };
+
+        receiptList.forEach(v => {
+            const row = ws.addRow({
+                srvcCd         : srvcList.find(s => s.srvcCd === v.srvcCd) ? `${v.srvcCd} [${srvcList.find(s => s.srvcCd === v.srvcCd)?.srvcNm}]` : v.srvcCd,
+                whCd           : whList.find(w => w.whCd === v.whCd) ? `${v.whCd} [${whList.find(w => w.whCd === v.whCd)?.whNm}]` : v.whCd,
+                inExpectedDate : v.inExpectedDate,
+                inNo           : v.inNo,
+                inExpectedSeq  : v.inExpectedSeq,
+                status         : getStatusNm(v.status),
+                receiptClsCd   : receiptCategory.find(c => c.sys_cd === v.receiptClsCd)?.sys_cdnm ?? v.receiptClsCd,
+                receiptType    : receiptType.find(c => c.sys_cd === v.receiptType)?.sys_cdnm ?? v.receiptType,
+                receiptDate    : v.receiptDate,
+                vendorCd       : v.vendorCd,
+                vendorNm       : v.vendorNm,
+                prodCd         : v.prodCd,
+                prodNm         : v.prodNm,
+                inZoneCd       : v.inZoneCd,
+                inZoneNm       : v.inZoneNm,
+                inLocCd        : v.inLocCd,
+                originalQty    : v.originalQty,
+                expectedQty    : v.expectedQty,
+                receivedQty    : v.receivedQty,
+                totInWeight    : v.totInWeight,
+                pdaScanQty     : v.pdaScanQty,
+                pdaScanCnt     : v.pdaScanCnt,
+                notRsnCd       : inNotRsnCd.find(c => c.sys_cd === v.notRsnCd)?.sys_cdnm ?? v.notRsnCd,
+                vendorAddress  : v.vendorAddress,
+                zipCd          : v.zipCd,
+                managerNm      : v.managerNm,
+                telNo          : v.telNo,
+                inVNo          : v.inVNo,
+                inVNm          : v.inVNm,
+                pdaYn          : v.pdaYn,
+                rmk            : v.rmk,
+                regId          : v.regId,
+                regDate        : v.regDate,
+                updId          : v.updId,
+                updDate        : v.updDate,
+            });
+
+            row.eachCell((cell) => {
+                cell.alignment = { vertical: "middle", horizontal: "center" };
+                cell.border    = {
+                    top: { style: "thin" }, left: { style: "thin" },
+                    bottom: { style: "thin" }, right: { style: "thin" },
+                };
+            });
+            row.height = 18;
+        });
+
+        const buffer = await wb.xlsx.writeBuffer();
+        const blob   = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+        const url    = window.URL.createObjectURL(blob);
+        const a      = document.createElement("a");
+
+        a.href     = url;
+        a.download = `입고예정확정_${new Date().toISOString().slice(0, 10)}.xlsx`;
+
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    }
+
+    // 입고예정리스트
+    const handlePrintReceiptList = () => {
+        showAlert('구현 예정 기능입니다.');
+    }
+
+    // 입고확정
+    const handleSaveReceiptConfirm = () => {
+        showAlert('입고확정');
+    }
+
+    // 이벤트 : 매입처검색
     const handleClientSelect = (clientCd: string, clientNm: string) => {
-        setSearchSupplierCd(clientCd);
-        setSearchSupplierNm(clientNm);
+        setSearchClientCd(clientCd);
+        setSearchClientNm(clientNm);
     };
 
+    // 이벤트 : 품목검색
     const handleProdSelect = (prodCd: string, prodNm: string) => {
         setSearchProdCd(prodCd);
         setSearchProdNm(prodNm);
     };
 
+    // 이벤트 : 차량검색
     const handleVehicleSelect = (vehicleNo: string, drvNm: string) => {
         setSearchVehicleNo(vehicleNo);
         setSearchDrvNm(drvNm);
     };
 
+    // 체크박스 : 선택
+    const handleSelectRow = (idx: number) => {
+        setReceiptList(prev => prev.map((r, i) => i === idx ? { ...r, chk: r.chk === '1' ? '0' : '1' } : r));
+    };
+
+    // 체크박스 : 전체선택
+    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.checked ? '1' : '0';
+        setReceiptList(prev => prev.map(r => ({ ...r, chk: val })));
+    };
+    
+    // 입고상태별 출력(스타일적용)
     const getStatusBadge = (status: string) => {
         switch (status) {
-            case '00': return <span className={styles.badgePlan}>입고예정</span>;
-            case '01': return <span className={styles.badgePartial}>부분입고</span>;
-            case '09': return <span className={styles.badgeConf}>입고확정</span>;
-            default:     return <span>{status}</span>;
+            case '0': return <span className={styles.badgePlan}>입고예정</span>;
+            case '1': return <span className={styles.badgePartial}>부분입고</span>;
+            case '9': return <span className={styles.badgeConf}>입고확정</span>;
+            default:  return <span>{status}</span>;
         }
     };
 
-    const totalPages = Math.max(1, Math.ceil(rows.length / rowsPerPage));
-    const pagedRows  = rows.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+    // 예정수량 '0' 일괄적용(미압고사유 추가)
+    const handleSetInNotRsnCd = () => {
+        const chkList = receiptList.filter(v => v.chk === '1');
+
+        if (chkList.length === 0) {
+            showAlert('체크 항목이 없습니다. 최소 1건이상 체크해주세요.');
+            return;
+        }
+
+        setReceiptList(prev => prev.map(row =>
+            row.chk === '1' ? 
+            { 
+                ...row,
+                notRsnCd    : notRsnCd,
+                expectedQty : '0'
+            } : row
+        ));
+    }
+
+    // 비고저장
+    const handleSaveRemark = () => {
+        showAlert('비고저장');
+    }
 
     return (
         <>
@@ -134,15 +424,15 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                     <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>search</span>
                                     조회
                                 </button>
-                                <button className={`${styles.btn} ${styles.btnOutline}`}>
+                                <button className={`${styles.btn} ${styles.btnOutline}`} onClick={handleExcel}>
                                     <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span>
                                     엑셀
                                 </button>
-                                <button className={`${styles.btn} ${styles.btnOutline}`}>
+                                <button className={`${styles.btn} ${styles.btnOutline}`} onClick={handlePrintReceiptList}>
                                     <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>print</span>
                                     입고예정리스트발행
                                 </button>
-                                <button className={`${styles.btn} ${styles.btnBlue}`}>
+                                <button className={`${styles.btn} ${styles.btnBlue}`} onClick={handleSaveReceiptConfirm}>
                                     <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>task_alt</span>
                                     입고확정
                                 </button>
@@ -171,48 +461,55 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                 </div>
                                 <div className={styles.filterItem}>
                                     <label className={styles.filterLabel}>입고구분</label>
-                                    <select className={styles.filterSelect} value={searchInbType} onChange={e => setSearchInbType(e.target.value)}>
+                                    <select className={styles.filterSelect} value={searchInCategory} onChange={e => setSearchInCategory(e.target.value)}>
                                         <option value="">전체</option>
-                                        <option value="N">일반입고</option>
-                                        <option value="R">반품입고</option>
+                                        {
+                                            receiptCategory.map(t => (
+                                                <option key={t.sys_cd} value={t.sys_cd}>{t.sys_cdnm}</option>
+                                            ))
+                                        }
                                     </select>
                                 </div>
                                 <div className={styles.filterItem}>
                                     <label className={styles.filterLabel}>입고상태</label>
                                     <select className={styles.filterSelect} value={searchStatus} onChange={e => setSearchStatus(e.target.value)}>
                                         <option value="">전체</option>
-                                        <option value="00">입고예정</option>
-                                        <option value="01">부분입고</option>
-                                        <option value="09">입고확정</option>
+                                        {
+                                            receiptStatus.map(t => (
+                                                <option key={t.sys_cd} value={t.sys_cd}>{t.sys_cdnm}</option>
+                                            ))
+                                        }
                                     </select>
                                 </div>
                                 {/* 2행 */}
                                 <div className={styles.filterItem}>
                                     <label className={styles.filterLabel}>입고번호</label>
-                                    <input type="text" className={styles.filterInput} placeholder="입고번호" value={searchInbNo} onChange={e => setSearchInbNo(e.target.value)} />
+                                    <input type="text" className={styles.filterInput} placeholder="입고번호" value={searchInNo} onChange={e => setSearchInNo(e.target.value)} />
                                 </div>
                                 <div className={styles.filterItem}>
                                     <label className={styles.filterLabel}>수불유형</label>
-                                    <select className={styles.filterSelect} value={searchTranType} onChange={e => setSearchTranType(e.target.value)}>
+                                    <select className={styles.filterSelect} value={searchInType} onChange={e => setSearchInType(e.target.value)}>
                                         <option value="">전체</option>
-                                        <option value="T">이관오더</option>
-                                        <option value="P">구매오더</option>
-                                        <option value="S">판매오더</option>
+                                        {
+                                            receiptType.map(t => (
+                                                <option key={t.sys_cd} value={t.sys_cd}>{t.sys_cdnm}</option>
+                                            ))
+                                        }
                                     </select>
                                 </div>
                                 <div className={styles.filterItemDate}>
                                     <label className={styles.filterLabel}>기간</label>
                                     <div className={styles.filterDateGroup}>
                                         <select className={styles.filterSelectNarrow} value={searchDateType} onChange={e => setSearchDateType(e.target.value)}>
-                                            <option value="PLAN">입고예정일</option>
-                                            <option value="COMP">입고완료일</option>
+                                            <option value="00">입고예정일</option>
+                                            <option value="09">입고완료일</option>
                                         </select>
                                         <div className={styles.filterDateRange}>
                                             <div className={styles.filterDateWrapper}>
                                                 <span className={`material-symbols-outlined ${styles.filterDateIcon}`}>calendar_today</span>
                                                 <DatePicker
-                                                    selected={searchInExptDateFrom ? new Date(`${searchInExptDateFrom.slice(0,4)}-${searchInExptDateFrom.slice(4,6)}-${searchInExptDateFrom.slice(6,8)}`) : null}
-                                                    onChange={(date: Date | null) => setSearchInExptDateFrom(date ? formatDate(date) : '')}
+                                                    selected={searchStrDate ? new Date(`${searchStrDate.slice(0,4)}-${searchStrDate.slice(4,6)}-${searchStrDate.slice(6,8)}`) : null}
+                                                    onChange={(date: Date | null) => setSearchStrDate(date ? formatDate(date) : '')}
                                                     dateFormat="yyyy-MM-dd"
                                                     locale={ko}
                                                     placeholderText="시작일"
@@ -223,8 +520,8 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                             <div className={styles.filterDateWrapper}>
                                                 <span className={`material-symbols-outlined ${styles.filterDateIcon}`}>calendar_today</span>
                                                 <DatePicker
-                                                    selected={searchInExptDateTo ? new Date(`${searchInExptDateTo.slice(0,4)}-${searchInExptDateTo.slice(4,6)}-${searchInExptDateTo.slice(6,8)}`) : null}
-                                                    onChange={(date: Date | null) => setSearchInExptDateTo(date ? formatDate(date) : '')}
+                                                    selected={searchEndDate ? new Date(`${searchEndDate.slice(0,4)}-${searchEndDate.slice(4,6)}-${searchEndDate.slice(6,8)}`) : null}
+                                                    onChange={(date: Date | null) => setSearchEndDate(date ? formatDate(date) : '')}
                                                     dateFormat="yyyy-MM-dd"
                                                     locale={ko}
                                                     placeholderText="종료일"
@@ -238,60 +535,55 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                 <div className={styles.filterItemWide}>
                                     <label className={styles.filterLabel}>매입처</label>
                                     <div className={styles.filterInputGroup}>
-                                        <input type="text" className={styles.filterInput} value={searchSupplierCd} placeholder="매입처코드" />
+                                        <input type="text" className={styles.filterInput} value={searchClientCd} placeholder=""/>
                                         <button className={styles.filterSearchBtn} onClick={() => setIsClientPopupOpen(true)}>
                                             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>search</span>
                                         </button>
-                                        <input type="text" className={styles.filterInputReadonly} value={searchSupplierNm} readOnly placeholder="" />
+                                        <input type="text" className={styles.filterInputReadonly} value={searchClientNm} placeholder="" readOnly/>
                                     </div>
                                 </div>
                                 <div className={styles.filterItemWide}>
                                     <label className={styles.filterLabel}>품번</label>
                                     <div className={styles.filterInputGroup}>
-                                        <input type="text" className={styles.filterInput} value={searchProdCd} placeholder="품번" />
+                                        <input type="text" className={styles.filterInput} value={searchProdCd} placeholder=""/>
                                         <button className={styles.filterSearchBtn} onClick={() => setIsProdPopupOpen(true)}>
                                             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>search</span>
                                         </button>
-                                        <input type="text" className={styles.filterInputReadonly} value={searchProdNm} readOnly placeholder="" />
+                                        <input type="text" className={styles.filterInputReadonly} value={searchProdNm} placeholder="" readOnly/>
                                     </div>
                                 </div>
                                 {/* 4행 */}
                                 <div className={styles.filterItemWide}>
                                     <label className={styles.filterLabel}>차량번호</label>
                                     <div className={styles.filterInputGroup}>
-                                        <input type="text" className={styles.filterInput} value={searchVehicleNo} placeholder="차량번호" />
+                                        <input type="text" className={styles.filterInput} value={searchVehicleNo} placeholder=""/>
                                         <button className={styles.filterSearchBtn} onClick={() => setIsVehiclePopupOpen(true)}>
                                             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>search</span>
                                         </button>
-                                        <input type="text" className={styles.filterInputReadonly} value={searchDrvNm} readOnly placeholder="" />
+                                        <input type="text" className={styles.filterInputReadonly} value={searchDrvNm} placeholder="" readOnly/>
                                     </div>
                                 </div>
-                                <div className={styles.filterItem} />
-                                <div className={styles.filterItem} />
+                                <div className={styles.filterItem}/>
+                                <div className={styles.filterItem}/>
                             </div>
                         </div>
 
                         {/* Toolbar — 우측만 */}
                         <div className={styles.toolbar}>
                             <div className={styles.toolbarGroup}>
-                                <button className={styles.btnToolbar}>
+                                <button className={styles.btnToolbar} onClick={handleSetInNotRsnCd}>
                                     <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>format_list_numbered</span>
                                     예정수량 '0' 일괄적용
                                 </button>
-                                <select
-                                    className={styles.selectToolbar}
-                                    value={noInbReasonSel}
-                                    onChange={e => setNoInbReasonSel(e.target.value)}
-                                >
-                                    <option value="">미입고사유 선택</option>
-                                    <option value="01">물량부족</option>
-                                    <option value="02">품질불량</option>
-                                    <option value="03">배송지연</option>
-                                    <option value="04">차량미도착</option>
-                                    <option value="05">고객요청</option>
-                                    <option value="06">기타</option>    
+                                <select className={styles.selectToolbar} value={notRsnCd} onChange={e => setNotRsnCd(e.target.value)}>
+                                    <option value="">** 선택 **</option>
+                                    {
+                                        inNotRsnCd.map(t => (
+                                            <option key={t.srvc_cd} value={t.sys_cd}>{t.sys_cd} | {t.sys_cdnm}</option>
+                                        ))
+                                    } 
                                 </select>
-                                <button className={styles.btnToolbar}>
+                                <button className={styles.btnToolbar} onClick={handleSaveRemark}>
                                     <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>save</span>
                                     비고저장
                                 </button>
@@ -303,22 +595,39 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                     <div className={styles.tableWrapper}>
                         <table className={styles.table}>
                             <colgroup>
+                                {/* 체크박스 */}
                                 <col style={{ width: '40px' }} />
+                                {/* 고객사 */}
                                 <col style={{ width: '150px' }} />
-                                <col style={{ width: '150px' }} />
-                                <col style={{ width: '110px' }} />
-                                <col style={{ width: '150px' }} />
-                                <col style={{ width: '150px' }} />
-                                <col style={{ width: '150px' }} />
-                                <col style={{ width: '120px' }} />
-                                <col style={{ width: '120px' }} />
-                                <col style={{ width: '130px' }} />
-                                <col style={{ width: '120px' }} />
-                                <col style={{ width: '120px' }} />
-                                <col style={{ width: '120px' }} />
+                                {/* 센터 */}
                                 <col style={{ width: '180px' }} />
-                                <col style={{ width: '180px' }} />
-                                <col style={{ width: '180px' }} />
+                                {/* 입고예정일 */}
+                                <col style={{ width: '150px' }} />
+                                {/* 입고번호 */}
+                                <col style={{ width: '200px' }} />
+                                {/* 입고순번 */}
+                                <col style={{ width: '80px' }} />
+                                {/* 입고상태 */}
+                                <col style={{ width: '150px' }} />
+                                {/* 입고구분 */}
+                                <col style={{ width: '120px' }} />
+                                {/* 수불유형 */}
+                                <col style={{ width: '120px' }} />
+                                {/* 입고완료일 */}
+                                <col style={{ width: '150px' }} />
+                                {/* 매입처코드 */}
+                                <col style={{ width: '150px' }} />
+                                {/* 매입처명 */}
+                                <col style={{ width: '250px' }} />
+                                {/* 품번 */}
+                                <col style={{ width: '150px' }} />
+                                {/* 품명 */}
+                                <col style={{ width: '300px' }} />
+                                {/* 존 */}
+                                <col style={{ width: '100px' }} />
+                                {/* 존명 */}
+                                <col style={{ width: '150px' }} />
+                                {/* 로케이션 */}
                                 <col style={{ width: '180px' }} />
                                 {/* 수량 그룹 */}
                                 <col style={{ width: '150px' }} />
@@ -327,28 +636,36 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                 {/* 스캔정보 그룹 */}
                                 <col style={{ width: '150px' }} />
                                 <col style={{ width: '150px' }} />
-                                {/* 수량:총중량 */}
                                 <col style={{ width: '150px' }} />
+                                {/* 미입고사유 */}
+                                <col style={{ width: '200px' }} />
+                                {/* 업체주소 */}
+                                <col style={{ width: '300px' }} />
+                                {/* 우편번호 */}
+                                <col style={{ width: '120px' }} />
+                                {/* 담당자 */}
+                                <col style={{ width: '120px' }} />
+                                {/* 연락처 */}
                                 <col style={{ width: '150px' }} />
+                                {/* 차량번호 */}
+                                <col style={{ width: '180px' }} />
+                                {/* 기사명 */}
                                 <col style={{ width: '150px' }} />
-                                <col style={{ width: '150px' }} />
-                                <col style={{ width: '150px' }} />
-                                <col style={{ width: '150px' }} />
-                                <col style={{ width: '150px' }} />
-                                <col style={{ width: '150px' }} />
-                                <col style={{ width: '150px' }} />
-                                <col style={{ width: '150px' }} />
-                                <col style={{ width: '150px' }} />
-                                <col style={{ width: '150px' }} />
-                                <col style={{ width: '150px' }} />
-                                <col style={{ width: '150px' }} />
+                                {/* PDA작업여부 */}
+                                <col style={{ width: '120px' }} />
+                                {/* 비고 */}
+                                <col style={{ width: '350px' }} />
+                                <col style={{ width: '90px' }} />
+                                <col style={{ width: '120px' }} />
+                                <col style={{ width: '90px' }} />
+                                <col style={{ width: '120px' }} />
                             </colgroup>
                             <thead className={styles.thead}>
                                 <tr>
                                     <th rowSpan={2}>
                                         <input type="checkbox" className={styles.checkbox}
                                             onChange={handleSelectAll}
-                                            checked={rows.length > 0 && rows.every(r => r.chk === '1')} />
+                                            checked={receiptList.length > 0 && receiptList.every(r => r.chk === '1')} />
                                     </th>
                                     <th rowSpan={2}>고객사</th>
                                     <th rowSpan={2}>센터</th>
@@ -366,9 +683,8 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                     <th rowSpan={2}>존</th>
                                     <th rowSpan={2}>존명</th>
                                     <th rowSpan={2}>로케이션</th>
-                                    <th colSpan={3} className={styles.thGroup}>수량</th>
-                                    <th colSpan={2} className={styles.thGroup}>스캔정보</th>
-                                    <th rowSpan={2}>총중량</th>
+                                    <th colSpan={4} className={styles.thGroupQty}>수량</th>
+                                    <th colSpan={2} className={styles.thGroupScan}>스캔정보</th>
                                     <th rowSpan={2}>미입고사유</th>
                                     <th rowSpan={2}>업체주소</th>
                                     <th rowSpan={2}>우편번호</th>
@@ -384,62 +700,82 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                     <th rowSpan={2}>수정일자</th>
                                 </tr>
                                 <tr>
-                                    <th className={styles.thGroupSub}>원주문량</th>
-                                    <th className={styles.thGroupSub}>예정수량</th>
-                                    <th className={styles.thGroupSub}>확정수량</th>
-                                    <th className={styles.thGroupSub}>스캔수량</th>
-                                    <th className={styles.thGroupSub}>스캔건수</th>
+                                    <th className={styles.thGroupSubQty}>원주문량</th>
+                                    <th className={styles.thGroupSubQty}>예정수량</th>
+                                    <th className={styles.thGroupSubQty}>확정수량</th>
+                                    <th className={styles.thGroupSubQty}>총중량</th>
+                                    <th className={styles.thGroupSubScan}>스캔수량</th>
+                                    <th className={styles.thGroupSubScan}>스캔건수</th>
                                 </tr>
                             </thead>
                             <tbody className={styles.tbody}>
-                                {pagedRows.length === 0 ? (
+                                {receiptList.length === 0 ? (
                                     <tr>
                                         <td colSpan={36} className={styles.emptyCell}>
                                             <span className="material-symbols-outlined" style={{ fontSize: '2rem', display: 'block' }}>inbox</span>
                                             <p>조회된 데이터가 없습니다.</p>
                                         </td>
                                     </tr>
-                                ) : pagedRows.map((r, idx) => (
+                                ) : receiptList.map((v, idx) => (
                                     <tr key={idx} onClick={() => handleSelectRow(idx)}>
                                         <td className={styles.cellCenter}>
-                                            <input type="checkbox" className={styles.checkbox}
-                                                checked={r.chk === '1'} onChange={() => {}} />
+                                            <input type="checkbox" className={styles.checkbox} checked={v.chk === '1'} onChange={() => {}} />
                                         </td>
-                                        <td className={styles.cellCenter}>{r.srvcCd}</td>
-                                        <td className={styles.cellCenter}>{r.whCd}</td>
-                                        <td className={styles.cellCenter}>{r.inbPlanDate}</td>
-                                        <td className={styles.cellBold}>{r.inbNo}</td>
-                                        <td className={styles.cellCenter}>{r.inbSeq}</td>
-                                        <td className={styles.cellCenter}>{getStatusBadge(r.inbStatus)}</td>
-                                        <td className={styles.cellCenter}>{r.inbType}</td>
-                                        <td className={styles.cellCenter}>{r.tranType}</td>
-                                        <td className={styles.cellCenter}>{r.inbCmpDate}</td>
-                                        <td className={styles.cellCenter}>{r.supplierCd}</td>
-                                        <td className={styles.cellMedium}>{r.supplierNm}</td>
-                                        <td className={styles.cellMedium}>{r.prodCd}</td>
-                                        <td className={styles.cellMedium}>{r.prodNm}</td>
-                                        <td className={styles.cellCenter}>{r.zoneCd}</td>
-                                        <td className={styles.cellCenter}>{r.zoneNm}</td>
-                                        <td className={styles.cellCenter}>{r.locCd}</td>
-                                        <td className={styles.cellCenter}>{r.ordQty}</td>
-                                        <td className={styles.cellCenter}>{r.planQty}</td>
-                                        <td className={styles.cellCenter}>{r.confQty}</td>
-                                        <td className={styles.cellCenter}>{r.scanQty}</td>
-                                        <td className={styles.cellCenter}>{r.scanCnt}</td>
-                                        <td className={styles.cellCenter}>{r.totalWeight}</td>
-                                        <td className={styles.cellDim}>{r.noInbReason}</td>
-                                        <td className={styles.cellDim}>{r.addr}</td>
-                                        <td className={styles.cellCenter}>{r.zipCd}</td>
-                                        <td className={styles.cellCenter}>{r.manager}</td>
-                                        <td className={styles.cellCenter}>{r.tel}</td>
-                                        <td className={styles.cellCenter}>{r.vehicleNo}</td>
-                                        <td className={styles.cellCenter}>{r.drvNm}</td>
-                                        <td className={styles.cellCenter}>{r.pdaYn}</td>
-                                        <td className={styles.cellDim}>{r.remark}</td>
-                                        <td className={styles.cellCenter}>{r.regId}</td>
-                                        <td className={styles.cellCenter}>{r.regDate}</td>
-                                        <td className={styles.cellCenter}>{r.updId}</td>
-                                        <td className={styles.cellCenter}>{r.updDate}</td>
+                                        <td className={styles.cellCenter}>
+                                            { (s => s ? `${s.srvcCd} [${s.srvcNm}]` : v.srvcCd)(srvcList.find( s => s.srvcCd === v.srvcCd)) }
+                                        </td>
+                                        <td className={styles.cellCenter}>
+                                            { (w => w ? `${w.whCd} [${w.whNm}]` : v.whCd)(whList.find( w => w.whCd === v.whCd)) }
+                                        </td>
+                                        <td className={styles.cellCenter}>{v.inExpectedDate}</td>
+                                        <td className={styles.cellCenter}>{v.inNo}</td>
+                                        <td className={styles.cellCenter}>{v.inExpectedSeq}</td>
+                                        <td className={styles.cellCenter}>{getStatusBadge(v.status)}</td>
+                                        <td className={styles.cellCenter}>
+                                            { (c => c ? `${c.sys_cdnm}` : v.receiptClsCd)(receiptCategory.find(c => c.sys_cd === v.receiptClsCd)) }
+                                        </td>
+                                        <td className={styles.cellCenter}>
+                                            { (c => c ? `${c.sys_cdnm}` : v.receiptType)(receiptType.find(c => c.sys_cd === v.receiptType)) }
+                                        </td>
+                                        <td className={styles.cellCenter}>{v.receiptDate}</td>
+                                        <td className={styles.cellCenter}>{v.vendorCd}</td>
+                                        <td className={styles.cellMedium}>{v.vendorNm}</td>
+                                        <td className={styles.cellCenter}>{v.prodCd}</td>
+                                        <td className={styles.cellMedium}>{v.prodNm}</td>
+                                        <td className={styles.cellCenter}>{v.inZoneCd}</td>
+                                        <td className={styles.cellCenter}>{v.inZoneNm}</td>
+                                        <td className={styles.cellCenter}>{v.inLocCd}</td>
+                                        <td className={styles.cellRight}>{v.originalQty}</td>
+                                        <td className={styles.cellRight}>
+                                            <input type='text' className={`${styles.cellInput} ${styles.cellRight}`} value={v.expectedQty} readOnly={v.status === '09'} />
+                                        </td>
+                                        <td className={styles.cellRight}>{v.receivedQty}</td>
+                                        <td className={styles.cellRight}>{v.totInWeight}</td>
+                                        <td className={styles.cellRight}>{v.pdaScanQty}</td>
+                                        <td className={styles.cellRight}>{v.pdaScanCnt}</td>
+                                        <td className={styles.cellCenter}>
+                                            <select className={styles.cellInput} value={v.notRsnCd}
+                                                onChange={(e) => setReceiptList(prev => prev.map((r, i) => i === idx ? { ...r, notRsnCd: e.target.value } : r))}>
+                                                <option value="">-- 선택 --</option>
+                                                { inNotRsnCd.map(t => (
+                                                    <option key={t.sys_cd} value={t.sys_cd}>{t.sys_cd} | {t.sys_cdnm}</option>
+                                                ))}
+                                            </select>
+                                        </td>
+                                        <td className={styles.cellCenter}>{v.vendorAddress}</td>
+                                        <td className={styles.cellCenter}>{v.zipCd}</td>
+                                        <td className={styles.cellCenter}>{v.managerNm}</td>
+                                        <td className={styles.cellCenter}>{v.telNo}</td>
+                                        <td className={styles.cellCenter}>{v.inVNo}</td>
+                                        <td className={styles.cellCenter}>{v.inVNm}</td>
+                                        <td className={styles.cellCenter}>{v.pdaYn}</td>
+                                        <td className={styles.cellDim}>
+                                            <input type='text' className={styles.cellInput} value={v.rmk}/>
+                                        </td>
+                                        <td className={styles.cellCenter}>{v.regId}</td>
+                                        <td className={styles.cellCenter}>{v.regDate}</td>
+                                        <td className={styles.cellCenter}>{v.updId}</td>
+                                        <td className={styles.cellCenter}>{v.updDate}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -449,11 +785,19 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
             </div>
         </div>
 
+        <Popup
+            isOpen={popup.isOpen}
+            message={popup.message}
+            type={popup.type}
+            onConfirm={popup.onConfirm}
+            onCancel={closePopup}
+        />
+
         <ClientSearchPopup
             isOpen={isClientPopupOpen}
             srvcCd={searchSrvcCd}
             whCd={searchWhCd}
-            initialClientCd={searchSupplierCd}
+            initialClientCd={searchClientCd}
             onSelect={handleClientSelect}
             onClose={() => setIsClientPopupOpen(false)}
         />
