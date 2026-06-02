@@ -280,7 +280,7 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
                     ...row,
                     inNo            : inNo,
                     inExpectedNo    : keyData?.in_no_seq ?? '',
-                    status          : '0'
+                    status          : '00'
                 })));
             },
             (err) => showAlert("조회 실패: " + err?.message)
@@ -304,7 +304,7 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
         }
 
         // 3. 입고상태 체크
-        const statusIdx = receiptDtlList.findIndex(row => row.status !== '0');
+        const statusIdx = receiptDtlList.findIndex(row => row.status !== '00');
         if (statusIdx !== -1) {
             showAlert('해당 입고오더는 작업한 상태입니다.');
             return;
@@ -479,7 +479,7 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
             prodCd          : '',
             prodNm          : '',
             originalQty     : 0,
-            status          : '0',
+            status          : '00',
             rmk             : '',
             inZoneCd        : '',
             inZoneNm        : '',
