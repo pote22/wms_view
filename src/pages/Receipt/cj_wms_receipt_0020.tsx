@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { ko } from 'date-fns/locale';
@@ -341,7 +341,174 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
 
     // 입고확정
     const handleSaveReceiptConfirm = () => {
-        showAlert('입고확정');
+        const chkList = receiptList.filter(v => v.chk === '1');
+
+        if (chkList.length === 0) {
+            showAlert('체크 항목이 없습니다. 최소 1건 이상 체크해주세요.');
+            return;
+        }
+
+        let errorMsg = '';
+        let focusKey = '';
+        let rowIdx   = -1;
+
+        receiptList.forEach((data, idx) => {
+            if (errorMsg) return;
+            if (data.chk !== '1') return;
+
+            const inNo = data.inNo;
+
+            if (data.status === '09') {
+                errorMsg = `입고번호 : ${inNo} 이미 입고완료된 항목이 있습니다.`;
+                rowIdx   = idx;
+            } else if (!data.vendorNm.trim()) {
+                errorMsg = `입고번호 : ${inNo} 기준정보에 거래처 정보가 없습니다.`;
+                rowIdx   = idx;
+            } else if (!data.prodNm.trim()) {
+                errorMsg = `입고번호 : ${inNo} 기준정보에 품목 정보가 없습니다.`;
+                rowIdx   = idx;
+            } else if (!data.inZoneNm.trim()) {
+                errorMsg = `입고번호 : ${inNo} 기준정보에 존 정보가 없습니다.`;
+                rowIdx   = idx;
+            } else if (!data.inLocCd.trim()) {
+                errorMsg = `입고번호 : ${inNo} 기준정보에 로케이션 정보가 없습니다.`;
+                rowIdx   = idx;
+            } else if (Number(data.originalQty) > Number(data.expectedQty) && !data.notRsnCd.trim()) {
+                errorMsg = `입고번호 : ${inNo} 해당 항목의 결품 사유코드를 입력하세요.`;
+                focusKey = `${idx}_notRsnCd`;
+                rowIdx   = idx;
+            }
+        });
+
+        if (errorMsg) {
+            showAlert(errorMsg, () => {
+                setTimeout(() => {
+                    if (rowIdx >= 0) {
+                        rowRefs.current.get(rowIdx)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    if (focusKey) {
+                        cellRefs.current.get(focusKey)?.focus();
+                    }
+                }, 50);
+            });
+            return;
+        }
+
+        showConfirm('입고확정 처리하시겠습니까?', () => {
+            closePopup();
+
+            const payload = getTokenPayload();
+            const userId  = payload?.userId ?? '';
+
+            saveReceiptConfirm(
+                {
+                    list: chkList.map(v => ({
+                        srvcCd        : v.srvcCd,
+                        whCd          : v.whCd,
+                        inNo          : v.inNo,
+                        inExpectedSeq : v.inExpectedSeq,
+                        expectedQty   : v.expectedQty,
+                        receivedQty   : v.expectedQty,
+                        notRsnCd      : v.notRsnCd,
+                        userId        : userId
+                    }))
+                },
+                (res) => {
+                    showAlert(res.resultMessage);
+                    handleSearch();
+                },
+                (err) => showAlert('입고확정 실패: ' + err?.message)
+            );
+        });
+    }
+
+    // 입고상태별 출력(스타일적용)
+    const getStatusBadge = (status: string) => {
+        switch (status) {
+            case '00': return <span className={styles.badgePlan}>입고예정</span>;
+            case '01': return <span className={styles.badgePartial}>부분입고</span>;
+            case '09': return <span className={styles.badgeConf}>입고확정</span>;
+            default:  return <span>{status}</span>;
+        }
+    };
+
+    // 예정수량 '0' 일괄적용(미압고사유 추가)
+    const handleSetInNotRsnCd = () => {
+        const chkList = receiptList.filter(v => v.chk === '1');
+
+        if (chkList.length === 0) {
+            showAlert('체크 항목이 없습니다. 최소 1건이상 체크해주세요.');
+            return;
+        }
+
+        setReceiptList(prev => prev.map(row =>
+            row.chk === '1' ? 
+            { 
+                ...row,
+                notRsnCd    : notRsnCd,
+                expectedQty : '0'
+            } : row
+        ));
+    }
+
+    // 비고저장
+    const handleSaveRemark = () => {
+        const chkList = receiptList.filter(v => v.chk === '1');
+
+        if (chkList.length === 0) {
+            showAlert('체크 항목이 없습니다. 최소 1건 이상 체크해주세요.');
+            return;
+        }
+
+        var srvcCdIdx       = receiptList.findIndex(v => v.chk === '1' && !v.srvcCd);
+        var whCdIdx         = receiptList.findIndex(v => v.chk === '1' && !v.whCd);
+        var inNoIdx         = receiptList.findIndex(v => v.chk === '1' && !v.inNo);
+        var inExptSeqIdx    = receiptList.findIndex(v => v.chk === '1' && !v.inExpectedSeq);
+
+        if (srvcCdIdx !== -1) {
+            showAlert("고객사 코드를 확인해주세요.");
+            return;
+        }
+
+        if (whCdIdx !== -1) {
+            showAlert("센터 코드를 확인해주세요.");
+            return;
+        }
+
+        if (inNoIdx !== -1) {
+            showAlert("입고번호를 확인해주세요.");
+            return;
+        }
+
+        if (inExptSeqIdx !== -1) {
+            showAlert("입고순번을 확인해주세요.");
+            return;
+        }
+
+        showConfirm('비고를 저장하시겠습니까?', () => {
+            closePopup();
+
+            const payload = getTokenPayload();
+            const userId  = payload?.userId ?? '';
+
+            saveRemarkInfo(
+                {
+                    list: chkList.map(v => ({
+                        srvcCd        : v.srvcCd,
+                        whCd          : v.whCd,
+                        inNo          : v.inNo,
+                        inExpectedSeq : v.inExpectedSeq,
+                        rmk           : v.rmk,
+                        userId        : userId
+                    }))
+                },
+                (res) => {
+                    showAlert(res.resultMessage);
+                    handleSearch();
+                },
+                (err) => showAlert('비고 저장 실패: ' + err?.message)
+            );
+        });
     }
 
     // 이벤트 : 매입처검색
@@ -372,40 +539,24 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
         const val = e.target.checked ? '1' : '0';
         setReceiptList(prev => prev.map(r => ({ ...r, chk: val })));
     };
-    
-    // 입고상태별 출력(스타일적용)
-    const getStatusBadge = (status: string) => {
-        switch (status) {
-            case '0': return <span className={styles.badgePlan}>입고예정</span>;
-            case '1': return <span className={styles.badgePartial}>부분입고</span>;
-            case '9': return <span className={styles.badgeConf}>입고확정</span>;
-            default:  return <span>{status}</span>;
-        }
+
+    // 해당 셀 컴포넌트 값 변경 이벤트
+    const handleCellChange = (idx : number, field : keyof ReceiptRow, value : string) => {
+        setReceiptList(prev => prev.map((v, i) => i === idx ? {...v, [field] : value } : v));
+    }
+
+    const cellRefs = useRef<Map<string, HTMLInputElement | HTMLSelectElement>>(new Map());
+    const setCellRef = (idx: number, field: string) => (
+        el: HTMLInputElement | HTMLSelectElement | null) => {
+            if (el) cellRefs.current.set(`${idx}_${field}`, el);
+            else cellRefs.current.delete(`${idx}_${field}`);
     };
 
-    // 예정수량 '0' 일괄적용(미압고사유 추가)
-    const handleSetInNotRsnCd = () => {
-        const chkList = receiptList.filter(v => v.chk === '1');
-
-        if (chkList.length === 0) {
-            showAlert('체크 항목이 없습니다. 최소 1건이상 체크해주세요.');
-            return;
-        }
-
-        setReceiptList(prev => prev.map(row =>
-            row.chk === '1' ? 
-            { 
-                ...row,
-                notRsnCd    : notRsnCd,
-                expectedQty : '0'
-            } : row
-        ));
-    }
-
-    // 비고저장
-    const handleSaveRemark = () => {
-        showAlert('비고저장');
-    }
+    const rowRefs = useRef<Map<number, HTMLTableRowElement>>(new Map());
+    const setRowRef = (idx: number) => (el: HTMLTableRowElement | null) => {
+        if (el) rowRefs.current.set(idx, el);
+        else rowRefs.current.delete(idx);
+    };
 
     return (
         <>
@@ -655,10 +806,14 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                 <col style={{ width: '120px' }} />
                                 {/* 비고 */}
                                 <col style={{ width: '350px' }} />
+                                {/* 등록자 */}
                                 <col style={{ width: '90px' }} />
-                                <col style={{ width: '120px' }} />
+                                {/* 등록일자 */}
+                                <col style={{ width: '220px' }} />
+                                {/* 수정자 */}
                                 <col style={{ width: '90px' }} />
-                                <col style={{ width: '120px' }} />
+                                {/* 수정일자 */}
+                                <col style={{ width: '220px' }} />
                             </colgroup>
                             <thead className={styles.thead}>
                                 <tr>
@@ -717,7 +872,7 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                         </td>
                                     </tr>
                                 ) : receiptList.map((v, idx) => (
-                                    <tr key={idx} onClick={() => handleSelectRow(idx)}>
+                                    <tr key={idx} ref={setRowRef(idx)} onClick={() => handleSelectRow(idx)}>
                                         <td className={styles.cellCenter}>
                                             <input type="checkbox" className={styles.checkbox} checked={v.chk === '1'} onChange={() => {}} />
                                         </td>
@@ -747,7 +902,7 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                         <td className={styles.cellCenter}>{v.inLocCd}</td>
                                         <td className={styles.cellRight}>{v.originalQty}</td>
                                         <td className={styles.cellRight}>
-                                            <input type='text' className={`${styles.cellInput} ${styles.cellRight}`} value={v.expectedQty} readOnly={v.status === '09'} />
+                                            <input type='text' className={`${styles.cellInput} ${styles.cellRight}`} value={v.expectedQty} onChange={e => { if (/^\d*\.?\d*$/.test(e.target.value)) handleCellChange(idx, 'expectedQty', e.target.value); }} ref={setCellRef(idx, "expectedQty") as any} readOnly={v.status === '09'} />
                                         </td>
                                         <td className={styles.cellRight}>{v.receivedQty}</td>
                                         <td className={styles.cellRight}>{v.totInWeight}</td>
@@ -755,7 +910,8 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                         <td className={styles.cellRight}>{v.pdaScanCnt}</td>
                                         <td className={styles.cellCenter}>
                                             <select className={styles.cellInput} value={v.notRsnCd}
-                                                onChange={(e) => setReceiptList(prev => prev.map((r, i) => i === idx ? { ...r, notRsnCd: e.target.value } : r))}>
+                                                onChange={e => handleCellChange(idx, 'notRsnCd', e.target.value)}
+                                                ref={setCellRef(idx, "notRsnCd") as any}>
                                                 <option value="">-- 선택 --</option>
                                                 { inNotRsnCd.map(t => (
                                                     <option key={t.sys_cd} value={t.sys_cd}>{t.sys_cd} | {t.sys_cdnm}</option>
@@ -770,7 +926,7 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                         <td className={styles.cellCenter}>{v.inVNm}</td>
                                         <td className={styles.cellCenter}>{v.pdaYn}</td>
                                         <td className={styles.cellDim}>
-                                            <input type='text' className={styles.cellInput} value={v.rmk}/>
+                                            <input type='text' className={styles.cellInput} value={v.rmk} onChange={e => handleCellChange(idx, 'rmk', e.target.value)}/>
                                         </td>
                                         <td className={styles.cellCenter}>{v.regId}</td>
                                         <td className={styles.cellCenter}>{v.regDate}</td>
