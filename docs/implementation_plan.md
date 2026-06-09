@@ -26,7 +26,9 @@
 | Phase 18 | 존&로케이션 관리 화면 구현 (WMS_MASTER_0040) | ✅ 완료 |
 | Phase 19 | 거래처관리 화면 구현 (WMS_MASTER_0020) | ✅ 완료 |
 | Phase 20 | 입고등록 화면 전체 구현 (WMS_RECEIPT_0010) | ✅ 완료 |
-| Phase 21 | 입고예정&확정 화면 UI 구현 (WMS_RECEIPT_0020) | 🔲 미완료 |
+| Phase 21 | 입고예정&확정 화면 전체 구현 (WMS_RECEIPT_0020) | ✅ 완료 |
+| Phase 22 | 재고현황 화면 구현 (WMS_STOCK_0010) | 🔲 미완료 |
+| Phase 23 | 트랜잭션관리 화면 구현 (WMS_STOCK_0090) | 🔲 미완료 |
 
 > 완료된 Phase 상세 → [`docs/history/frontend_phases.md`](history/frontend_phases.md)
 
@@ -104,87 +106,80 @@
 
 ---
 
-## Phase 21 — 입고예정&확정 화면 UI 구현 (WMS_RECEIPT_0020) 🔲
+## Phase 21 — 입고예정&확정 화면 전체 구현 (WMS_RECEIPT_0020) ✅
 
 ### 작업 파일
 - `src/pages/Receipt/cj_wms_receipt_0020.tsx`
 - `src/pages/Receipt/cj_wms_receipt_0020.module.css`
-- 디자인 참조: `src/design/cj_wms_receipt_0020_design.html`
+- `src/api/receipt/receipt_0020Service.ts`
 
-### 구현 범위 (UI 레이아웃)
+### 구현 내용
 
-#### 상단 영역
-- **타이틀**: 입고예정/입고확정 + 부제
-- **액션 버튼**: 조회(primary), 엑셀다운로드(outline), 입고예정리스트발행(outline), 입고확정(blue outline)
+#### API 서비스 (`receipt_0020Service.ts`)
+| 함수 | 엔드포인트 | 설명 |
+|------|-----------|------|
+| `getList` | POST `/api/receipt/0020/getList` | 입고예정 목록 조회 |
+| `saveRemarkInfo` | POST `/api/receipt/0020/saveRemarkInfo` | 비고 다건 저장 |
+| `saveReceiptConfirm` | POST `/api/receipt/0020/saveReceiptConfirm` | 입고확정 처리 |
 
-#### 검색 필터 (6컬럼 grid)
-| 항목 | 컨트롤 |
-|------|--------|
-| 고객사 | select (useCommonWhList) |
-| 센터 | select (useCommonWhList) |
-| 입고구분 | select (전체 / 일반입고 / 반품입고) |
-| 수불유형 | select (이관오더 / 구매오더 / 판매오더) |
-| 입고상태 | select (전체 / 입고예정 / 부분입고 / 입고확정) |
-| 입고번호 | text input |
-| 품번 | text input |
-| 차량번호 | text input |
+#### 인라인 편집
+- `cellRefs` Map + `setCellRef(idx, field)` 패턴 — 셀 포커스 제어
+- `rowRefs` Map + `setRowRef(idx)` 패턴 — 행 스크롤 제어
+- `handleCellChange(idx, field, value)` — 제네릭 셀 값 변경 핸들러
+- 예정수량: 숫자만 입력 허용 (`onKeyDown` regex 필터)
 
-#### 테이블 컬럼
-| 컬럼 | 너비 | 비고 |
+#### 비고저장 (`handleSaveRemark`)
+- 체크 항목 없음 차단
+- srvcCd/whCd/inNo/inExpectedSeq 유효성 검사
+- `showConfirm` → `saveRemarkInfo` API → `showAlert` + 재조회
+
+#### 입고확정 (`handleSaveReceiptConfirm`)
+- 체크 항목 없음 차단
+- forEach + flag 패턴으로 6개 항목 순차 유효성 검증:
+  1. STATUS='09' 이미 완료된 항목 차단
+  2. 거래처 정보 없음
+  3. 품목 정보 없음
+  4. 존 정보 없음
+  5. 로케이션 정보 없음
+  6. 원주문량 > 예정수량 시 미입고사유 필수
+- 오류 시 `showAlert` + `rowRefs.scrollIntoView` + `cellRefs.focus` (setTimeout 50ms 타이밍 처리)
+- 검증 통과 시 `showConfirm` → `saveReceiptConfirm` API → `showAlert` + 재조회
+
+#### 버그 수정 이력
+| 증상 | 원인 | 해결 |
 |------|------|------|
-| 체크박스 | 40px | 전체선택 |
-| 고객사 | 150px | center |
-| 센터 | 150px | center |
-| 입고예정일 | 110px | center |
-| 입고번호 | 150px | center |
-| 입고순번 | 150px | center |
-| 입고상태 | 150px | center |
-| 입고구분 | 120px | center|
-| 수불유형 | 120px | center|
-| 입고완료일 | 130px | center |
-| 매입처코드 | 120px | center|
-| 매입처명 | 120px | center|
-| 품번 | 120px | center |
-| 품명 | 180px | center |
-| 존 | 180px | center |
-| 존명 | 180px | center |
-| 로케이션 | 180px | center |
-| 수량:원주문량 | 150px | center |
-| 수량:예정수량 | 150px | center |
-| 수량:확정수량 | 150px | center |
-| 스캔정보:스캔수량 | 150px | center |
-| 스캔정보:스캔건수 | 150px | center |
-| 수량:총중량 | 150px | center |
-| 미입고사유 | 150px | center |
-| 업체주소 | 150px | center |
-| 우편번호 | 150px | center |
-| 담당자 | 150px | center |
-| 연락처 | 150px | center |
-| 차량번호 | 150px | center |
-| 기사명 | 150px | center |
-| PDA작업여부 | 150px | center |
-| 비고 | 150px | center |
-| 등록자 | 150px | center |
-| 등록일자 | 150px | center |
-| 수정자 | 150px | center |
-| 수정일자 | 150px | center |
+| 모든 행이 동시에 수정됨 | `prev.map((v, idx) => idx === idx)` — 외부 idx가 map callback idx에 가려짐 | 콜백 변수를 `i`로 변경 |
+| forEach return이 바깥 함수를 종료 못 함 | `return`은 callback만 종료 | flag 변수 패턴(`errorMsg`, `rowIdx`, `focusKey`)으로 변경 |
+| 수량 비교 오류 (`'9' > '10'` = true) | 문자열 비교 | `Number()` 래핑으로 숫자 비교 |
+| scrollIntoView 타이밍 오류 | popup close 전에 DOM 참조 | `setTimeout(fn, 50)` 내부에서 `rowRefs.current.get()` 재조회 |
 
-#### 상태 뱃지 색상
-| 상태 | 배경 | 텍스트 |
-|------|------|--------|
-| 입고예정 | white (#ffffff) / border | #374151 |
-| 부분입고 | purple (#f3e8ff) | #6b21a8 |
-| 입고확정 | emerald (#d1fae5) | #065f46 |
+---
 
-#### 페이지네이션
-- 총 N건 표시 + 이전/다음 버튼 + 페이지 번호
+## Phase 22 — 재고현황 화면 구현 (WMS_STOCK_0010) 🔲
 
-### 미구현 (API 연동 — 별도 Phase)
-- 조회 / 입고확정 / 입고예정리스트발행 API 연동
-- 엑셀다운로드
+### 작업 파일 (예정)
+- `src/pages/Stock/cj_wms_stock_0010.tsx`
+- `src/pages/Stock/cj_wms_stock_0010.module.css`
+- `src/api/stock/stock_0010Service.ts`
 
-#### 툴바
-- 우: 예정수량 '0'일괄적용 / 미입고사유 / 비고저장
+### 구현 예정 범위
+- 검색 필터: 고객사·센터·존·로케이션·품목
+- 테이블: TB_STOCK_H + TB_STOCK_D JOIN 조회 결과 표시
+- 엑셀 다운로드
+
+---
+
+## Phase 23 — 트랜잭션관리 화면 구현 (WMS_STOCK_0090) 🔲
+
+### 작업 파일 (예정)
+- `src/pages/Stock/cj_wms_stock_0090.tsx`
+- `src/pages/Stock/cj_wms_stock_0090.module.css`
+- `src/api/stock/stock_0090Service.ts`
+
+### 구현 예정 범위
+- 검색 필터: 고객사·센터·TRAN_TYPE·기간·품목
+- 테이블: TB_ITRN 조회 결과 표시 (DP/WD/MV/AJ/TR 구분)
+- 엑셀 다운로드
 
 ---
 

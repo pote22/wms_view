@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CJ WMS - 재고현황</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Manrope:wght@500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-error-container": "#93000a",
+              "tertiary-container": "#983c00",
+              "secondary-fixed-dim": "#afcbd8",
+              "secondary-container": "#cbe7f5",
+              "on-secondary-container": "#4e6874",
+              "on-background": "#191c1d",
+              "on-primary-fixed": "#001a40",
+              "tertiary-fixed-dim": "#ffb694",
+              "on-tertiary-fixed-variant": "#7b2f00",
+              "tertiary": "#722b00",
+              "secondary-fixed": "#cbe7f5",
+              "surface-variant": "#e1e3e4",
+              "surface-tint": "#115cb9",
+              "inverse-on-surface": "#eff1f2",
+              "on-secondary": "#ffffff",
+              "on-secondary-fixed-variant": "#304a55",
+              "primary": "#003f87",
+              "surface-container-low": "#f2f4f5",
+              "primary-fixed": "#d7e2ff",
+              "error": "#ba1a1a",
+              "surface-container-lowest": "#ffffff",
+              "on-primary-fixed-variant": "#004491",
+              "on-secondary-fixed": "#021f29",
+              "primary-fixed-dim": "#acc7ff",
+              "surface-bright": "#f8fafb",
+              "outline": "#727784",
+              "surface-dim": "#d8dadb",
+              "inverse-primary": "#acc7ff",
+              "error-container": "#ffdad6",
+              "background": "#f8fafb",
+              "on-surface-variant": "#424752",
+              "surface-container": "#eceeef",
+              "on-tertiary-container": "#ffc2a7",
+              "on-tertiary": "#ffffff",
+              "surface": "#f8fafb",
+              "secondary": "#48626e",
+              "tertiary-fixed": "#ffdbcc",
+              "surface-container-high": "#e6e8e9",
+              "surface-container-highest": "#e1e3e4",
+              "inverse-surface": "#2e3132",
+              "outline-variant": "#c2c6d4",
+              "on-tertiary-fixed": "#351000",
+              "on-surface": "#191c1d",
+              "primary-container": "#0056b3",
+              "on-primary": "#ffffff",
+              "on-primary-container": "#bbd0ff",
+              "on-error": "#ffffff"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3 { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #c2c6d4; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface flex h-screen overflow-hidden">
+<!-- SideNavBar Component (Synced with SCREEN_40) -->
+<aside class="bg-slate-100 dark:bg-slate-950 flex flex-col h-full border-r border-slate-200 dark:border-slate-800 w-64 shrink-0 z-20">
+<!-- Sidebar Header -->
+<div class="px-6 py-8">
+<h2 class="text-xl font-bold text-blue-900 font-headline uppercase tracking-tight">CJ WMS</h2>
+<p class="text-xs text-slate-500 font-medium mt-1">CJ Logistics</p>
+</div>
+<!-- Sidebar Navigation Items -->
+<nav class="flex-1 px-4 space-y-6 overflow-y-auto custom-scrollbar">
+<div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-2 block mb-2 font-headline">마스터 관리</span>
+<div class="space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/30 hover:translate-x-1 transition-transform duration-200 text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">database</span>
+<span>품번관리</span>
+</a>
+</div>
+</div>
+<div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-2 block mb-2 font-headline">입고관리</span>
+<div class="space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/30 hover:translate-x-1 transition-transform duration-200 text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">download</span>
+<span>입고등록</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/30 hover:translate-x-1 transition-transform duration-200 text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">pending_actions</span>
+<span>입고예정&amp;확정</span>
+</a>
+</div>
+</div>
+<div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-2 block mb-2 font-headline">출고관리</span>
+<div class="space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/30 hover:translate-x-1 transition-transform duration-200 text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">upload</span>
+<span>출고등록</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/30 hover:translate-x-1 transition-transform duration-200 text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">assignment</span>
+<span>출고/할당 관리</span>
+</a>
+</div>
+</div>
+<div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-2 block mb-2 font-headline">재고관리</span>
+<div class="space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white dark:bg-slate-800 text-blue-800 dark:text-blue-200 font-semibold shadow-sm text-sm" href="#">
+<span class="material-symbols-outlined text-[20px]">inventory_2</span>
+<span>재고현황</span>
+</a>
+</div>
+</div>
+</nav>
+<!-- Sidebar Footer -->
+<div class="p-4 mt-auto border-t border-slate-200/60 dark:border-slate-800/60">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 text-sm font-medium transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">help</span>
+<span>Support</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col min-w-0 bg-surface">
+<!-- TopNavBar Component (Synced with SCREEN_40) -->
+<header class="bg-slate-50 dark:bg-slate-900 docked full-width top-0 z-10">
+<!-- Header Top Row -->
+<div class="flex justify-between items-center w-full px-8 py-3">
+<div class="flex items-center gap-12">
+<div class="hidden lg:flex items-center gap-4">
+<div class="flex items-center gap-2 px-3 py-1.5 rounded bg-surface-container-low text-xs font-semibold text-slate-700 cursor-pointer">
+<span class="text-slate-400 font-normal">고객사</span>
+<span>GS칼텍스</span>
+<span class="material-symbols-outlined text-[14px]">expand_more</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-1.5 rounded bg-surface-container-low text-xs font-semibold text-slate-700 cursor-pointer">
+<span class="text-slate-400 font-normal">센터</span>
+<span>인천GSC센터</span>
+<span class="material-symbols-outlined text-[14px]">expand_more</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2 mr-4">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container text-xs font-bold">
+                            JS
+                        </div>
+<div class="flex flex-col">
+<span class="text-xs font-bold text-on-primary-fixed">김철수 관리자</span>
+<span class="text-[10px] text-slate-500 uppercase">Super User</span>
+</div>
+<button class="ml-4 flex items-center gap-1 px-3 py-1.5 rounded-lg text-error hover:bg-error-container/10 transition-colors border border-error/20">
+<span class="material-symbols-outlined text-[18px]">logout</span>
+<span class="text-xs font-bold">로그아웃</span>
+</button>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-slate-500 hover:bg-slate-200/50 p-2 rounded transition-colors">notifications</button>
+<button class="material-symbols-outlined text-slate-500 hover:bg-slate-200/50 p-2 rounded transition-colors">settings</button>
+</div>
+</div>
+</div>
+<!-- Header Bottom Row -->
+<div class="flex items-center w-full px-8 gap-8 border-t border-slate-200 dark:border-slate-800 h-12">
+<a class="text-blue-700 dark:text-blue-300 font-bold border-b-2 border-blue-700 dark:border-blue-300 h-full flex items-center px-2 text-sm" href="#">보관관리</a>
+<a class="text-slate-500 dark:text-slate-400 font-medium hover:text-blue-900 h-full flex items-center px-2 text-sm transition-colors" href="#">공통관리</a>
+</div>
+</header>
+<!-- Page Canvas -->
+<div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+<div class="max-w-7xl mx-auto space-y-6">
+<!-- Data Table Section with Filters and Actions -->
+<div class="bg-surface-container-lowest rounded-xl border border-slate-200/30 overflow-hidden shadow-sm">
+<div class="p-6 border-b border-slate-100 space-y-6">
+<!-- Title and Action Buttons -->
+<div class="flex items-center justify-between">
+<div>
+<h3 class="text-xl font-bold text-on-primary-fixed font-headline">재고현황</h3>
+<p class="text-sm text-slate-500 mt-0.5">실시간 재고 현황을 조회하고 관리합니다.</p>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-blue-800 transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[18px]">search</span>
+                                    조회
+                                </button>
+<button class="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
+<span class="material-symbols-outlined text-[18px]">save</span>
+                                    저장
+                                </button>
+<button class="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
+<span class="material-symbols-outlined text-[18px]">download</span>
+                                    엑셀
+                                </button>
+</div>
+</div>
+<!-- Filters -->
+<div class="bg-slate-50/50 p-4 rounded-lg border border-slate-100">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+<div class="space-y-1.5">
+<label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">센터</label>
+<select class="w-full bg-white border-slate-200 rounded text-sm h-10 px-3 focus:ring-primary focus:border-primary">
+<option>곤지암 메가허브</option>
+<option>용인 풀필먼트</option>
+</select>
+</div>
+<div class="space-y-1.5">
+<label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">고객사</label>
+<select class="w-full bg-white border-slate-200 rounded text-sm h-10 px-3 focus:ring-primary focus:border-primary">
+<option>전체</option>
+<option>CJ ENM</option>
+<option>Olive Young</option>
+</select>
+</div>
+<div class="space-y-1.5">
+<label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">바코드</label>
+<input class="w-full bg-white border-slate-200 rounded text-sm h-10 px-3 focus:ring-primary focus:border-primary" placeholder="Scan or enter barcode" type="text"/>
+</div>
+<div class="space-y-1.5">
+<label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">입고일자</label>
+<input class="w-full bg-white border-slate-200 rounded text-sm h-10 px-3 focus:ring-primary focus:border-primary" type="date"/>
+</div>
+<div class="space-y-1.5">
+<label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">존</label>
+<div class="relative">
+<input class="w-full bg-white border-slate-200 rounded text-sm h-10 pl-3 pr-10 focus:ring-primary focus:border-primary" type="text"/>
+<button class="absolute right-2 top-2.5 text-slate-400 hover:text-primary"><span class="material-symbols-outlined text-[18px]">search</span></button>
+</div>
+</div>
+<div class="space-y-1.5">
+<label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">로케이션</label>
+<div class="relative">
+<input class="w-full bg-white border-slate-200 rounded text-sm h-10 pl-3 pr-10 focus:ring-primary focus:border-primary" type="text"/>
+<button class="absolute right-2 top-2.5 text-slate-400 hover:text-primary"><span class="material-symbols-outlined text-[18px]">search</span></button>
+</div>
+</div>
+<div class="space-y-1.5">
+<label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">품번</label>
+<div class="relative">
+<input class="w-full bg-white border-slate-200 rounded text-sm h-10 pl-3 pr-10 focus:ring-primary focus:border-primary" type="text"/>
+<button class="absolute right-2 top-2.5 text-slate-400 hover:text-primary"><span class="material-symbols-outlined text-[18px]">search</span></button>
+</div>
+</div>
+</div>
+</div>
+<!-- Table Toolbar -->
+<div class="flex items-center justify-between pt-2"><span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total: 48,291 Items</span>
+<label class="flex items-center gap-2 cursor-pointer group">
+<input class="w-4 h-4 rounded text-primary focus:ring-primary border-slate-300" type="checkbox"/>
+<span class="text-xs font-bold text-slate-600 group-hover:text-primary transition-colors">총 재고량 0 제외</span>
+</label></div>
+</div>
+<!-- Main Table -->
+<div class="overflow-x-auto custom-scrollbar">
+<table class="w-full text-left border-collapse min-w-[2400px]">
+<thead>
+<tr class="text-[10px] uppercase tracking-wider text-slate-400 font-black border-b border-slate-100 bg-slate-50/50"><th class="py-4 px-4 w-10">
+<input class="w-4 h-4 rounded text-primary focus:ring-primary border-slate-300" type="checkbox"/>
+</th>
+<th class="py-4 px-4">센터명</th>
+<th class="py-4 px-4">고객사</th>
+<th class="py-4 px-4">품번</th>
+<th class="py-4 px-4">품명</th>
+<th class="py-4 px-4">존</th>
+<th class="py-4 px-4">존명</th>
+<th class="py-4 px-4">로케이션</th>
+<th class="py-4 px-4 text-right">총재고</th>
+<th class="py-4 px-4 text-right">할당수량</th>
+<th class="py-4 px-4 text-right">피킹수량</th>
+<th class="py-4 px-4 text-right">가용재고</th>
+<th class="py-4 px-4">입고일자</th>
+<th class="py-4 px-4">바코드</th>
+<th class="py-4 px-4">비고</th>
+<th class="py-4 px-4 text-right">보관일수</th>
+<th class="py-4 px-4">등록자</th>
+<th class="py-4 px-4">등록일자</th>
+<th class="py-4 px-4">수정자</th>
+<th class="py-4 px-4">수정일자</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-50 bg-white">
+<!-- Sample Row 1 -->
+<tr class="group hover:bg-surface-container-low/50 transition-colors cursor-pointer"><td class="py-4 px-4 w-10">
+<input class="w-4 h-4 rounded text-primary focus:ring-primary border-slate-300" type="checkbox"/>
+</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">곤지암 메가허브</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">CJ ENM</td>
+<td class="py-4 px-4 text-xs font-bold text-primary">SKU-2024-X99</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">아이오페 에어쿠션 15g</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">A-01</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">상온보관존</td>
+<td class="py-4 px-4 text-xs font-bold text-slate-700">A01-02-03</td>
+<td class="py-4 px-4 text-xs font-bold text-right tabular-nums">1,250</td>
+<td class="py-4 px-4 text-xs font-medium text-right tabular-nums text-slate-400">120</td>
+<td class="py-4 px-4 text-xs font-medium text-right tabular-nums text-slate-400">0</td>
+<td class="py-4 px-4 text-xs font-bold text-right tabular-nums text-primary-container">1,130</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">2024-05-10</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">8801234567890</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-400">-</td>
+<td class="py-4 px-4 text-xs font-medium text-right tabular-nums">14</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">홍길동</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">2024-05-10</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">이순신</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">2024-05-11</td>
+</tr>
+<!-- Sample Row 2 -->
+<tr class="group hover:bg-surface-container-low/50 transition-colors cursor-pointer"><td class="py-4 px-4 w-10">
+<input class="w-4 h-4 rounded text-primary focus:ring-primary border-slate-300" type="checkbox"/>
+</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">곤지암 메가허브</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">Olive Young</td>
+<td class="py-4 px-4 text-xs font-bold text-primary">OY-Lotion-B2</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">라운드랩 자작나무 수분크림</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">B-12</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">피킹존-소형</td>
+<td class="py-4 px-4 text-xs font-bold text-slate-700">B12-01-01</td>
+<td class="py-4 px-4 text-xs font-bold text-right tabular-nums">480</td>
+<td class="py-4 px-4 text-xs font-medium text-right tabular-nums text-slate-400">480</td>
+<td class="py-4 px-4 text-xs font-medium text-right tabular-nums text-slate-400">50</td>
+<td class="py-4 px-4 text-xs font-bold text-right tabular-nums text-error">0</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">2024-04-28</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">8809876543211</td>
+<td class="py-4 px-4 text-xs font-medium text-tertiary">재고부족 알림</td>
+<td class="py-4 px-4 text-xs font-medium text-right tabular-nums">26</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">김철수</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">2024-04-28</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">박영희</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">2024-05-20</td>
+</tr>
+<!-- Sample Row 3 -->
+<tr class="group hover:bg-surface-container-low/50 transition-colors cursor-pointer"><td class="py-4 px-4 w-10">
+<input class="w-4 h-4 rounded text-primary focus:ring-primary border-slate-300" type="checkbox"/>
+</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">곤지암 메가허브</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">CJ ENM</td>
+<td class="py-4 px-4 text-xs font-bold text-primary">SKU-2024-Z01</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">비비고 사골곰탕 500g</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">P-05</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">파렛트 보관존</td>
+<td class="py-4 px-4 text-xs font-bold text-slate-700">P05-04-02</td>
+<td class="py-4 px-4 text-xs font-bold text-right tabular-nums">5,000</td>
+<td class="py-4 px-4 text-xs font-medium text-right tabular-nums text-slate-400">0</td>
+<td class="py-4 px-4 text-xs font-medium text-right tabular-nums text-slate-400">0</td>
+<td class="py-4 px-4 text-xs font-bold text-right tabular-nums text-primary-container">5,000</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">2024-05-22</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">8801122334455</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-400">-</td>
+<td class="py-4 px-4 text-xs font-medium text-right tabular-nums">2</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">관리자</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">2024-05-22</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">-</td>
+<td class="py-4 px-4 text-xs font-medium text-slate-600">-</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Component (Synced with SCREEN_40 style) -->
+<footer class="fixed bottom-6 left-[18rem] right-8 bg-surface-container-lowest/80 backdrop-blur-[32px] rounded-full py-4 px-8 flex items-center justify-between border border-white/40 shadow-xl shadow-slate-900/5">
+<div class="flex items-center gap-12">
+<div class="flex flex-col">
+<span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Active Pickers</span>
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+<span class="text-xs font-bold text-on-primary-fixed">24 / 30</span>
+</div>
+</div>
+<div class="flex flex-col">
+<span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Pending Orders</span>
+<span class="text-xs font-bold text-on-primary-fixed">114</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Low Stock Alerts</span>
+<span class="text-xs font-bold text-on-primary-fixed">12 Items</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<span class="text-[11px] text-slate-500 italic">Live tracking enabled.</span>
+<div class="w-1.5 h-1.5 bg-primary rounded-full animate-ping"></div>
+</div>
+</footer>
+</main>
+</body></html>
