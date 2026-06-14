@@ -1,9 +1,447 @@
-const CJ_WMS_STOCK_0090: React.FC = () => (
-    <div className="stub-page">
-        <span className="material-symbols-outlined stub-icon">contract</span>
-        <h2 className="stub-title">트랜잭션관리</h2>
-        <p className="stub-desc">준비 중인 페이지입니다.</p>
-    </div>
-);
+import React, { useState, useEffect } from 'react';
+// datepicker
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { ko } from 'date-fns/locale';
+// 공통 API
+import { useCommonWhList } from '../../api/common/commonWhList';
+import Popup from "../../components/common/Popup";
+import { usePopup } from "../../components/common/usePopup";
+import { formatDate } from '../../utils/dateUtils';
+// 엑셀
+import ExcelJS from "exceljs";
+// CSS
+import styles from './cj_wms_stock_0090.module.css';
+// API
+import { getList, type Transaction } from '../../api/stock/stock_0090Service';
+
+// 구분 옵션
+const TXN_TP_OPTIONS = [
+    { value: '',  label: '전체' },
+    { value: 'I', label: '입고' },
+    { value: 'O', label: '출고' },
+    { value: 'M', label: '이동' },
+];
+
+// 날짜 문자열(YYYYMMDD) → Date 변환
+const toDate = (s: string): Date | null =>
+    s ? new Date(`${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`) : null;
+
+const CJ_WMS_STOCK_0090: React.FC = () => {
+    const { srvcList, whList, selectSrvcCd, selectWhCd } = useCommonWhList();
+
+    // 조회조건
+    const [searchSrvcCd, setSearchSrvcCd]   = useState(selectSrvcCd);
+    const [searchWhCd,   setSearchWhCd]     = useState(selectWhCd);
+    const [searchWorkDtFr, setSearchWorkDtFr] = useState('');
+    const [searchWorkDtTo, setSearchWorkDtTo] = useState('');
+    const [searchRcptDt, setSearchRcptDt]   = useState('');
+    const [searchProdCd, setSearchProdCd]   = useState('');
+    const [searchTxnKey, setSearchTxnKey]   = useState('');
+    const [searchTxnTp,  setSearchTxnTp]    = useState('');
+    const [searchOrdNo,  setSearchOrdNo]    = useState('');
+    const [searchBarCd,  setSearchBarCd]    = useState('');
+
+    // 조회결과
+    const [txnList,  setTxnList]    = useState<Transaction[]>([]);
+    const [searched, setSearched]   = useState(false);
+
+    // 팝업
+    const { popup, showAlert, closePopup } = usePopup();
+
+    // 조회
+    const handleSearch = () => {
+        if (!searchSrvcCd) { showAlert('고객사를 선택하세요.'); return; }
+        if (!searchWhCd)   { showAlert('센터를 선택하세요.');   return; }
+
+        getList(
+            {
+                srvcCd   : searchSrvcCd,
+                whCd     : searchWhCd,
+                workDtFr : searchWorkDtFr,
+                workDtTo : searchWorkDtTo,
+                rcptDt   : searchRcptDt,
+                prodCd   : searchProdCd,
+                txnKey   : searchTxnKey,
+                txnTp    : searchTxnTp,
+                ordNo    : searchOrdNo,
+                barcode  : searchBarCd,
+            },
+            (res) => {
+                const list: Transaction[] = (res.data ?? []).map((v: any) => ({
+                    srvcCd    : v.srvc_cd     ?? '',
+                    whCd      : v.wh_cd       ?? '',
+                    txnKey    : v.txn_key     ?? '',
+                    txnTp     : v.txn_tp      ?? '',
+                    txnTpNm   : v.txn_tp_nm   ?? '',
+                    workDt    : v.work_dt     ?? '',
+                    prodCd    : v.prod_cd     ?? '',
+                    prodNm    : v.prod_nm     ?? '',
+                    rcptLotNo : v.rcpt_lot_no ?? '',
+                    prodLotNo : v.prod_lot_no ?? '',
+                    befZoneCd : v.bef_zone_cd ?? '',
+                    befLocCd  : v.bef_loc_cd  ?? '',
+                    befBarCd  : v.bef_bar_cd  ?? '',
+                    aftZoneCd : v.aft_zone_cd ?? '',
+                    aftLocCd  : v.aft_loc_cd  ?? '',
+                    aftBarCd  : v.aft_bar_cd  ?? '',
+                    ordNo     : v.ord_no      ?? '',
+                    stockQty  : v.stock_qty   ?? 0,
+                    applyQty  : v.apply_qty   ?? 0,
+                    ioGb      : v.io_gb       ?? '',
+                    regId     : v.reg_id      ?? '',
+                    regDate   : v.reg_date    ?? '',
+                    updId     : v.upd_id      ?? '',
+                    updDate   : v.upd_date    ?? '',
+                }));
+                setTxnList(list);
+                setSearched(true);
+            },
+            (err) => { showAlert('조회 실패: ' + err?.message); setSearched(true); }
+        );
+    };
+
+    // 엑셀
+    const handleExcel = async () => {
+        if (txnList.length === 0) {
+            showAlert("다운로드할 데이터가 없습니다.");
+            return;
+        }
+
+        const wb = new ExcelJS.Workbook();
+        const ws = wb.addWorksheet("트랜잭션현황");
+
+        ws.columns = [
+            { header: "센터명",           key: "whNm",      width: 16 },
+            { header: "고객사",           key: "srvcNm",    width: 16 },
+            { header: "트랜잭션KEY",      key: "txnKey",    width: 18 },
+            { header: "구분",             key: "txnTpNm",   width: 8 },
+            { header: "작업일자",         key: "workDt",    width: 12 },
+            { header: "품번",             key: "prodCd",    width: 16 },
+            { header: "품명",             key: "prodNm",    width: 24 },
+            { header: "입고일자(로트번호)", key: "rcptLotNo", width: 16 },
+            { header: "생산로트(로트번호)", key: "prodLotNo", width: 16 },
+            { header: "존(이동전)",       key: "befZoneCd", width: 12 },
+            { header: "로케이션(이동전)", key: "befLocCd",  width: 14 },
+            { header: "바코드(이동전)",   key: "befBarCd",  width: 14 },
+            { header: "존(이동후)",       key: "aftZoneCd", width: 12 },
+            { header: "로케이션(이동후)", key: "aftLocCd",  width: 14 },
+            { header: "바코드(이동후)",   key: "aftBarCd",  width: 14 },
+            { header: "지시번호",         key: "ordNo",     width: 14 },
+            { header: "수량(재고)",       key: "stockQty",  width: 12 },
+            { header: "재고반영(수량)",   key: "applyQty",  width: 12 },
+            { header: "증차감구분자",     key: "ioGb",      width: 12 },
+            { header: "등록자",           key: "regId",     width: 12 },
+            { header: "등록일자",         key: "regDate",   width: 18 },
+            { header: "수정자",           key: "updId",     width: 12 },
+            { header: "수정일자",         key: "updDate",   width: 18 },
+        ];
+
+        const headerRow = ws.getRow(1);
+        headerRow.eachCell((cell) => {
+            cell.fill      = { type: "pattern", pattern: "solid", fgColor: { argb: "0080B2Fd" } };
+            cell.font      = { bold: true, color: { argb: "00000000" }, size: 11 };
+            cell.alignment = { vertical: "middle", horizontal: "center" };
+            cell.border    = { top: {style:"thin"}, left: {style:"thin"}, bottom: {style:"thin"}, right: {style:"thin"} };
+        });
+        headerRow.height = 22;
+
+        txnList.forEach(v => {
+            const s = srvcList.find(s => s.srvcCd === v.srvcCd);
+            const w = whList.find(w => w.whCd === v.whCd);
+            const row = ws.addRow({
+                ...v,
+                srvcNm: s ? `${s.srvcCd} [${s.srvcNm}]` : v.srvcCd,
+                whNm:   w ? `${w.whCd} [${w.whNm}]`     : v.whCd,
+            });
+            row.eachCell((cell) => {
+                cell.alignment = { vertical: "middle", horizontal: "center" };
+                cell.border    = { top: {style:"thin"}, left: {style:"thin"}, bottom: {style:"thin"}, right: {style:"thin"} };
+            });
+            row.height = 18;
+        });
+
+        const buffer = await wb.xlsx.writeBuffer();
+        const blob   = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+        const url    = window.URL.createObjectURL(blob);
+        const a      = document.createElement("a");
+        a.href       = url;
+        a.download   = `트랜잭션현황_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    };
+
+    useEffect(() => { setSearchSrvcCd(selectSrvcCd); }, [selectSrvcCd]);
+    useEffect(() => { setSearchWhCd(selectWhCd); },     [selectWhCd]);
+
+    // 구분 뱃지 클래스
+    const badgeClass = (tp: string) =>
+        tp === 'I' ? styles.badgeIn
+      : tp === 'O' ? styles.badgeOut
+      : tp === 'M' ? styles.badgeMove
+      : styles.badgeDefault;
+
+    // 구분명 표시 (txnTpNm 우선, 없으면 옵션 라벨)
+    const txnTpLabel = (item: Transaction) =>
+        item.txnTpNm || TXN_TP_OPTIONS.find(o => o.value === item.txnTp)?.label || item.txnTp;
+
+    // 증가/감소 판정
+    const isUp = (item: Transaction) =>
+        item.ioGb ? item.ioGb === 'I' : Number(item.applyQty) >= 0;
+
+    return (
+        <>
+        <Popup
+            isOpen={popup.isOpen}
+            message={popup.message}
+            type={popup.type}
+            onConfirm={popup.onConfirm}
+            onCancel={closePopup}
+        />
+        <div className={styles.pageContainer}>
+            <div className={styles.contentWrapper}>
+                <div className={styles.sectionCard}>
+
+                    {/* ── 섹션 헤더 ── */}
+                    <div className={styles.sectionHeader}>
+                        <div className={styles.headerTop}>
+                            <div className={styles.titleArea}>
+                                <h3>트랜잭션현황</h3>
+                                <p>재고 이동 및 수량 변화 이력을 상세하게 조회합니다.</p>
+                            </div>
+                            <div className={styles.actionGroup}>
+                                <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleSearch}>
+                                    <span className="material-symbols-outlined">search</span>
+                                    조회
+                                </button>
+                                <button className={`${styles.btn} ${styles.btnOutline}`} onClick={handleExcel}>
+                                    <span className="material-symbols-outlined">download</span>
+                                    엑셀
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* ── 필터 영역 ── */}
+                        <div className={styles.filterBox}>
+                            <div className={styles.filterGrid}>
+
+                                {/* 고객사 */}
+                                <div className={styles.filterItem}>
+                                    <label className={styles.filterLabel}>고객사</label>
+                                    <select className={styles.filterSelect} value={searchSrvcCd} onChange={e => setSearchSrvcCd(e.target.value)}>
+                                        {srvcList.map(s => <option key={s.srvcCd} value={s.srvcCd}>{`${s.srvcCd} [${s.srvcNm}]`}</option>)}
+                                    </select>
+                                </div>
+
+                                {/* 센터 */}
+                                <div className={styles.filterItem}>
+                                    <label className={styles.filterLabel}>센터</label>
+                                    <select className={styles.filterSelect} value={searchWhCd} onChange={e => setSearchWhCd(e.target.value)}>
+                                        {whList.map(w => <option key={w.whCd} value={w.whCd}>{`${w.whCd} [${w.whNm}]`}</option>)}
+                                    </select>
+                                </div>
+
+                                {/* 작업일자 (범위) */}
+                                <div className={styles.filterItem}>
+                                    <label className={styles.filterLabel}>작업일자</label>
+                                    <div className={styles.filterDateRange}>
+                                        <div className={styles.filterDateWrapper}>
+                                            <DatePicker
+                                                selected={toDate(searchWorkDtFr)}
+                                                onChange={(date: Date | null) => setSearchWorkDtFr(date ? formatDate(date) : '')}
+                                                dateFormat="yyyy-MM-dd"
+                                                locale={ko}
+                                                isClearable
+                                                placeholderText=""
+                                            />
+                                        </div>
+                                        <span className={styles.filterDateTilde}>~</span>
+                                        <div className={styles.filterDateWrapper}>
+                                            <DatePicker
+                                                selected={toDate(searchWorkDtTo)}
+                                                onChange={(date: Date | null) => setSearchWorkDtTo(date ? formatDate(date) : '')}
+                                                dateFormat="yyyy-MM-dd"
+                                                locale={ko}
+                                                isClearable
+                                                placeholderText=""
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 입고일자 */}
+                                <div className={styles.filterItem}>
+                                    <label className={styles.filterLabel}>입고일자</label>
+                                    <div className={styles.filterDateWrapper}>
+                                        <DatePicker
+                                            selected={toDate(searchRcptDt)}
+                                            onChange={(date: Date | null) => setSearchRcptDt(date ? formatDate(date) : '')}
+                                            dateFormat="yyyy-MM-dd"
+                                            locale={ko}
+                                            isClearable
+                                            placeholderText=""
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* 품번 */}
+                                <div className={styles.filterItem}>
+                                    <label className={styles.filterLabel}>품번</label>
+                                    <input type="text" className={styles.filterInput} value={searchProdCd}
+                                        onChange={e => setSearchProdCd(e.target.value)} placeholder="품번 입력" />
+                                </div>
+
+                                {/* 트랜잭션KEY */}
+                                <div className={styles.filterItem}>
+                                    <label className={styles.filterLabel}>트랜잭션KEY</label>
+                                    <input type="text" className={styles.filterInput} value={searchTxnKey}
+                                        onChange={e => setSearchTxnKey(e.target.value)} placeholder="TXN-0000" />
+                                </div>
+
+                                {/* 구분 */}
+                                <div className={styles.filterItem}>
+                                    <label className={styles.filterLabel}>구분</label>
+                                    <select className={styles.filterSelect} value={searchTxnTp} onChange={e => setSearchTxnTp(e.target.value)}>
+                                        {TXN_TP_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                                    </select>
+                                </div>
+
+                                {/* 지시번호 */}
+                                <div className={styles.filterItem}>
+                                    <label className={styles.filterLabel}>지시번호</label>
+                                    <input type="text" className={styles.filterInput} value={searchOrdNo}
+                                        onChange={e => setSearchOrdNo(e.target.value)} placeholder="지시번호 입력" />
+                                </div>
+
+                                {/* 바코드 */}
+                                <div className={styles.filterItem}>
+                                    <label className={styles.filterLabel}>바코드</label>
+                                    <input type="text" className={styles.filterInput} value={searchBarCd}
+                                        onChange={e => setSearchBarCd(e.target.value)} placeholder="바코드 입력" />
+                                </div>
+
+                            </div>
+                        </div>
+
+                        {/* ── 테이블 툴바 ── */}
+                        <div className={styles.tableToolbar}>
+                            <span className={styles.totalCount}>Total: {txnList.length} Items</span>
+                        </div>
+                    </div>
+
+                    {/* ── 메인 테이블 ── */}
+                    <div className={styles.tableWrapper}>
+                        <table className={styles.table}>
+                            <colgroup>
+                                <col style={{ width: '150px' }} />   {/* 센터명 */}
+                                <col style={{ width: '150px' }} />   {/* 고객사 */}
+                                <col style={{ width: '150px' }} />   {/* 트랜잭션KEY */}
+                                <col style={{ width: '80px' }} />    {/* 구분 */}
+                                <col style={{ width: '100px' }} />   {/* 작업일자 */}
+                                <col style={{ width: '150px' }} />   {/* 품번 */}
+                                <col style={{ width: '220px' }} />   {/* 품명 */}
+                                <col style={{ width: '140px' }} />   {/* 입고일자(로트) */}
+                                <col style={{ width: '140px' }} />   {/* 생산로트 */}
+                                <col style={{ width: '100px' }} />   {/* 존(이동전) */}
+                                <col style={{ width: '120px' }} />   {/* 로케이션(이동전) */}
+                                <col style={{ width: '120px' }} />   {/* 바코드(이동전) */}
+                                <col style={{ width: '100px' }} />   {/* 존(이동후) */}
+                                <col style={{ width: '120px' }} />   {/* 로케이션(이동후) */}
+                                <col style={{ width: '120px' }} />   {/* 바코드(이동후) */}
+                                <col style={{ width: '120px' }} />   {/* 지시번호 */}
+                                <col style={{ width: '100px' }} />   {/* 수량(재고) */}
+                                <col style={{ width: '110px' }} />   {/* 재고반영(수량) */}
+                                <col style={{ width: '90px' }} />    {/* 증차감구분자 */}
+                                <col style={{ width: '90px' }} />    {/* 등록자 */}
+                                <col style={{ width: '150px' }} />   {/* 등록일자 */}
+                                <col style={{ width: '90px' }} />    {/* 수정자 */}
+                                <col style={{ width: '150px' }} />   {/* 수정일자 */}
+                            </colgroup>
+                            <thead className={styles.thead}>
+                                <tr>
+                                    <th>센터명</th>
+                                    <th>고객사</th>
+                                    <th>트랜잭션KEY</th>
+                                    <th>구분</th>
+                                    <th>작업일자</th>
+                                    <th>품번</th>
+                                    <th>품명</th>
+                                    <th>입고일자(로트번호)</th>
+                                    <th>생산로트(로트번호)</th>
+                                    <th>존(이동전)</th>
+                                    <th>로케이션(이동전)</th>
+                                    <th>바코드(이동전)</th>
+                                    <th>존(이동후)</th>
+                                    <th>로케이션(이동후)</th>
+                                    <th>바코드(이동후)</th>
+                                    <th>지시번호</th>
+                                    <th>수량(재고)</th>
+                                    <th>재고반영(수량)</th>
+                                    <th>증차감구분자</th>
+                                    <th>등록자</th>
+                                    <th>등록일자</th>
+                                    <th>수정자</th>
+                                    <th>수정일자</th>
+                                </tr>
+                            </thead>
+                            <tbody className={styles.tbody}>
+                                {searched && txnList.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={23} className={styles.emptyRow}>
+                                            <span className="material-symbols-outlined">inbox</span>
+                                            <p>조회된 데이터가 없습니다.</p>
+                                        </td>
+                                    </tr>
+                                ) : txnList.map((item, idx) => (
+                                    <tr key={idx}>
+                                        <td className={styles.cellCenter}>
+                                            { (w => w ? `${w.whCd} [${w.whNm}]` : item.whCd)(whList.find(w => w.whCd === item.whCd)) }
+                                        </td>
+                                        <td className={styles.cellCenter}>
+                                            { (s => s ? `${s.srvcCd} [${s.srvcNm}]` : item.srvcCd)(srvcList.find(s => s.srvcCd === item.srvcCd)) }
+                                        </td>
+                                        <td className={styles.cellTxnKey}>{item.txnKey}</td>
+                                        <td className={styles.cellCenter}>
+                                            <span className={`${styles.badge} ${badgeClass(item.txnTp)}`}>{txnTpLabel(item)}</span>
+                                        </td>
+                                        <td className={styles.cellCenter}>{item.workDt}</td>
+                                        <td className={styles.cellMedium}>{item.prodCd}</td>
+                                        <td className={styles.cellMedium}>{item.prodNm}</td>
+                                        <td className={styles.cellCenter}>{item.rcptLotNo}</td>
+                                        <td className={styles.cellCenter}>{item.prodLotNo}</td>
+                                        <td className={styles.cellCenter}>{item.befZoneCd}</td>
+                                        <td className={styles.cellCenter}>{item.befLocCd}</td>
+                                        <td className={styles.cellCenter}>{item.befBarCd}</td>
+                                        <td className={styles.cellCenter}>{item.aftZoneCd}</td>
+                                        <td className={styles.cellCenter}>{item.aftLocCd}</td>
+                                        <td className={styles.cellCenter}>{item.aftBarCd}</td>
+                                        <td className={styles.cellCenter}>{item.ordNo}</td>
+                                        <td className={styles.cellQty}>{Number(item.stockQty).toLocaleString()}</td>
+                                        <td className={isUp(item) ? styles.cellApplyQtyUp : styles.cellApplyQtyDown}>
+                                            {Number(item.applyQty) > 0 ? '+' : ''}{Number(item.applyQty).toLocaleString()}
+                                        </td>
+                                        <td className={styles.cellCenter}>
+                                            <span className={`material-symbols-outlined ${isUp(item) ? styles.iconUp : styles.iconDown}`}>
+                                                {isUp(item) ? 'trending_up' : 'trending_down'}
+                                            </span>
+                                        </td>
+                                        <td className={styles.cellCenter}>{item.regId}</td>
+                                        <td className={styles.cellDim}>{item.regDate}</td>
+                                        <td className={styles.cellCenter}>{item.updId || '-'}</td>
+                                        <td className={styles.cellDim}>{item.updDate || '-'}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        </>
+    );
+};
 
 export default CJ_WMS_STOCK_0090;
