@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+// datapicker
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { ko } from 'date-fns/locale';
+// 공통 API 
 import { useCommonWhList } from '../../api/common/commonWhList';
 import Popup from "../../components/common/Popup";
 import { usePopup } from "../../components/common/usePopup";
@@ -9,64 +11,87 @@ import ZoneSearchPopup from "../../components/common/ZoneSearchPopup";
 import LocSearchPopup from "../../components/common/LocSearchPopup";
 import ProdSearchPopup from "../../components/common/ProdSearchPopup";
 import { formatDate } from '../../utils/dateUtils';
-import styles from './cj_wms_stock_0010.module.css';
+// 엑셀
 import ExcelJS from "exceljs";
-// import { getStockList, type StockItem } from '../../api/stock/stock_0010Service';
-
-interface StockItem {
-    srvcCd:  string; whCd:    string; whNm:    string; srvcNm:  string;
-    itemCd:  string; itemNm:  string; zoneCd:  string; zoneNm:  string; locCd: string;
-    totQty:  number; alctQty: number; pickQty: number; availQty: number;
-    rcptDt:  string; barCd:   string; rmk:     string; storDay:  number;
-    regId:   string; regDate: string; updId:   string; updDate:  string;
-}
+// CSS
+import styles from './cj_wms_stock_0010.module.css';
+// API
+import { getList, type Stock } from '../../api/stock/stock_0010Service';
 
 const CJ_WMS_STOCK_0010: React.FC = () => {
     const { srvcList, whList, selectSrvcCd, selectWhCd } = useCommonWhList();
 
     // 조회조건
-    const [searchSrvcCd, setSearchSrvcCd] = useState(selectSrvcCd);
-    const [searchWhCd,   setSearchWhCd]   = useState(selectWhCd);
-    const [searchBarCd,  setSearchBarCd]  = useState('');
-    const [searchRcptDt, setSearchRcptDt] = useState('');
-    const [searchZoneCd, setSearchZoneCd] = useState('');
-    const [searchZoneNm, setSearchZoneNm] = useState('');
-    const [searchLocCd,  setSearchLocCd]  = useState('');
-    const [searchItemCd, setSearchItemCd] = useState('');
-    const [searchItemNm, setSearchItemNm] = useState('');
-    const [searchRmk,    setSearchRmk]    = useState('');
+    const [searchSrvcCd, setSearchSrvcCd]   = useState(selectSrvcCd);
+    const [searchWhCd,   setSearchWhCd]     = useState(selectWhCd);
+    const [searchBarCd,  setSearchBarCd]    = useState('');
+    const [searchRcptDt, setSearchRcptDt]   = useState('');
+    const [searchZoneCd, setSearchZoneCd]   = useState('');
+    const [searchZoneNm, setSearchZoneNm]   = useState('');
+    const [searchLocCd,  setSearchLocCd]    = useState('');
+    const [searchItemCd, setSearchItemCd]   = useState('');
+    const [searchItemNm, setSearchItemNm]   = useState('');
+    const [searchRmk,    setSearchRmk]      = useState('');
 
     // 조회결과
-    const [stockList,  setStockList]  = useState<StockItem[]>([]);
-    const [searched,   setSearched]   = useState(false);
-
-    // 필터
-    const [excludeZeroStock, setExcludeZeroStock] = useState(false);
-
+    const [stockList,  setStockList]        = useState<Stock[]>([]);
+    const [searched,   setSearched]         = useState(false);
+    
     // 팝업
     const [zonePopupOpen, setZonePopupOpen] = useState(false);
     const [locPopupOpen,  setLocPopupOpen]  = useState(false);
     const [prodPopupOpen, setProdPopupOpen] = useState(false);
-    const { popup, showAlert, closePopup }   = usePopup();
+    const { popup, showAlert, closePopup }  = usePopup();
 
-    const filteredList = excludeZeroStock
-        ? stockList.filter(v => v.availQty > 0)
-        : stockList;
-
-    // ── 조회 ──
+    // 조회
     const handleSearch = () => {
-        // getStockList({ srvcCd: searchSrvcCd, whCd: searchWhCd, barCd: searchBarCd,
-        //   rcptDt: searchRcptDt, zoneCd: searchZoneCd, locCd: searchLocCd, itemCd: searchItemCd },
-        //   (res) => { if (res.resultCode === '0000') setStockList(res.data ?? []); },
-        //   (err) => showAlert('조회 실패: ' + err?.message)
-        // );
-        setStockList([]);
-        setSearched(true);
+        if (!searchSrvcCd) { showAlert('고객사를 선택하세요.'); return; }
+        if (!searchWhCd)   { showAlert('센터를 선택하세요.');   return; }
+
+        getList(
+            {
+                srvcCd : searchSrvcCd,
+                whCd   : searchWhCd,
+                barcode: searchBarCd,
+                lotNo  : searchRcptDt,   // YYYYMMDD
+                zoneCd : searchZoneCd,
+                locCd  : searchLocCd,
+                prodCd : searchItemCd,
+                rmk    : searchRmk,
+            },
+            (res) => {
+                const list: Stock[] = (res.data ?? []).map((v: any) => ({
+                    srvcCd   : v.srvc_cd   ?? '',
+                    whCd     : v.wh_cd     ?? '',
+                    prodCd   : v.prod_cd   ?? '',
+                    prodNm   : v.prod_nm   ?? '',
+                    zoneCd   : v.zone_cd   ?? '',
+                    zoneNm   : v.zone_nm   ?? '',
+                    locCd    : v.loc_cd    ?? '',
+                    stockQty : v.stock_qty ?? 0,
+                    allocQty : v.alloc_qty ?? 0,
+                    pickQty  : v.pick_qty  ?? 0,
+                    avlQty   : v.avl_qty   ?? 0,
+                    lotNo    : v.lot_no    ?? '',
+                    id       : v.id        ?? '',
+                    aging    : v.aging     ?? 0,
+                    prodSpec : v.prod_spec ?? '',
+                    rmk      : v.rmk       ?? '',
+                    regId    : v.reg_id    ?? '',
+                    regDate  : v.reg_date  ?? '',
+                    updId    : v.upd_id    ?? '',
+                    updDate  : v.upd_date  ?? '',
+                }));
+                setStockList(list);
+                setSearched(true);
+            },
+            (err) => { showAlert('조회 실패: ' + err?.message); setSearched(true); }
+        );
     };
 
     // ── 엑셀 ──
     const handleExcel = async () => {
-        if (filteredList.length === 0) {
+        if (stockList.length === 0) {
             showAlert("다운로드할 데이터가 없습니다.");
             return;
         }
@@ -75,21 +100,22 @@ const CJ_WMS_STOCK_0010: React.FC = () => {
         const ws = wb.addWorksheet("재고현황");
 
         ws.columns = [
-            { header: "센터명",   key: "whNm",    width: 15 },
             { header: "고객사",   key: "srvcNm",  width: 15 },
-            { header: "품번",     key: "itemCd",  width: 15 },
-            { header: "품명",     key: "itemNm",  width: 22 },
+            { header: "센터명",   key: "whNm",    width: 15 },
+            { header: "품번",     key: "prodCd",  width: 15 },
+            { header: "품명",     key: "prodNm",  width: 22 },
             { header: "존",       key: "zoneCd",  width: 10 },
             { header: "존명",     key: "zoneNm",  width: 15 },
             { header: "로케이션", key: "locCd",   width: 12 },
-            { header: "총재고",   key: "totQty",  width: 10 },
-            { header: "할당수량", key: "alctQty", width: 10 },
-            { header: "피킹수량", key: "pickQty", width: 10 },
-            { header: "가용재고", key: "availQty",width: 10 },
-            { header: "입고일자", key: "rcptDt",  width: 12 },
-            { header: "바코드",   key: "barCd",   width: 15 },
-            { header: "비고",     key: "rmk",     width: 20 },
-            { header: "보관일수", key: "storDay", width: 10 },
+            { header: "총재고",   key: "stockQty", width: 10 },
+            { header: "할당수량", key: "allocQty", width: 10 },
+            { header: "피킹수량", key: "pickQty",  width: 10 },
+            { header: "가용재고", key: "avlQty",   width: 10 },
+            { header: "입고일자", key: "lotNo",    width: 12 },
+            { header: "바코드",   key: "id",       width: 15 },
+            { header: "비고",     key: "rmk",      width: 20 },
+            { header: "보관일수", key: "aging",    width: 10 },
+            { header: "사양",     key: "prodSpec", width: 15 },
             { header: "등록자",   key: "regId",   width: 12 },
             { header: "등록일자", key: "regDate", width: 12 },
             { header: "수정자",   key: "updId",   width: 12 },
@@ -105,8 +131,14 @@ const CJ_WMS_STOCK_0010: React.FC = () => {
         });
         headerRow.height = 22;
 
-        filteredList.forEach(v => {
-            const row = ws.addRow(v);
+        stockList.forEach(v => {
+            const s = srvcList.find(s => s.srvcCd === v.srvcCd);
+            const w = whList.find(w => w.whCd === v.whCd);
+            const row = ws.addRow({
+                ...v,
+                srvcNm: s ? `${s.srvcCd} [${s.srvcNm}]` : v.srvcCd,
+                whNm:   w ? `${w.whCd} [${w.whNm}]`   : v.whCd,
+            });
             row.eachCell((cell) => {
                 cell.alignment = { vertical: "middle", horizontal: "center" };
                 cell.border    = { top: {style:"thin"}, left: {style:"thin"}, bottom: {style:"thin"}, right: {style:"thin"} };
@@ -255,7 +287,7 @@ const CJ_WMS_STOCK_0010: React.FC = () => {
                                     <div className={styles.filterInputGroup}>
                                         <input type="text" className={styles.filterInput} value={searchLocCd}
                                             onChange={e => setSearchLocCd(e.target.value)} />
-                                        <button className={styles.filterSearchBtn} onClick={() => setLocPopupOpen(true)}>
+                                        <button className={styles.filterSearchBtn} onClick={() => { if (!searchZoneCd) { showAlert('존코드를 먼저 입력하세요.'); return; } setLocPopupOpen(true); }}>
                                             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>search</span>
                                         </button>
                                     </div>
@@ -295,25 +327,26 @@ const CJ_WMS_STOCK_0010: React.FC = () => {
                     <div className={styles.tableWrapper}>
                         <table className={styles.table}>
                             <colgroup>
+                                <col style={{ width: '150px' }} />
+                                <col style={{ width: '150px' }} />
+                                <col style={{ width: '150px' }} />
+                                <col style={{ width: '300px' }} />
                                 <col style={{ width: '100px' }} />
-                                <col style={{ width: '120px' }} />
-                                <col style={{ width: '120px' }} />
-                                <col style={{ width: '160px' }} />
-                                <col style={{ width: '70px' }} />
-                                <col style={{ width: '110px' }} />
+                                <col style={{ width: '150px' }} />
                                 <col style={{ width: '100px' }} />
-                                <col style={{ width: '80px' }} />
-                                <col style={{ width: '80px' }} />
-                                <col style={{ width: '80px' }} />
-                                <col style={{ width: '80px' }} />
                                 <col style={{ width: '100px' }} />
+                                <col style={{ width: '100px' }} />
+                                <col style={{ width: '100px' }} />
+                                <col style={{ width: '100px' }} />
+                                <col style={{ width: '150px' }} />
                                 <col style={{ width: '130px' }} />
+                                <col style={{ width: '200px' }} />
                                 <col style={{ width: '120px' }} />
-                                <col style={{ width: '80px' }} />
-                                <col style={{ width: '80px' }} />
-                                <col style={{ width: '100px' }} />
-                                <col style={{ width: '80px' }} />
-                                <col style={{ width: '100px' }} />
+                                <col style={{ width: '150px' }} />
+                                <col style={{ width: '90px' }} />
+                                <col style={{ width: '200px' }} />
+                                <col style={{ width: '90px' }} />
+                                <col style={{ width: '200px' }} />
                             </colgroup>
                             <thead className={styles.thead}>
                                 <tr>
@@ -324,14 +357,15 @@ const CJ_WMS_STOCK_0010: React.FC = () => {
                                     <th>존</th>
                                     <th>존명</th>
                                     <th>로케이션</th>
-                                    <th className={styles.cellRight}>총재고</th>
-                                    <th className={styles.cellRight}>할당수량</th>
-                                    <th className={styles.cellRight}>피킹수량</th>
-                                    <th className={styles.cellRight}>가용재고</th>
+                                    <th className={styles.thQty}>총재고</th>
+                                    <th className={styles.thQty}>할당수량</th>
+                                    <th className={styles.thQty}>피킹수량</th>
+                                    <th className={styles.thQty}>가용재고</th>
                                     <th>입고일자</th>
                                     <th>바코드</th>
                                     <th>비고</th>
-                                    <th className={styles.cellRight}>보관일수</th>
+                                    <th>보관일수</th>
+                                    <th>사양</th>
                                     <th>등록자</th>
                                     <th>등록일자</th>
                                     <th>수정자</th>
@@ -339,32 +373,35 @@ const CJ_WMS_STOCK_0010: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody className={styles.tbody}>
-                                {searched && filteredList.length === 0 ? (
+                                {searched && stockList.length === 0 ? (
                                     <tr>
-                                        <td colSpan={19} className={styles.emptyRow}>
+                                        <td colSpan={20} className={styles.emptyRow}>
                                             <span className="material-symbols-outlined">inbox</span>
                                             <p>조회된 데이터가 없습니다.</p>
                                         </td>
                                     </tr>
-                                ) : filteredList.map((item, idx) => (
+                                ) : stockList.map((item, idx) => (
                                     <tr key={idx}>
-                                        <td>{item.srvcNm}</td>
-                                        <td>{item.whNm}</td>
-                                        <td className={styles.cellBold}>{item.itemCd}</td>
-                                        <td>{item.itemNm}</td>
-                                        <td className={styles.cellCenter}>{item.zoneCd}</td>
-                                        <td>{item.zoneNm}</td>
-                                        <td className={`${styles.cellCenter} ${styles.cellBold}`}>{item.locCd}</td>
-                                        <td className={styles.cellRight}>{item.totQty.toLocaleString()}</td>
-                                        <td className={`${styles.cellRight} ${styles.cellDim}`}>{item.alctQty.toLocaleString()}</td>
-                                        <td className={`${styles.cellRight} ${styles.cellDim}`}>{item.pickQty.toLocaleString()}</td>
-                                        <td className={`${styles.cellRight} ${item.availQty === 0 ? styles.cellAvailQtyZero : styles.cellAvailQtyOk}`}>
-                                            {item.availQty.toLocaleString()}
+                                        <td className={styles.cellCenter}>
+                                            { (s => s ? `${s.srvcCd} [${s.srvcNm}]` : item.srvcCd)(srvcList.find(s => s.srvcCd === item.srvcCd)) }
                                         </td>
-                                        <td className={styles.cellCenter}>{item.rcptDt}</td>
-                                        <td>{item.barCd}</td>
-                                        <td className={styles.cellDim}>{item.rmk || '-'}</td>
-                                        <td className={styles.cellRight}>{item.storDay}</td>
+                                        <td className={styles.cellCenter}>
+                                            { (w => w ? `${w.whCd} [${w.whNm}]` : item.whCd)(whList.find(w => w.whCd === item.whCd)) }
+                                        </td>
+                                        <td className={styles.cellCenter}>{item.prodCd}</td>
+                                        <td className={styles.cellMedium}>{item.prodNm}</td>
+                                        <td className={styles.cellCenter}>{item.zoneCd}</td>
+                                        <td className={styles.cellCenter}>{item.zoneNm}</td>
+                                        <td className={styles.cellCenter}>{item.locCd}</td>
+                                        <td className={styles.cellQty}>{item.stockQty}</td>
+                                        <td className={styles.cellQty}>{item.allocQty}</td>
+                                        <td className={styles.cellQty}>{item.pickQty}</td>
+                                        <td className={styles.cellQty}>{item.avlQty}</td>
+                                        <td className={styles.cellCenter}>{item.lotNo}</td>
+                                        <td className={styles.cellMedium}>{item.id}</td>
+                                        <td className={styles.cellMedium}>{item.rmk}</td>
+                                        <td className={styles.cellCenter}>{item.aging}</td>
+                                        <td className={styles.cellCenter}>{item.prodSpec}</td>
                                         <td className={styles.cellCenter}>{item.regId}</td>
                                         <td className={styles.cellCenter}>{item.regDate}</td>
                                         <td className={styles.cellCenter}>{item.updId}</td>

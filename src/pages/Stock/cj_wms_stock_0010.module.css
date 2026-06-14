@@ -409,6 +409,11 @@
     color: #003f87;
 }
 
+.cellMedium {
+    font-weight: 500;
+    color: #334155;
+}
+
 .cellDim {
     color: #64748b;
     font-size: 0.6875rem !important;
@@ -423,6 +428,18 @@
 .cellAvailQtyZero {
     font-weight: 700;
     color: #ba1a1a;
+}
+
+/* ─── 수량 영역 색상 (입고확정 화면 참고) ─── */
+.thQty {
+    background-color: #dbeafe !important;
+    color: #1d4ed8;
+}
+
+.cellQty {
+    text-align: right;
+    font-weight: 700;
+    color: #1d4ed8;
 }
 
 /* ─── 빈 행 ─── */
