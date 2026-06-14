@@ -1,7 +1,7 @@
 ﻿import { request } from "../common/transaction";
 import { API_MASTER_ROOT } from "../common/index";
 
-// 議??곗씠???명꽣?섏씠??
+// 존 데이터 인터페이스
 export interface Zone {
     srvcCd  : string;
     whCd    : string;
@@ -14,7 +14,7 @@ export interface Zone {
     updDate : string;
 }
 
-// 濡쒖??댁뀡 ?곗씠???명꽣?섏씠??
+// 로케이션 데이터 인터페이스
 export interface Loc {
     srvcCd      : string;
     whCd        : string;
@@ -29,7 +29,7 @@ export interface Loc {
     updDate     : string;
 }
 
-// 怨듯넻 API ?묐떟
+// 공통 API 응답
 export interface Response {
     resultCode      : string;
     resultMessage   : string;
@@ -38,7 +38,7 @@ export interface Response {
     data            : any;
 }
 
-// ?묒??낅줈???좏슚??泥댄겕 寃곌낵
+// 엑셀업로드 유효성 체크 결과
 export interface CheckResult {
     rowIndex    : number;
     isValid     : boolean;
@@ -53,7 +53,7 @@ export interface CheckResponse {
     data            : CheckResult[] | null;
 }
 
-// 議?由ъ뒪??議고쉶
+// 존 리스트 조회
 export const getZoneList = (
     data        : Record<string, any>,
     onSuccess   : (res: Response) => void,
@@ -66,7 +66,7 @@ export const getZoneList = (
     });
 };
 
-// 濡쒖??댁뀡 由ъ뒪??議고쉶
+// 로케이션 리스트 조회
 export const getLocList = (
     data        : Record<string, any>,
     onSuccess   : (res: Response) => void,
@@ -79,7 +79,7 @@ export const getLocList = (
     });
 };
 
-// 議?濡쒖??댁뀡 ???
+// 존 로케이션 저장
 export const saveInfo = (
     data        : Record<string, any>,
     onSuccess   : (res: Response) => void,
@@ -92,7 +92,7 @@ export const saveInfo = (
     });
 };
 
-// ?묒??낅줈???좏슚??泥댄겕
+// 엑셀업로드 유효성 체크
 export const getCheckList = (
     data        : Record<string, any>,
     onSuccess   : (res: Response) => void,

@@ -35,7 +35,7 @@ export interface FileResponse {
     data: AttachedFile[] | null;
 }
 
-// 由ъ뒪??議고쉶
+// 리스트 조회
 export const getList = (
     data: Record<string, any>,
     onSuccess: (res: Response) => void,
@@ -52,7 +52,7 @@ export const getList = (
     });
 };
 
-// 怨듭??ы빆 ?뺣낫 ????섏젙
+// 공지사항 정보 저장/수정
 export const saveNotice = (
     data: Record<string, any>,
     onSuccess: (res: Response) => void,
@@ -69,7 +69,7 @@ export const saveNotice = (
     });
 };
 
-// ?뚯씪 紐⑸줉 議고쉶
+// 파일 목록 조회
 export const getFileList = (
     data: Record<string, any>,
     onSuccess: (res: FileResponse) => void,
@@ -82,7 +82,7 @@ export const getFileList = (
     });
 };
 
-// ?뚯씪 ?낅줈??
+// 파일 업로드
 export const uploadFile = (
     formData: FormData,
     onSuccess: (res: Response) => void,
@@ -100,7 +100,7 @@ export const uploadFile = (
     });
 };
 
-// ?뚯씪 ?ㅼ슫濡쒕뱶
+// 파일 다운로드
 export const downloadFile = async (fileId: number, fileName: string): Promise<void> => {
     const blob = await transaction.get(`${API_HOME_ROOT}/downloadFile/${fileId}`, {
         responseType: 'blob',
@@ -115,7 +115,7 @@ export const downloadFile = async (fileId: number, fileName: string): Promise<vo
     window.URL.revokeObjectURL(url);
 };
 
-// ?뚯씪 ??젣
+// 파일 삭제
 export const deleteFile = (
     data: Record<string, any>,
     onSuccess: (res: Response) => void,
@@ -128,7 +128,7 @@ export const deleteFile = (
     });
 };
 
-// 怨듭??ы빆 ?뺣낫 ??젣
+// 공지사항 정보 삭제
 export const deleteNotice = (
     data: Record<string, any>,
     onSuccess: (res: Response) => void,

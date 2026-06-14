@@ -53,7 +53,7 @@ export interface CheckResponse {
     data            : CheckResult[] | null;
 }
 
-// 議고쉶 
+// 조회
 export const getList = (
     data : Record<string, any>,
     onSuccess       : (res: Response) => void,
@@ -66,7 +66,7 @@ export const getList = (
     });
 }
 
-// ???
+// 저장
 export const saveClient = (
     data            : Record<string, any>,
     onSuccess       : (res: Response) => void,
@@ -79,7 +79,7 @@ export const saveClient = (
     });
 }
 
-// ??젣
+// 삭제
 export const deleteClient = (
     data            : Record<string, any>,
     onSuccess       : (res: Response) => void,
@@ -92,7 +92,7 @@ export const deleteClient = (
     });
 }
 
-// ?묒??낅줈??
+// 엑셀업로드
 export const getCheckList = (
     data            : Record<string, any>,
     onSuccess       : (res: CheckResponse) => void,

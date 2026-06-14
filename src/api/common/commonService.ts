@@ -2,7 +2,7 @@
 import { API_USER_ROOT } from "./index";
 import { API_COMMON_ROOT } from "./index";
 
-// ?ъ슜??沅뚰븳蹂?怨좉컼???쇳꽣 議고쉶 ?곗씠??
+// 사용자 권한별 고객사 센터 조회 데이터
 export interface UserAuthSrvcWh {
     srvc_cd         : string;
     srvc_nm         : string;
@@ -11,19 +11,19 @@ export interface UserAuthSrvcWh {
     base_yn         : string;
 }
 
-// ?ъ슜??沅뚰븳蹂?怨좉컼???쇳꽣 議고쉶
+// 사용자 권한별 고객사 센터 조회
 export interface UserSrvcWhRequest {
     userId          : string;
 }
 
-// ?ъ슜??沅뚰븳蹂?怨좉컼???쇳꽣 議고쉶 ?묐떟
+// 사용자 권한별 고객사 센터 조회 응답
 export interface UserSrvcWhResponse {
     resultCode      : string;
     resultMessage   : string;
     data            : UserAuthSrvcWh[];
 }
 
-// 怨듯넻肄붾뱶
+// 공통코드
 export interface CommCode {
     sys_grp_cd  : string;
     sys_cd      : string;
@@ -36,7 +36,7 @@ export interface CommCode {
     sys_etc5    : string;
 }
 
-// 怨듯넻肄붾뱶 由ъ뒪??
+// 공통코드 리스트
 export interface CommCodeList {
     resultCode      : string;
     resultMessage   : string;
@@ -45,7 +45,7 @@ export interface CommCodeList {
     data            : CommCode[] | null;
 }
 
-// ?덈ぉ 寃???앹뾽 寃곌낵
+// 차량 검색 팝업 결과
 export interface VehicleSearch {
     vehicle_no  : string;
     drv_nm      : string;
@@ -101,12 +101,13 @@ export interface ProdSearchResponse {
     data            : ProdSearch[] | null;
 }
 
-// ?ъ슜??沅뚰븳蹂?怨좉컼???쇳꽣 議고쉶 API ?몄텧
+// 사용자 권한별 고객사 센터 조회 API 호출
 export const getUserAuthSrvcWhList = (
     data        : UserSrvcWhRequest,
     onSuccess   : (res: UserSrvcWhResponse) => void,
     onError     : (err: any) => void
 ) => {
+    // TODO: request 타입인자 2개 → 1개로 수정 필요 (transaction.ts의 request는 <R> 1개만 받음 / TS2558, build 시 오류) — 종합 수정 시 처리
     return request<UserSrvcWhRequest, UserSrvcWhResponse>({
         config: {
             url: `${API_USER_ROOT}/getUserAuthWhList`,
@@ -118,12 +119,13 @@ export const getUserAuthSrvcWhList = (
     });
 };
 
-// 怨듯넻肄붾뱶 由ъ뒪??議고쉶
+// 공통코드 리스트 조회
 export const getCommCodeList = (
     data        : CommCode,
     onSuccess   : (res: CommCodeList) => void,
     onError     : (err: any) => void
 ) => {
+    // TODO: request 타입인자 2개 → 1개로 수정 필요 (transaction.ts의 request는 <R> 1개만 받음 / TS2558, build 시 오류) — 종합 수정 시 처리
     return request<CommCode, CommCodeList>({
         config: {
             url     : `${API_COMMON_ROOT}/getCommonCodeList`,
@@ -135,7 +137,6 @@ export const getCommCodeList = (
     });
 };
 
-// ?덈ぉ 寃???앹뾽 議고쉶
 // 차량 검색 팝업 조회
 export const getVehicleSearchList = (
     data        : Record<string, any>,

@@ -16,11 +16,11 @@ export interface Vehicle {
     updDate?        : string;
 }
 
-// ?붾㈃?먯꽌 ?ъ슜?섎뒗 李⑤웾???
+// 화면에서 사용하는 차량 행
 export interface VehicleRow extends Vehicle {
-    isNew           : boolean;          // ?좉퇋?щ?
-    isDirty         : boolean;          // ?섏젙?щ?
-    uploadStatus    : string;           // ?묒??낅줈???곹깭
+    isNew           : boolean;          // 신규여부
+    isDirty         : boolean;          // 수정여부
+    uploadStatus    : string;           // 엑셀업로드 상태
 }
 
 export interface Response {
@@ -45,7 +45,7 @@ export interface CheckResponse {
     data            : CheckResult[] | null;
 }
 
-// 李⑤웾議고쉶
+// 차량조회
 export const getList = (
     data            : Record<string, any>,
     onSuccess       : (res: Response) => void,
@@ -62,7 +62,7 @@ export const getList = (
     });
 }
 
-// 李⑤웾???
+// 차량저장
 export const saveVehicle = (
     data           : Record<string, any>,
     onSuccess      : (res: Response) => void,
@@ -79,7 +79,7 @@ export const saveVehicle = (
     });
 }
 
-// 李⑤웾??젣
+// 차량삭제
 export const deleteVehicle = (
     data            : Record<string, any>,
     onSuccess       : (res: Response) => void,
@@ -96,7 +96,7 @@ export const deleteVehicle = (
     });
 }
 
-// ?묒? ?낅줈??(?좏슚泥댄겕)
+// 엑셀 업로드 (유효체크)
 export const getCheckList = (
     data        : Record<string, any>,
     onSuccess   : (res: CheckResponse) => void,

@@ -72,7 +72,7 @@ export interface Response {
     data            : any;
 }
 
-// ?묒??낅줈???좏슚??泥댄겕 寃곌낵
+// 엑셀업로드 유효성 체크 결과
 export interface CheckResult {
     rowIndex        : number;
     isValid         : boolean;
@@ -87,7 +87,7 @@ export interface CheckResponse {
     data            : CheckResult[] | null;
 }
 
-// ?낃퀬議고쉶
+// 입고조회
 export const getList = (
     data        : Record<string, any>,
     onSuccess   : (res: Response) => void,
@@ -100,7 +100,7 @@ export const getList = (
     });
 };
 
-// ?ㅺ컪?뺣낫 議고쉶
+// 키값정보 조회
 export const getKeyInfo = (
     data        : Record<string, any>,
     onSuccess   : (res: Response) => void,
@@ -113,7 +113,7 @@ export const getKeyInfo = (
     });
 };
 
-// ?낃퀬???
+// 입고저장
 export const saveReceiptList = (
     data        : Record<string, any>,
     onSuccess   : (res: Response) => void,
