@@ -48,6 +48,18 @@ const OUTBOUND_DIST = {
   ],
 };
 
+const BADGE_CLASSES: Record<string, string> = {
+  done:    "bg-emerald-100 text-emerald-900 border border-emerald-200",
+  active:  "bg-blue-100 text-blue-700 border border-blue-200",
+  pending: "bg-slate-50 text-slate-500 border border-slate-200",
+};
+
+const TX_ICON_CLASSES: Record<string, string> = {
+  done:    "bg-emerald-100 text-emerald-600",
+  active:  "bg-blue-100 text-blue-700",
+  pending: "bg-slate-100 text-slate-500",
+};
+
 /* ── 컴포넌트 ── */
 const Main: React.FC = () => {
   const [activeOpsTab, setActiveOpsTab] = useState<"inbound" | "outbound">("inbound");
@@ -60,32 +72,34 @@ const Main: React.FC = () => {
   return (
     <>
       {/* 공지사항 */}
-      <section className="card notice-card">
-        <div className="card-header">
-          <h3 className="card-title">공지사항 (Notice)</h3>
-          <a className="card-link" href="#">모두 보기</a>
+      <section className="bg-white rounded-xl border border-slate-200/30 shadow-sm p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-display text-sm font-bold text-[#001a40] m-0">공지사항 (Notice)</h3>
+          <a className="text-[11px] font-bold text-primary no-underline flex items-center gap-0.5 hover:underline" href="#">모두 보기</a>
         </div>
-        <table className="notice-table">
+        <table className="w-full border-collapse">
           <thead>
             <tr>
-              <th className="notice-th">No.</th>
-              <th className="notice-th">Title</th>
-              <th className="notice-th notice-th--author">작성자</th>
-              <th className="notice-th">등록일자</th>
+              <th className="px-2 pb-2 text-[9px] font-bold uppercase tracking-[0.8px] text-slate-400 text-left border-b border-slate-100 w-[60px]">No.</th>
+              <th className="px-2 pb-2 text-[9px] font-bold uppercase tracking-[0.8px] text-slate-400 text-left border-b border-slate-100">Title</th>
+              <th className="px-2 pb-2 text-[9px] font-bold uppercase tracking-[0.8px] text-slate-400 text-left border-b border-slate-100 w-[90px]">작성자</th>
+              <th className="px-2 pb-2 text-[9px] font-bold uppercase tracking-[0.8px] text-slate-400 text-left border-b border-slate-100 w-[120px]">등록일자</th>
             </tr>
           </thead>
           <tbody>
             {NOTICES.map((n) => (
-              <tr className="notice-row" key={n.no}>
-                <td className="notice-td notice-td--no">{String(n.no).padStart(2, "0")}</td>
-                <td className="notice-td">
-                  <div className="notice-title-cell">
-                    {n.important && <span className="badge badge--important">중요</span>}
-                    <span className={n.important ? "notice-title--bold" : "notice-title"}>{n.title}</span>
+              <tr className="cursor-pointer transition-colors hover:bg-[#f2f4f5]" key={n.no}>
+                <td className="px-2 py-3 text-xs border-b border-slate-50 text-slate-400">{String(n.no).padStart(2, "0")}</td>
+                <td className="px-2 py-3 text-xs border-b border-slate-50">
+                  <div className="flex items-center gap-2">
+                    {n.important && (
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold whitespace-nowrap bg-[#ffdad6] text-[#93000a]">중요</span>
+                    )}
+                    <span className={n.important ? "font-semibold text-slate-800" : "font-medium text-slate-600"}>{n.title}</span>
                   </div>
                 </td>
-                <td className="notice-td notice-td--author">{n.author}</td>
-                <td className="notice-td notice-td--date">{n.date}</td>
+                <td className="px-2 py-3 text-xs border-b border-slate-50 text-slate-600 font-medium">{n.author}</td>
+                <td className="px-2 py-3 text-xs border-b border-slate-50 text-slate-500">{n.date}</td>
               </tr>
             ))}
           </tbody>
@@ -93,66 +107,73 @@ const Main: React.FC = () => {
       </section>
 
       {/* 운영 현황 + 분포도 그리드 */}
-      <div className="ops-grid">
+      <div className="grid grid-cols-2 gap-6">
 
         {/* 운영 현황 탭 */}
-        <div className="card ops-card">
-          <div className="ops-tab-nav">
-            <button
-              className={`ops-tab ${activeOpsTab === "inbound" ? "ops-tab--active" : ""}`}
-              onClick={() => setActiveOpsTab("inbound")}
-            >
-              <span className="material-symbols-outlined">download</span>
-              입고 현황 (Inbound)
-            </button>
-            <button
-              className={`ops-tab ${activeOpsTab === "outbound" ? "ops-tab--active" : ""}`}
-              onClick={() => setActiveOpsTab("outbound")}
-            >
-              <span className="material-symbols-outlined">upload</span>
-              출고 현황 (Outbound)
-            </button>
+        <div className="bg-white rounded-xl border border-slate-200/30 shadow-sm flex flex-col overflow-hidden">
+          <div className="flex border-b border-slate-200">
+            {(["inbound", "outbound"] as const).map((tab) => (
+              <button
+                key={tab}
+                className={`flex items-center gap-1.5 px-6 py-4 border-0 border-b-2 border-solid bg-transparent text-[13px] cursor-pointer transition-colors -mb-px ${
+                  activeOpsTab === tab
+                    ? "text-primary font-bold border-b-[#003f87]"
+                    : "text-slate-500 font-medium border-b-transparent hover:text-slate-700"
+                }`}
+                onClick={() => setActiveOpsTab(tab)}
+              >
+                <span className="material-symbols-outlined text-base">
+                  {tab === "inbound" ? "download" : "upload"}
+                </span>
+                {tab === "inbound" ? "입고 현황 (Inbound)" : "출고 현황 (Outbound)"}
+              </button>
+            ))}
           </div>
-          <div className="ops-content">
-            <div className="ops-summary-grid">
-              <div className="summary-card summary-card--blue">
-                <p className="summary-label">{activeOpsTab === "inbound" ? "금일 입고" : "금일 출고"}</p>
-                <div className="summary-value">
+          <div className="p-6 flex-1 flex flex-col gap-4">
+            <div className="grid grid-cols-3 gap-3">
+              {/* 금일 입/출고 — 블루 카드 */}
+              <div className="p-4 rounded-lg flex flex-col gap-1.5 bg-blue-50 border border-blue-100">
+                <p className="text-[10px] font-bold uppercase tracking-[0.5px] text-blue-700 m-0">
+                  {activeOpsTab === "inbound" ? "금일 입고" : "금일 출고"}
+                </p>
+                <div className="text-xl font-black text-slate-900 leading-none">
                   {opsStats.todayCount.toLocaleString()}
-                  <span className="summary-unit"> {opsStats.unit}</span>
+                  <span className="text-[10px] font-normal text-slate-400"> {opsStats.unit}</span>
                 </div>
-                <span className="summary-rate">{opsStats.rate} ↑</span>
+                <span className="text-[10px] font-bold text-emerald-600">{opsStats.rate} ↑</span>
               </div>
-              <div className="summary-card summary-card--gray">
-                <p className="summary-label">주간 진행률</p>
-                <div className="progress-bar-wrap">
-                  <div className="progress-bar">
-                    <div className="progress-bar__fill" style={{ width: `${opsStats.progress}%` }} />
+              {/* 주간 진행률 */}
+              <div className="p-4 rounded-lg flex flex-col gap-1.5 bg-slate-50 border border-slate-100">
+                <p className="text-[10px] font-bold uppercase tracking-[0.5px] text-slate-500 m-0">주간 진행률</p>
+                <div className="py-2 pb-1">
+                  <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                    <div className="h-full bg-primary rounded-full transition-[width] duration-300" style={{ width: `${opsStats.progress}%` }} />
                   </div>
                 </div>
-                <span className="summary-progress-text">{opsStats.progress}% 완료</span>
+                <span className="text-[9px] font-bold text-slate-500">{opsStats.progress}% 완료</span>
               </div>
-              <div className="summary-card summary-card--gray">
-                <p className="summary-label">{opsStats.label}</p>
-                <div className="summary-value">
+              {/* 확정/출고 대기 */}
+              <div className="p-4 rounded-lg flex flex-col gap-1.5 bg-slate-50 border border-slate-100">
+                <p className="text-[10px] font-bold uppercase tracking-[0.5px] text-slate-500 m-0">{opsStats.label}</p>
+                <div className="text-xl font-black text-slate-900 leading-none">
                   {opsStats.waiting}
-                  <span className="summary-unit"> {opsStats.waitingUnit}</span>
+                  <span className="text-[10px] font-normal text-slate-400"> {opsStats.waitingUnit}</span>
                 </div>
               </div>
             </div>
-            <p className="ops-footnote">실시간 운영 요약 데이터</p>
+            <p className="text-[11px] text-slate-400 font-medium m-0">실시간 운영 요약 데이터</p>
           </div>
         </div>
 
         {/* 분포도 */}
-        <div className="card dist-card">
-          <div className="card-header">
-            <h3 className="card-title">{distData.title}</h3>
-            <span className="material-symbols-outlined card-icon">bar_chart</span>
+        <div className="bg-white rounded-xl border border-slate-200/30 shadow-sm p-6 flex flex-col">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-display text-sm font-bold text-[#001a40] m-0">{distData.title}</h3>
+            <span className="material-symbols-outlined text-slate-400 text-[20px]">bar_chart</span>
           </div>
-          <div className="dist-content">
-            <div className="donut-wrap">
-              <svg className="donut-svg" viewBox="0 0 36 36">
+          <div className="flex-1 flex items-center justify-around gap-6 pt-2">
+            <div className="relative w-40 h-40 shrink-0">
+              <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
                 <circle cx="18" cy="18" r="16" fill="none" stroke="#e2e8f0" strokeWidth="4" />
                 {distData.items.map((seg) => (
                   <circle
@@ -166,17 +187,17 @@ const Main: React.FC = () => {
                   />
                 ))}
               </svg>
-              <div className="donut-center">
-                <span className="donut-total">{distData.total.toLocaleString()}</span>
-                <span className="donut-label">TOTAL ORDERS</span>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-[22px] font-black text-slate-900 leading-none">{distData.total.toLocaleString()}</span>
+                <span className="text-[9px] font-bold uppercase tracking-[1px] text-slate-400 mt-0.5">TOTAL ORDERS</span>
               </div>
             </div>
-            <div className="dist-legend">
+            <div className="flex flex-col gap-3 flex-1 min-w-[140px]">
               {distData.items.map((seg) => (
-                <div className="legend-row" key={seg.label}>
-                  <div className="legend-dot" style={{ backgroundColor: seg.color }} />
-                  <span className="legend-text">{seg.label}</span>
-                  <span className="legend-pct">{seg.pct}%</span>
+                <div className="flex items-center justify-between gap-2" key={seg.label}>
+                  <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: seg.color }} />
+                  <span className="text-xs font-medium text-slate-600 flex-1">{seg.label}</span>
+                  <span className="text-xs font-bold text-slate-900">{seg.pct}%</span>
                 </div>
               ))}
             </div>
@@ -185,47 +206,54 @@ const Main: React.FC = () => {
       </div>
 
       {/* 최근 트랜젝션 */}
-      <section className="card tx-card">
-        <div className="card-header">
-          <h3 className="card-title">{txTitle}</h3>
-          <a className="card-link" href="#">
+      <section className="bg-white rounded-xl border border-slate-200/30 shadow-sm flex flex-col">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200">
+          <h3 className="font-display text-sm font-bold text-[#001a40] m-0">{txTitle}</h3>
+          <a className="text-[11px] font-bold text-primary no-underline flex items-center gap-0.5 hover:underline" href="#">
             전체 내역 보기
             <span className="material-symbols-outlined" style={{ fontSize: 14 }}>arrow_forward</span>
           </a>
         </div>
-        <div className="tx-list">
+        <div className="flex-1 max-h-[479px] overflow-y-auto">
           {txList.map((tx) => (
-            <div className="tx-row" key={tx.id}>
-              <div className="tx-left">
-                <div className={`tx-icon tx-icon--${tx.statusType}`}>
-                  <span className="material-symbols-outlined">
+            <div
+              className="flex items-center justify-between p-4 rounded-xl border border-transparent transition-colors cursor-pointer hover:bg-slate-50 hover:border-slate-100"
+              key={tx.id}
+            >
+              <div className="flex items-center gap-4">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${TX_ICON_CLASSES[tx.statusType]}`}>
+                  <span className="material-symbols-outlined text-[22px]">
                     {tx.statusType === "done" ? "check_circle" : tx.statusType === "active" ? "sync" : "schedule"}
                   </span>
                 </div>
-                <div className="tx-info">
-                  <div className="tx-title-row">
-                    <span className="tx-id">{tx.id}</span>
-                    <span className={`badge badge--${tx.statusType}`}>{tx.status}</span>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-900">{tx.id}</span>
+                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold whitespace-nowrap ${BADGE_CLASSES[tx.statusType]}`}>
+                      {tx.status}
+                    </span>
                   </div>
-                  <div className="tx-meta">
-                    <span className="material-symbols-outlined tx-meta-icon">inventory_2</span>
+                  <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
+                    <span className="material-symbols-outlined text-sm">inventory_2</span>
                     {tx.type}
-                    <span className="tx-divider" />
-                    <span className="material-symbols-outlined tx-meta-icon">location_on</span>
+                    <span className="inline-block w-px h-2 bg-slate-200" />
+                    <span className="material-symbols-outlined text-sm">location_on</span>
                     {tx.location}
                   </div>
                 </div>
               </div>
-              <div className="tx-right">
-                <div className="tx-qty">
-                  <p className="tx-qty-value">{tx.qty.toLocaleString()} EA</p>
-                  <p className="tx-qty-label">QUANTITY</p>
+              <div className="flex items-center gap-12">
+                <div className="text-right">
+                  <p className="text-xs font-bold text-slate-900 m-0">{tx.qty.toLocaleString()} EA</p>
+                  <p className="text-[10px] text-slate-400 font-medium uppercase tracking-[0.5px] m-0">QUANTITY</p>
                 </div>
-                <div className="tx-time">
-                  <p className="tx-time-value">{tx.time}</p>
-                  <p className="tx-time-label">Today</p>
+                <div className="text-right min-w-[72px]">
+                  <p className="text-xs font-bold text-slate-700 m-0">{tx.time}</p>
+                  <p className="text-[10px] text-slate-400 m-0">Today</p>
                 </div>
-                <button className="tx-more material-symbols-outlined">more_vert</button>
+                <button className="w-9 h-9 border-0 bg-transparent text-slate-400 rounded-lg cursor-pointer text-[22px] flex items-center justify-center transition-colors hover:bg-white hover:text-primary material-symbols-outlined">
+                  more_vert
+                </button>
               </div>
             </div>
           ))}
