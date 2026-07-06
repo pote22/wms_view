@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CJ WMS - 사용자 관리</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Manrope:wght@500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-error-container": "#93000a",
+              "tertiary-container": "#983c00",
+              "secondary-fixed-dim": "#afcbd8",
+              "secondary-container": "#cbe7f5",
+              "on-secondary-container": "#4e6874",
+              "on-background": "#191c1d",
+              "on-primary-fixed": "#001a40",
+              "tertiary-fixed-dim": "#ffb694",
+              "on-tertiary-fixed-variant": "#7b2f00",
+              "tertiary": "#722b00",
+              "secondary-fixed": "#cbe7f5",
+              "surface-variant": "#e1e3e4",
+              "surface-tint": "#115cb9",
+              "inverse-on-surface": "#eff1f2",
+              "on-secondary": "#ffffff",
+              "on-secondary-fixed-variant": "#304a55",
+              "primary": "#003f87",
+              "surface-container-low": "#f2f4f5",
+              "primary-fixed": "#d7e2ff",
+              "error": "#ba1a1a",
+              "surface-container-lowest": "#ffffff",
+              "on-primary-fixed-variant": "#004491",
+              "on-secondary-fixed": "#021f29",
+              "primary-fixed-dim": "#acc7ff",
+              "surface-bright": "#f8fafb",
+              "outline": "#727784",
+              "surface-dim": "#d8dadb",
+              "inverse-primary": "#acc7ff",
+              "error-container": "#ffdad6",
+              "background": "#f8fafb",
+              "on-surface-variant": "#424752",
+              "surface-container": "#eceeef",
+              "on-tertiary-container": "#ffc2a7",
+              "on-tertiary": "#ffffff",
+              "surface": "#f8fafb",
+              "secondary": "#48626e",
+              "tertiary-fixed": "#ffdbcc",
+              "surface-container-high": "#e6e8e9",
+              "surface-container-highest": "#e1e3e4",
+              "inverse-surface": "#2e3132",
+              "outline-variant": "#c2c6d4",
+              "on-tertiary-fixed": "#351000",
+              "on-surface": "#191c1d",
+              "primary-container": "#0056b3",
+              "on-primary": "#ffffff",
+              "on-primary-container": "#bbd0ff",
+              "on-error": "#ffffff"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3 { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #c2c6d4; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface flex h-screen overflow-hidden">
+<!-- SideNavBar Component -->
+<aside class="bg-slate-100 dark:bg-slate-950 flex flex-col h-full border-r border-slate-200 dark:border-slate-800 w-64 shrink-0 z-20">
+<!-- Sidebar Header -->
+<div class="px-6 py-8">
+<h2 class="text-xl font-bold text-blue-900 font-headline uppercase tracking-tight">CJ WMS</h2>
+<p class="text-xs text-slate-500 font-medium mt-1">CJ Logistics</p>
+</div>
+<!-- Sidebar Navigation Items -->
+<nav class="flex-1 px-4 space-y-6 overflow-y-auto custom-scrollbar">
+<div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-2 block mb-2 font-headline">마스터 관리</span>
+<div class="space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/30 hover:translate-x-1 transition-transform duration-200 text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">database</span>
+<span>품번관리</span>
+</a>
+</div>
+</div>
+<div>
+<span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-2 block mb-2 font-headline">공통관리</span>
+<div class="space-y-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white dark:bg-slate-800 text-blue-800 dark:text-blue-200 font-semibold shadow-sm text-sm" href="#">
+<span class="material-symbols-outlined text-[20px]">manage_accounts</span>
+<span>사용자관리</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/30 hover:translate-x-1 transition-transform duration-200 text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">admin_panel_settings</span>
+<span>권한관리</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/30 hover:translate-x-1 transition-transform duration-200 text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">settings_applications</span>
+<span>코드관리</span>
+</a>
+</div>
+</div>
+</nav>
+<!-- Sidebar Footer -->
+<div class="p-4 mt-auto border-t border-slate-200/60 dark:border-slate-800/60">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 text-sm font-medium transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">help</span>
+<span>Support</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col min-w-0 bg-surface">
+<!-- TopNavBar Component -->
+<header class="bg-slate-50 dark:bg-slate-900 docked full-width top-0 z-10">
+<!-- Header Top Row (Branding & Identity) -->
+<div class="flex justify-between items-center w-full px-8 py-3">
+<div class="flex items-center gap-12">
+<!-- Selectors -->
+<div class="hidden lg:flex items-center gap-4">
+<div class="flex items-center gap-2 px-3 py-1.5 rounded bg-surface-container-low text-xs font-semibold text-slate-700">
+<span class="text-slate-400 font-normal">고객사</span>
+<span>GS칼텍스</span>
+<span class="material-symbols-outlined text-[14px]">expand_more</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-1.5 rounded bg-surface-container-low text-xs font-semibold text-slate-700">
+<span class="text-slate-400 font-normal">센터</span>
+<span>인천GSC센터</span>
+<span class="material-symbols-outlined text-[14px]">expand_more</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2 mr-4">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container text-xs font-bold">
+                        JS
+                    </div>
+<div class="flex flex-col">
+<span class="text-xs font-bold text-on-primary-fixed">김철수 관리자</span>
+<span class="text-[10px] text-slate-500 uppercase">Super User</span>
+</div>
+<button class="ml-4 flex items-center gap-1 px-3 py-1.5 rounded-lg text-error hover:bg-error-container/10 transition-colors border border-error/20">
+<span class="material-symbols-outlined text-[18px]">logout</span>
+<span class="text-xs font-bold">로그아웃</span>
+</button>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-slate-500 hover:bg-slate-200/50 p-2 rounded transition-colors">notifications</button>
+<button class="material-symbols-outlined text-slate-500 hover:bg-slate-200/50 p-2 rounded transition-colors">settings</button>
+</div>
+</div>
+</div>
+<!-- Header Bottom Row (Top-level Tabs) -->
+<div class="flex items-center w-full px-8 gap-8 border-t border-slate-200 dark:border-slate-800 h-12">
+<a class="text-slate-500 dark:text-slate-400 font-medium hover:text-blue-900 h-full flex items-center px-2 text-sm transition-colors" href="#">보관관리</a>
+<a class="text-blue-700 dark:text-blue-300 font-bold border-b-2 border-blue-700 dark:border-blue-300 h-full flex items-center px-2 text-sm" href="#">공통관리</a>
+</div>
+</header>
+<!-- Page Canvas -->
+<div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+<!-- User Management Content -->
+<div class="max-w-7xl mx-auto flex flex-col gap-6">
+<!-- Header Row -->
+<div class="flex items-center justify-between">
+<div>
+<h3 class="text-2xl font-bold text-on-primary-fixed font-headline">사용자 관리</h3>
+<p class="text-sm text-slate-500 mt-0.5">시스템 접속 권한 및 사용자 프로필을 구성합니다.</p>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex items-center gap-2 px-6 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-blue-800 transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[18px]">search</span>
+                        조회
+                    </button>
+<button class="flex items-center gap-2 px-6 py-2 border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors bg-white shadow-sm">
+<span class="material-symbols-outlined text-[18px]">save</span>
+                        저장
+                    </button>
+</div>
+</div>
+<!-- Main Layout Grid (3-way split) -->
+<div class="grid grid-cols-12 gap-6 h-[calc(100vh-280px)] min-h-[600px]">
+<!-- Left: User List Table (7 columns) -->
+<section class="col-span-7 bg-surface-container-lowest rounded-xl border border-slate-200/30 flex flex-col overflow-hidden shadow-sm">
+<div class="p-4 bg-slate-50/50 border-b border-slate-100">
+<div class="grid grid-cols-4 gap-3">
+<input class="w-full bg-white border-slate-200 rounded text-xs h-9 px-3 focus:ring-primary focus:border-primary" placeholder="사용자 ID" type="text"/>
+<input class="w-full bg-white border-slate-200 rounded text-xs h-9 px-3 focus:ring-primary focus:border-primary" placeholder="성명" type="text"/>
+<select class="w-full bg-white border-slate-200 rounded text-xs h-9 px-3 focus:ring-primary focus:border-primary">
+<option>부서 전체</option>
+</select>
+<select class="w-full bg-white border-slate-200 rounded text-xs h-9 px-3 focus:ring-primary focus:border-primary">
+<option>상태 전체</option>
+</select>
+</div>
+</div>
+<div class="flex-1 overflow-auto custom-scrollbar">
+<table class="w-full text-left border-collapse">
+<thead class="sticky top-0 z-10">
+<tr class="text-[10px] uppercase tracking-wider text-slate-400 font-black border-b border-slate-100 bg-slate-50/80 backdrop-blur-sm">
+<th class="py-3 px-4 w-10 text-center">
+<input class="rounded border-slate-300 text-primary focus:ring-primary h-3.5 w-3.5" type="checkbox"/>
+</th>
+<th class="py-3 px-4">사용자 ID</th>
+<th class="py-3 px-4">성명</th>
+<th class="py-3 px-4">부서</th>
+<th class="py-3 px-4">권한</th>
+<th class="py-3 px-4 text-center">상태</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-50">
+<tr class="group bg-blue-50/30 hover:bg-blue-50 transition-colors cursor-pointer">
+<td class="py-3 px-4 text-center">
+<input checked="" class="rounded border-slate-300 text-primary focus:ring-primary h-3.5 w-3.5" type="checkbox"/>
+</td>
+<td class="py-3 px-4 text-sm font-bold text-primary">user_logis2</td>
+<td class="py-3 px-4 text-sm font-medium text-slate-700">이영희</td>
+<td class="py-3 px-4 text-sm text-slate-600">물류지원팀</td>
+<td class="py-3 px-4 text-sm text-slate-600">운영자</td>
+<td class="py-3 px-4 text-center">
+<span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-bold border border-emerald-100">정상</span>
+</td>
+</tr>
+<tr class="group hover:bg-slate-50 transition-colors cursor-pointer">
+<td class="py-3 px-4 text-center">
+<input class="rounded border-slate-300 text-primary focus:ring-primary h-3.5 w-3.5" type="checkbox"/>
+</td>
+<td class="py-3 px-4 text-sm font-bold text-on-primary-fixed">admin_cj01</td>
+<td class="py-3 px-4 text-sm font-medium text-slate-700">김철수</td>
+<td class="py-3 px-4 text-sm text-slate-600">운영팀</td>
+<td class="py-3 px-4 text-sm text-slate-600">슈퍼바이저</td>
+<td class="py-3 px-4 text-center">
+<span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-bold border border-emerald-100">정상</span>
+</td>
+</tr>
+<tr class="group hover:bg-slate-50 transition-colors cursor-pointer">
+<td class="py-3 px-4 text-center">
+<input class="rounded border-slate-300 text-primary focus:ring-primary h-3.5 w-3.5" type="checkbox"/>
+</td>
+<td class="py-3 px-4 text-sm font-bold text-on-primary-fixed">cj_it_manager</td>
+<td class="py-3 px-4 text-sm font-medium text-slate-700">박지민</td>
+<td class="py-3 px-4 text-sm text-slate-600">IT전략팀</td>
+<td class="py-3 px-4 text-sm text-slate-600">시스템관리자</td>
+<td class="py-3 px-4 text-center">
+<span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-bold border border-emerald-100">정상</span>
+</td>
+</tr>
+<tr class="group hover:bg-slate-50 transition-colors cursor-pointer opacity-70">
+<td class="py-3 px-4 text-center">
+<input class="rounded border-slate-300 text-primary focus:ring-primary h-3.5 w-3.5" type="checkbox"/>
+</td>
+<td class="py-3 px-4 text-sm font-bold text-on-primary-fixed">temp_worker05</td>
+<td class="py-3 px-4 text-sm font-medium text-slate-700">최동석</td>
+<td class="py-3 px-4 text-sm text-slate-600">현장운영팀</td>
+<td class="py-3 px-4 text-sm text-slate-600">작업자</td>
+<td class="py-3 px-4 text-center">
+<span class="px-2 py-0.5 rounded-full bg-red-50 text-red-600 text-[10px] font-bold border border-red-100">중지</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- Right Side Stack: Form & Assigned Centers -->
+<div class="col-span-5 flex flex-col gap-6 overflow-hidden">
+<!-- Top Right: User Detail Form -->
+<section class="bg-surface-container-lowest rounded-xl border border-slate-200/30 p-6 shadow-sm shrink-0">
+<div class="flex items-center gap-2 mb-6 border-b border-slate-100 pb-3">
+<span class="material-symbols-outlined text-primary text-[20px]">person</span>
+<h4 class="font-bold text-on-primary-fixed">사용자 상세 정보</h4>
+</div>
+<div class="grid grid-cols-2 gap-x-6 gap-y-4">
+<div class="space-y-1">
+<label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">아이디</label>
+<input class="w-full border-b border-slate-200 focus:border-primary bg-transparent py-1 text-sm font-bold text-on-primary-fixed focus:outline-none" type="text" value="user_logis2"/>
+</div>
+<div class="space-y-1">
+<label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">비밀번호</label>
+<input class="w-full border-b border-slate-200 focus:border-primary bg-transparent py-1 text-sm text-on-primary-fixed focus:outline-none" type="password" value="********"/>
+</div>
+<div class="space-y-1">
+<label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">성명</label>
+<input class="w-full border-b border-slate-200 focus:border-primary bg-transparent py-1 text-sm text-on-primary-fixed focus:outline-none" type="text" value="이영희"/>
+</div>
+<div class="space-y-1">
+<label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">부서</label>
+<input class="w-full border-b border-slate-200 focus:border-primary bg-transparent py-1 text-sm text-on-primary-fixed focus:outline-none" type="text" value="물류지원팀"/>
+</div>
+<div class="space-y-1">
+<label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">역할(권한)</label>
+<select class="w-full border-b border-slate-200 focus:border-primary bg-transparent py-1 text-sm text-on-primary-fixed focus:outline-none appearance-none">
+<option>운영자</option>
+<option>슈퍼바이저</option>
+</select>
+</div>
+<div class="space-y-1">
+<label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">연락처</label>
+<input class="w-full border-b border-slate-200 focus:border-primary bg-transparent py-1 text-sm text-on-primary-fixed focus:outline-none" type="text" value="010-1234-5678"/>
+</div>
+<div class="col-span-2 space-y-1">
+<label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">이메일</label>
+<input class="w-full border-b border-slate-200 focus:border-primary bg-transparent py-1 text-sm text-on-primary-fixed focus:outline-none" type="email" value="yh.lee@cjlogistics.com"/>
+</div>
+</div>
+</section>
+<!-- Bottom Right: Assigned Center List -->
+<section class="bg-surface-container-lowest rounded-xl border border-slate-200/30 flex flex-col overflow-hidden shadow-sm flex-1">
+<div class="p-4 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">location_on</span>
+<h4 class="font-bold text-on-primary-fixed">배정 센터 리스트</h4>
+</div>
+<div class="flex gap-1">
+<button class="p-1 rounded hover:bg-slate-200 transition-colors text-slate-600">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</button>
+<button class="p-1 rounded hover:bg-red-50 transition-colors text-red-500">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</div>
+<div class="flex-1 overflow-auto custom-scrollbar">
+<table class="w-full text-left border-collapse">
+<thead class="sticky top-0 z-10">
+<tr class="text-[9px] uppercase tracking-wider text-slate-400 font-black border-b border-slate-100 bg-white">
+<th class="py-3 px-4 w-10 text-center">
+<input class="rounded border-slate-300 text-primary focus:ring-primary h-3.5 w-3.5" type="checkbox"/>
+</th>
+<th class="py-3 px-4">센터 코드</th>
+<th class="py-3 px-4">센터명</th>
+<th class="py-3 px-4">고객사</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-50">
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="py-3 px-4 text-center">
+<input checked="" class="rounded border-slate-300 text-primary focus:ring-primary h-3.5 w-3.5" type="checkbox"/>
+</td>
+<td class="py-3 px-4 text-xs font-bold text-slate-700">MP-IK-01</td>
+<td class="py-3 px-4 text-xs text-slate-600">이천1센터</td>
+<td class="py-3 px-4 text-xs text-slate-500">전체</td>
+</tr>
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="py-3 px-4 text-center">
+<input checked="" class="rounded border-slate-300 text-primary focus:ring-primary h-3.5 w-3.5" type="checkbox"/>
+</td>
+<td class="py-3 px-4 text-xs font-bold text-slate-700">MP-YH-02</td>
+<td class="py-3 px-4 text-xs text-slate-600">용인2센터</td>
+<td class="py-3 px-4 text-xs text-slate-500">조회</td>
+</tr>
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="py-3 px-4 text-center">
+<input class="rounded border-slate-300 text-primary focus:ring-primary h-3.5 w-3.5" type="checkbox"/>
+</td>
+<td class="py-3 px-4 text-xs font-bold text-slate-700">MP-GC-01</td>
+<td class="py-3 px-4 text-xs text-slate-600">군포HUB</td>
+<td class="py-3 px-4 text-xs text-slate-500">미배정</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Visual Component -->
+<footer class="fixed bottom-6 left-[18rem] right-8 bg-surface-container-lowest/80 backdrop-blur-[32px] rounded-full py-4 px-8 flex items-center justify-between border border-white/40 shadow-xl shadow-slate-900/5">
+<div class="flex items-center gap-12">
+<div class="flex flex-col">
+<span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Live System Status</span>
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+<span class="text-xs font-bold text-on-primary-fixed">All Systems Operational</span>
+</div>
+</div>
+<div class="flex flex-col">
+<span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Active Workers</span>
+<span class="text-xs font-bold text-on-primary-fixed">124 / 150</span>
+</div>
+<div class="flex flex-col">
+<span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Storage Capacity</span>
+<span class="text-xs font-bold text-on-primary-fixed">88.42% Full</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<span class="text-[11px] text-slate-500 italic">Data refreshes every 30 seconds.</span>
+<div class="w-1.5 h-1.5 bg-primary rounded-full animate-ping"></div>
+</div>
+</footer>
+</main>
+</body></html>
