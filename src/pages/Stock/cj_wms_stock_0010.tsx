@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { ko } from 'date-fns/locale';
-// 공통 API 
+// 공통 API
 import { useCommonWhList } from '../../api/common/commonWhList';
 import Popup from "../../components/common/Popup";
 import { usePopup } from "../../components/common/usePopup";
@@ -13,10 +13,34 @@ import ProdSearchPopup from "../../components/common/ProdSearchPopup";
 import { formatDate } from '../../utils/dateUtils';
 // 엑셀
 import ExcelJS from "exceljs";
-// CSS
+// CSS (datepicker 보정 전용)
 import styles from './cj_wms_stock_0010.module.css';
 // API
 import { getList, type Stock } from '../../api/stock/stock_0010Service';
+
+// ── Tailwind 클래스 상수 ──
+const pageShell    = "flex min-h-0 flex-1 bg-surface";
+const contentShell = "flex min-w-0 flex-1 flex-col";
+const sectionCard  = "flex min-h-0 flex-1 flex-col rounded-t-xl border border-slate-200/60 bg-surface-card shadow-sm";
+const sectionHeader = "shrink-0 border-b border-slate-100 p-6";
+
+const btnBase    = "inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition";
+const btnPrimary = `${btnBase} bg-primary text-white hover:bg-primary-hover`;
+const btnOutline = `${btnBase} border border-border-soft bg-white text-slate-700 hover:bg-slate-50`;
+
+const filterItem     = "flex min-w-0 flex-col gap-1.5";
+const filterLabel    = "text-xs font-semibold uppercase tracking-wide text-slate-500";
+const filterSelect   = "h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
+const filterInput    = "h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
+const filterReadonly = "h-9 min-w-0 flex-1 rounded-r-md border border-slate-300 bg-slate-100 px-3 text-sm text-slate-600";
+const filterSearchBtn = "inline-flex h-9 w-10 items-center justify-center bg-primary text-white hover:bg-primary-hover";
+
+const thBase = "border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide";
+const thQty  = "border-b border-slate-100 px-2 py-2 bg-blue-100 text-blue-700 font-semibold uppercase tracking-wide";
+
+const cellCenter = "px-2 py-2 text-center";
+const cellMedium = "px-2 py-2 font-medium text-slate-700";
+const cellQty    = "px-2 py-2 text-right tabular-nums font-bold text-blue-700";
 
 const CJ_WMS_STOCK_0010: React.FC = () => {
     const { srvcList, whList, selectSrvcCd, selectWhCd } = useCommonWhList();
@@ -36,7 +60,7 @@ const CJ_WMS_STOCK_0010: React.FC = () => {
     // 조회결과
     const [stockList,  setStockList]        = useState<Stock[]>([]);
     const [searched,   setSearched]         = useState(false);
-    
+
     // 팝업
     const [zonePopupOpen, setZonePopupOpen] = useState(false);
     const [locPopupOpen,  setLocPopupOpen]  = useState(false);
@@ -195,23 +219,23 @@ const CJ_WMS_STOCK_0010: React.FC = () => {
             onSelect={(prodCd, prodNm) => { setSearchItemCd(prodCd); setSearchItemNm(prodNm); }}
             onClose={() => setProdPopupOpen(false)}
         />
-        <div className={styles.pageContainer}>
-            <div className={styles.contentWrapper}>
-                <div className={styles.sectionCard}>
+        <div className={pageShell}>
+            <div className={contentShell}>
+                <div className={sectionCard}>
 
                     {/* ── 섹션 헤더 ── */}
-                    <div className={styles.sectionHeader}>
-                        <div className={styles.headerTop}>
-                            <div className={styles.titleArea}>
-                                <h3>재고현황</h3>
-                                <p>실시간 재고 현황을 조회하고 관리합니다.</p>
+                    <div className={sectionHeader}>
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <h3 className="font-display text-xl font-bold text-slate-950">재고현황</h3>
+                                <p className="mt-1 text-sm text-muted">실시간 재고 현황을 조회하고 관리합니다.</p>
                             </div>
-                            <div className={styles.actionGroup}>
-                                <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleSearch}>
+                            <div className="flex items-center gap-2">
+                                <button className={btnPrimary} onClick={handleSearch}>
                                     <span className="material-symbols-outlined">search</span>
                                     조회
                                 </button>
-                                <button className={`${styles.btn} ${styles.btnOutline}`} onClick={handleExcel}>
+                                <button className={btnOutline} onClick={handleExcel}>
                                     <span className="material-symbols-outlined">download</span>
                                     엑셀
                                 </button>
@@ -219,38 +243,38 @@ const CJ_WMS_STOCK_0010: React.FC = () => {
                         </div>
 
                         {/* ── 필터 영역 ── */}
-                        <div className={styles.filterBox}>
-                            <div className={styles.filterGrid}>
+                        <div className="rounded-lg border border-slate-100 bg-slate-50 p-4">
+                            <div className="grid grid-cols-[1.5fr_1fr_1.5fr] gap-4">
 
                                 {/* Col 1: 고객사 | 센터 (가로) */}
-                                <div className={styles.filterItemRow}>
-                                    <div className={styles.filterItem}>
-                                        <label className={styles.filterLabel}>고객사</label>
-                                        <select className={styles.filterSelect} value={searchSrvcCd} onChange={e => setSearchSrvcCd(e.target.value)}>
+                                <div className="flex gap-2 [&>*]:flex-1 [&>*]:min-w-0">
+                                    <div className={filterItem}>
+                                        <label className={filterLabel}>고객사</label>
+                                        <select className={filterSelect} value={searchSrvcCd} onChange={e => setSearchSrvcCd(e.target.value)}>
                                             {srvcList.map(s => <option key={s.srvcCd} value={s.srvcCd}>{`${s.srvcCd} [${s.srvcNm}]`}</option>)}
                                         </select>
                                     </div>
-                                    <div className={styles.filterItem}>
-                                        <label className={styles.filterLabel}>센터</label>
-                                        <select className={styles.filterSelect} value={searchWhCd} onChange={e => setSearchWhCd(e.target.value)}>
+                                    <div className={filterItem}>
+                                        <label className={filterLabel}>센터</label>
+                                        <select className={filterSelect} value={searchWhCd} onChange={e => setSearchWhCd(e.target.value)}>
                                             {whList.map(w => <option key={w.whCd} value={w.whCd}>{`${w.whCd} [${w.whNm}]`}</option>)}
                                         </select>
                                     </div>
                                 </div>
 
                                 {/* Col 2: 바코드 */}
-                                <div className={styles.filterItem}>
-                                    <label className={styles.filterLabel}>바코드</label>
-                                    <input type="text" className={styles.filterInput} value={searchBarCd}
+                                <div className={filterItem}>
+                                    <label className={filterLabel}>바코드</label>
+                                    <input type="text" className={filterInput} value={searchBarCd}
                                         onChange={e => setSearchBarCd(e.target.value)} placeholder="" />
                                 </div>
 
                                 {/* Col 3: 입고일자 | 비고 (가로) */}
-                                <div className={styles.filterItemRow}>
-                                    <div className={styles.filterItem}>
-                                        <label className={styles.filterLabel}>입고일자</label>
-                                        <div className={styles.filterDateWrapper}>
-                                            <span className={`material-symbols-outlined ${styles.filterDateIcon}`}>calendar_today</span>
+                                <div className="flex gap-2 [&>*]:flex-1 [&>*]:min-w-0">
+                                    <div className={filterItem}>
+                                        <label className={filterLabel}>입고일자</label>
+                                        <div className={`${styles.datepickerWrapper} relative w-full min-w-0`}>
+                                            <span className="material-symbols-outlined absolute left-2.5 top-1/2 z-[1] -translate-y-1/2 text-slate-400 pointer-events-none" style={{ fontSize: '16px' }}>calendar_today</span>
                                             <DatePicker
                                                 selected={searchRcptDt ? new Date(`${searchRcptDt.slice(0,4)}-${searchRcptDt.slice(4,6)}-${searchRcptDt.slice(6,8)}`) : null}
                                                 onChange={(date: Date | null) => setSearchRcptDt(date ? formatDate(date) : '')}
@@ -261,60 +285,60 @@ const CJ_WMS_STOCK_0010: React.FC = () => {
                                             />
                                         </div>
                                     </div>
-                                    <div className={styles.filterItem}>
-                                        <label className={styles.filterLabel}>비고</label>
-                                        <input type="text" className={styles.filterInput} value={searchRmk}
+                                    <div className={filterItem}>
+                                        <label className={filterLabel}>비고</label>
+                                        <input type="text" className={filterInput} value={searchRmk}
                                             onChange={e => setSearchRmk(e.target.value)} />
                                     </div>
                                 </div>
 
                                 {/* Col 1: 존 */}
-                                <div className={styles.filterItem}>
-                                    <label className={styles.filterLabel}>존</label>
-                                    <div className={styles.filterInputGroup}>
-                                        <input type="text" className={styles.filterCodeInput} value={searchZoneCd}
+                                <div className={filterItem}>
+                                    <label className={filterLabel}>존</label>
+                                    <div className="flex min-w-0">
+                                        <input type="text" className="h-9 w-[70px] rounded-l-md border border-r-0 border-slate-300 bg-white px-2 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" value={searchZoneCd}
                                             onChange={e => setSearchZoneCd(e.target.value)} />
-                                        <button className={styles.filterSearchBtn} onClick={() => setZonePopupOpen(true)}>
+                                        <button className={filterSearchBtn} onClick={() => setZonePopupOpen(true)}>
                                             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>search</span>
                                         </button>
-                                        <input type="text" className={styles.filterInputReadonly} value={searchZoneNm} readOnly />
+                                        <input type="text" className={filterReadonly} value={searchZoneNm} readOnly />
                                     </div>
                                 </div>
 
                                 {/* Col 2: 로케이션 */}
-                                <div className={styles.filterItem}>
-                                    <label className={styles.filterLabel}>로케이션</label>
-                                    <div className={styles.filterInputGroup}>
-                                        <input type="text" className={styles.filterInput} value={searchLocCd}
+                                <div className={filterItem}>
+                                    <label className={filterLabel}>로케이션</label>
+                                    <div className="flex min-w-0">
+                                        <input type="text" className="h-9 min-w-0 flex-1 rounded-l-md border border-r-0 border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" value={searchLocCd}
                                             onChange={e => setSearchLocCd(e.target.value)} />
-                                        <button className={styles.filterSearchBtn} onClick={() => { if (!searchZoneCd) { showAlert('존코드를 먼저 입력하세요.'); return; } setLocPopupOpen(true); }}>
+                                        <button className={filterSearchBtn} onClick={() => { if (!searchZoneCd) { showAlert('존코드를 먼저 입력하세요.'); return; } setLocPopupOpen(true); }}>
                                             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>search</span>
                                         </button>
                                     </div>
                                 </div>
 
                                 {/* Col 3: 품번 */}
-                                <div className={styles.filterItem}>
-                                    <label className={styles.filterLabel}>품번</label>
-                                    <div className={styles.filterInputGroup}>
-                                        <input type="text" className={styles.filterCodeInput} value={searchItemCd}
+                                <div className={filterItem}>
+                                    <label className={filterLabel}>품번</label>
+                                    <div className="flex min-w-0">
+                                        <input type="text" className="h-9 w-[70px] rounded-l-md border border-r-0 border-slate-300 bg-white px-2 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" value={searchItemCd}
                                             onChange={e => setSearchItemCd(e.target.value)} />
-                                        <button className={styles.filterSearchBtn} onClick={() => setProdPopupOpen(true)}>
+                                        <button className={filterSearchBtn} onClick={() => setProdPopupOpen(true)}>
                                             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>search</span>
                                         </button>
-                                        <input type="text" className={styles.filterInputReadonly} value={searchItemNm} readOnly />
+                                        <input type="text" className={filterReadonly} value={searchItemNm} readOnly />
                                     </div>
                                 </div>
 
                             </div>
                         </div>
 
-                        {/* ── 테이블 툴바 ── */}
+                        {/* ── 테이블 툴바 (주석 처리된 상태 유지) ── */}
                         {/*
-                        <div className={styles.tableToolbar}>
-                            <span className={styles.totalCount}>Total: {filteredList.length} Items</span> 
-                            <label className={styles.excludeZeroLabel}>
-                                <input type="checkbox" className={styles.checkbox}
+                        <div className="mt-4 flex items-center justify-between gap-3">
+                            <span className="text-sm font-semibold text-primary">Total: {filteredList.length} Items</span>
+                            <label className="inline-flex items-center gap-2 text-sm text-slate-600">
+                                <input type="checkbox" className="size-4 rounded border-slate-300 text-primary focus:ring-primary"
                                     checked={excludeZeroStock}
                                     onChange={e => setExcludeZeroStock(e.target.checked)} />
                                 총 재고량 0 제외
@@ -324,8 +348,8 @@ const CJ_WMS_STOCK_0010: React.FC = () => {
                     </div>
 
                     {/* ── 메인 테이블 ── */}
-                    <div className={styles.tableWrapper}>
-                        <table className={styles.table}>
+                    <div className="min-h-0 flex-1 overflow-auto">
+                        <table className="min-w-[2400px] table-fixed border-collapse text-xs">
                             <colgroup>
                                 <col style={{ width: '150px' }} />
                                 <col style={{ width: '150px' }} />
@@ -348,64 +372,64 @@ const CJ_WMS_STOCK_0010: React.FC = () => {
                                 <col style={{ width: '90px' }} />
                                 <col style={{ width: '200px' }} />
                             </colgroup>
-                            <thead className={styles.thead}>
+                            <thead className="sticky top-0 z-10 bg-slate-50 text-slate-500">
                                 <tr>
-                                    <th>고객사</th>
-                                    <th>센터명</th>
-                                    <th>품번</th>
-                                    <th>품명</th>
-                                    <th>존</th>
-                                    <th>존명</th>
-                                    <th>로케이션</th>
-                                    <th className={styles.thQty}>총재고</th>
-                                    <th className={styles.thQty}>할당수량</th>
-                                    <th className={styles.thQty}>피킹수량</th>
-                                    <th className={styles.thQty}>가용재고</th>
-                                    <th>입고일자</th>
-                                    <th>바코드</th>
-                                    <th>비고</th>
-                                    <th>보관일수</th>
-                                    <th>사양</th>
-                                    <th>등록자</th>
-                                    <th>등록일자</th>
-                                    <th>수정자</th>
-                                    <th>수정일자</th>
+                                    <th className={thBase}>고객사</th>
+                                    <th className={thBase}>센터명</th>
+                                    <th className={thBase}>품번</th>
+                                    <th className={thBase}>품명</th>
+                                    <th className={thBase}>존</th>
+                                    <th className={thBase}>존명</th>
+                                    <th className={thBase}>로케이션</th>
+                                    <th className={thQty}>총재고</th>
+                                    <th className={thQty}>할당수량</th>
+                                    <th className={thQty}>피킹수량</th>
+                                    <th className={thQty}>가용재고</th>
+                                    <th className={thBase}>입고일자</th>
+                                    <th className={thBase}>바코드</th>
+                                    <th className={thBase}>비고</th>
+                                    <th className={thBase}>보관일수</th>
+                                    <th className={thBase}>사양</th>
+                                    <th className={thBase}>등록자</th>
+                                    <th className={thBase}>등록일자</th>
+                                    <th className={thBase}>수정자</th>
+                                    <th className={thBase}>수정일자</th>
                                 </tr>
                             </thead>
-                            <tbody className={styles.tbody}>
+                            <tbody className="divide-y divide-slate-50 text-slate-700">
                                 {searched && stockList.length === 0 ? (
                                     <tr>
-                                        <td colSpan={20} className={styles.emptyRow}>
-                                            <span className="material-symbols-outlined">inbox</span>
-                                            <p>조회된 데이터가 없습니다.</p>
+                                        <td colSpan={20} className="px-4 py-12 text-center text-slate-400">
+                                            <span className="material-symbols-outlined block text-4xl">inbox</span>
+                                            <p className="mt-2 text-sm">조회된 데이터가 없습니다.</p>
                                         </td>
                                     </tr>
                                 ) : stockList.map((item, idx) => (
-                                    <tr key={idx}>
-                                        <td className={styles.cellCenter}>
+                                    <tr key={idx} className="hover:bg-slate-50">
+                                        <td className={cellCenter}>
                                             { (s => s ? `${s.srvcCd} [${s.srvcNm}]` : item.srvcCd)(srvcList.find(s => s.srvcCd === item.srvcCd)) }
                                         </td>
-                                        <td className={styles.cellCenter}>
+                                        <td className={cellCenter}>
                                             { (w => w ? `${w.whCd} [${w.whNm}]` : item.whCd)(whList.find(w => w.whCd === item.whCd)) }
                                         </td>
-                                        <td className={styles.cellCenter}>{item.prodCd}</td>
-                                        <td className={styles.cellMedium}>{item.prodNm}</td>
-                                        <td className={styles.cellCenter}>{item.zoneCd}</td>
-                                        <td className={styles.cellCenter}>{item.zoneNm}</td>
-                                        <td className={styles.cellCenter}>{item.locCd}</td>
-                                        <td className={styles.cellQty}>{item.stockQty}</td>
-                                        <td className={styles.cellQty}>{item.allocQty}</td>
-                                        <td className={styles.cellQty}>{item.pickQty}</td>
-                                        <td className={styles.cellQty}>{item.avlQty}</td>
-                                        <td className={styles.cellCenter}>{item.lotNo}</td>
-                                        <td className={styles.cellMedium}>{item.id}</td>
-                                        <td className={styles.cellMedium}>{item.rmk}</td>
-                                        <td className={styles.cellCenter}>{item.aging}</td>
-                                        <td className={styles.cellCenter}>{item.prodSpec}</td>
-                                        <td className={styles.cellCenter}>{item.regId}</td>
-                                        <td className={styles.cellCenter}>{item.regDate}</td>
-                                        <td className={styles.cellCenter}>{item.updId}</td>
-                                        <td className={styles.cellCenter}>{item.updDate}</td>
+                                        <td className={cellCenter}>{item.prodCd}</td>
+                                        <td className={cellMedium}>{item.prodNm}</td>
+                                        <td className={cellCenter}>{item.zoneCd}</td>
+                                        <td className={cellCenter}>{item.zoneNm}</td>
+                                        <td className={cellCenter}>{item.locCd}</td>
+                                        <td className={cellQty}>{item.stockQty}</td>
+                                        <td className={cellQty}>{item.allocQty}</td>
+                                        <td className={cellQty}>{item.pickQty}</td>
+                                        <td className={cellQty}>{item.avlQty}</td>
+                                        <td className={cellCenter}>{item.lotNo}</td>
+                                        <td className={cellMedium}>{item.id}</td>
+                                        <td className={cellMedium}>{item.rmk}</td>
+                                        <td className={cellCenter}>{item.aging}</td>
+                                        <td className={cellCenter}>{item.prodSpec}</td>
+                                        <td className={cellCenter}>{item.regId}</td>
+                                        <td className={cellCenter}>{item.regDate}</td>
+                                        <td className={cellCenter}>{item.updId}</td>
+                                        <td className={cellCenter}>{item.updDate}</td>
                                     </tr>
                                 ))}
                             </tbody>

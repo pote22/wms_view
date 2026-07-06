@@ -107,8 +107,7 @@ export const getUserAuthSrvcWhList = (
     onSuccess   : (res: UserSrvcWhResponse) => void,
     onError     : (err: any) => void
 ) => {
-    // TODO: request 타입인자 2개 → 1개로 수정 필요 (transaction.ts의 request는 <R> 1개만 받음 / TS2558, build 시 오류) — 종합 수정 시 처리
-    return request<UserSrvcWhRequest, UserSrvcWhResponse>({
+    return request<UserSrvcWhResponse>({
         config: {
             url: `${API_USER_ROOT}/getUserAuthWhList`,
             method: 'POST',
@@ -125,8 +124,7 @@ export const getCommCodeList = (
     onSuccess   : (res: CommCodeList) => void,
     onError     : (err: any) => void
 ) => {
-    // TODO: request 타입인자 2개 → 1개로 수정 필요 (transaction.ts의 request는 <R> 1개만 받음 / TS2558, build 시 오류) — 종합 수정 시 처리
-    return request<CommCode, CommCodeList>({
+    return request<CommCodeList>({
         config: {
             url     : `${API_COMMON_ROOT}/getCommonCodeList`,
             method  : 'POST',

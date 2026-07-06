@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 // 고객사, 센터 공통 리스트
 import { useCommonWhList } from '../../api/common/commonWhList';
 // JWT 토큰 정보
@@ -10,15 +10,13 @@ import Popup from "../../components/common/Popup";
 import { usePopup } from "../../components/common/usePopup";
 // 존 검색 팝업
 import ZoneSearchPopup from "../../components/common/ZoneSearchPopup";
-// 모듈 CSS
-import styles from './cj_wms_master_0040.module.css';
 // 엑셀
 import ExcelJS from "exceljs";
 import * as XLSX from "xlsx";
 import { type CommCode, getCommCodeList } from '../../api/common/commonService';
 
 // 존객체 정보
-interface ZoneRow extends Zone {    
+interface ZoneRow extends Zone {
     isNew           : boolean;
     isDirty         : boolean;
     uploadStatus    : string;
@@ -30,9 +28,30 @@ interface LocRow extends Loc {
     isDirty : boolean;
 }
 
+const pageShell   = "flex min-h-0 flex-1 bg-surface";
+const contentShell = "flex min-w-0 flex-1 flex-col";
+const sectionCard = "flex min-h-0 flex-1 flex-col rounded-t-xl border border-slate-200/60 bg-white shadow-sm";
+const sectionHeader = "shrink-0 border-b border-slate-100 p-6 flex flex-col gap-5";
+const btnBase     = "inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition";
+const btnPrimary  = `${btnBase} bg-primary text-white hover:bg-primary-hover`;
+const btnOutline  = `${btnBase} border border-slate-200 bg-white text-slate-700 hover:bg-slate-50`;
+const filterItem  = "flex min-w-0 flex-col gap-1.5";
+const filterLabel = "text-xs font-semibold uppercase tracking-wide text-slate-500";
+const filterSelect = "h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
+const filterInput  = "h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
+const filterInputReadonly = "h-9 min-w-0 flex-1 rounded-md border border-slate-300 bg-slate-100 px-2 text-sm text-slate-600";
+const filterSearchBtn = "inline-flex h-9 w-10 shrink-0 items-center justify-center rounded-md bg-primary text-white hover:bg-primary-hover";
+const panel       = "flex min-h-0 flex-col overflow-hidden rounded-lg border border-slate-200/50 bg-white shadow-sm";
+const panelHeader = "flex shrink-0 items-center justify-between border-b border-slate-100 bg-slate-50/50 px-4 py-3";
+const btnToolbar  = "inline-flex items-center gap-1 whitespace-nowrap rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50";
+const thBase      = "border-b border-slate-100 px-2 py-2.5 text-center text-[10px] font-black uppercase tracking-wide whitespace-nowrap";
+const tdBase      = "overflow-hidden text-ellipsis whitespace-nowrap px-2 py-2 text-xs";
+const cellCenter  = "px-2 py-2 text-center text-xs";
+const cellInput   = "w-full min-w-0 rounded border border-slate-300 bg-white px-2 py-1 text-xs outline-none focus:border-primary";
+
 const CJ_WMS_MASTER_0040: React.FC = () => {
-    const { srvcList, whList, selectSrvcCd, selectWhCd }    = useCommonWhList();    
-    const payload                                           = getTokenPayload();  
+    const { srvcList, whList, selectSrvcCd, selectWhCd }    = useCommonWhList();
+    const payload                                           = getTokenPayload();
     // 조회조건
     const [searchSrvcCd,   setSearchSrvcCd]                 = useState(selectSrvcCd);
     const [searchWhCd,     setSearchWhCd]                   = useState(selectWhCd);
@@ -46,17 +65,9 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
     const [selectedZoneCd, setSelectedZoneCd]               = useState('');
     const [zoneSearched,   setZoneSearched]                 = useState(false);
     const [locSearched,    setLocSearched]                  = useState(false);
-    
+
     const [locClsList,     setLocClsList]                   = useState<CommCode[]>([]);
     const [zonePopupOpen,  setZonePopupOpen]                = useState(false);
-
-    // 포커싱
-    const cellRefs = useRef<Map<string, HTMLInputElement | HTMLSelectElement>>(new Map());
-    const setCellRef = (idx: number, field: string) => (
-        el: HTMLInputElement | HTMLSelectElement | null) => {
-            if (el) cellRefs.current.set(`${idx}_${field}`, el);
-            else cellRefs.current.delete(`${idx}_${field}`);
-    };
 
     // 로딩바표시
     const [isUploading, setIsUploading] = useState(false);
@@ -141,7 +152,7 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
 
     }
 
-    // 저장 
+    // 저장
     const handleSave = () => {
         const isDirtyZone   = zoneList.filter(v => v.isNew || v.isDirty);
         const isDirtyLoc    = locList.filter(v => v.isNew || v.isDirty);
@@ -182,10 +193,10 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
               },
               (err) => showAlert("저장 실패: " + err?.message)
           );
-      }); 
+      });
     }
 
-    // 엑셀다운로드 
+    // 엑셀다운로드
     const handleExcel = async () => {
         if (zoneList.length === 0) {
             showAlert("다운로드할 데이터가 없습니다.");
@@ -218,15 +229,15 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
               , fgColor : { argb: "0080B2Fd" }
             };
 
-            cell.font = { 
+            cell.font = {
                 bold    : true
               , color   : { argb: "00000000" }
-              , size    : 11 
+              , size    : 11
             };
 
-            cell.alignment = { 
+            cell.alignment = {
                 vertical    : "middle"
-              , horizontal  : "center" 
+              , horizontal  : "center"
             };
 
             cell.border = {
@@ -244,7 +255,7 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
             const row = ws.addRow({
                 srvcCd      : v.srvcCd          ?? selectSrvcCd,
                 whCd        : v.whCd            ?? selectWhCd,
-                zoneCd      : v.zoneCd          ?? '',     
+                zoneCd      : v.zoneCd          ?? '',
                 zoneNm      : v.zoneNm          ?? '',
                 useYn       : v.useYn           ?? 'Y',
                 regId       : v.regId           ?? '',
@@ -254,9 +265,9 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
             });
 
             row.eachCell((cell) => {
-                cell.alignment = { 
+                cell.alignment = {
                     vertical: "middle"
-                  , horizontal: "center" 
+                  , horizontal: "center"
                 };
                 cell.border = {
                     top     : { style: "thin" }
@@ -274,12 +285,12 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
         const blob      = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
         const url       = window.URL.createObjectURL(blob);
         const a         = document.createElement("a");
-        
+
         a.href = url;
         a.download = `폼목관리_${new Date().toISOString().slice(0, 10)}.xlsx`;
-        
+
         document.body.appendChild(a);
-        
+
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url)
@@ -306,9 +317,9 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
     // 행삭제(존)
     const handleDeleteZoneRow = () => {
         const lastNewIdx = zoneList.map((v, i) => v.isNew ? i : -1).filter(i => i >= 0).pop();
-        
+
         if (lastNewIdx === undefined) return;
-        
+
         setZoneList(prev => prev.filter((_, i) => i !== lastNewIdx));
     }
 
@@ -336,11 +347,11 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
             cell.fill = {
                 type: "pattern",
                 pattern: "solid",
-                fgColor: { argb: "0080B2Fd" },  // 배경색 (#003f87)
+                fgColor: { argb: "0080B2Fd" },
             };
             cell.font = {
                 bold: true,
-                color: { argb: "00000000" },    // 글자색 (검정색)
+                color: { argb: "00000000" },
                 size: 11,
             };
             cell.alignment = { vertical: "middle", horizontal: "center" };
@@ -376,7 +387,7 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
 
         a.href          = url;
         a.download      = "존마스터_양식.xlsx";
-        
+
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -389,7 +400,7 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
         if (!file) return;
 
          setIsUploading(true);
-        
+
         const reader = new FileReader();
         reader.onload = (evt) => {
             const data = evt.target?.result;
@@ -479,18 +490,18 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
     // 행삭제(로케이션)
     const handleDeleteLocRow = () => {
         const lastNewIdx = locList.map((v, i) => v.isNew ? i : -1).filter(i => i >= 0).pop();
-        
+
         if (lastNewIdx === undefined) return;
-        
+
         setLocList(prev => prev.filter((_, i) => i !== lastNewIdx));
     }
 
-    useEffect(() => { 
-        setSearchSrvcCd(selectSrvcCd); 
+    useEffect(() => {
+        setSearchSrvcCd(selectSrvcCd);
     }, [selectSrvcCd]);
 
-    useEffect(() => { 
-        setSearchWhCd(selectWhCd); 
+    useEffect(() => {
+        setSearchWhCd(selectWhCd);
     }, [selectWhCd]);
 
     useEffect(() => {
@@ -503,7 +514,7 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
                 , sys_etc2      : ''
                 , sys_etc3      : ''
                 , sys_etc4      : ''
-                , sys_etc5      : '' 
+                , sys_etc5      : ''
             },
             (res) => setLocClsList(res.data ?? []),
             (err) => showAlert("공통코드 조회 실패 : " + err?.message)
@@ -527,68 +538,68 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
             onSelect={(zoneCd, zoneNm) => { setSearchZoneCd(zoneCd); setSearchZoneNm(zoneNm); }}
             onClose={() => setZonePopupOpen(false)}
         />
-        <div className={styles.pageContainer}>
-            <div className={styles.contentWrapper}>
-                <div className={styles.sectionCard}>
+        <div className={pageShell}>
+            <div className={contentShell}>
+                <div className={sectionCard}>
 
                     {/* ── 섹션 헤더 ── */}
-                    <div className={styles.sectionHeader}>
-                        <div className={styles.headerTop}>
-                            <div className={styles.titleArea}>
-                                <h3>존&amp;로케이션 관리</h3>
-                                <p>창고 내 존과 상세 로케이션 정보를 구성하고 관리합니다.</p>
+                    <div className={sectionHeader}>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h3 className="font-display text-xl font-bold text-slate-950">존&amp;로케이션 관리</h3>
+                                <p className="mt-0.5 text-sm text-muted">창고 내 존과 상세 로케이션 정보를 구성하고 관리합니다.</p>
                             </div>
-                            <div className={styles.actionGroup}>
-                                <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleSearch}>
+                            <div className="flex items-center gap-2">
+                                <button className={btnPrimary} onClick={handleSearch}>
                                     <span className="material-symbols-outlined">search</span>
                                     조회
                                 </button>
-                                <button className={`${styles.btn} ${styles.btnOutline}`} onClick={handleSave}>
+                                <button className={btnOutline} onClick={handleSave}>
                                     <span className="material-symbols-outlined">save</span>
                                     저장
                                 </button>
-                                <button className={`${styles.btn} ${styles.btnOutline}`} onClick={handleExcel}>
+                                <button className={btnOutline} onClick={handleExcel}>
                                     <span className="material-symbols-outlined">download</span>
                                     엑셀
                                 </button>
                             </div>
                         </div>
-                        <div className={styles.filterBox}>
-                            <div className={styles.filterGrid}>
+                        <div className="rounded-lg border border-slate-100 bg-slate-50 p-4">
+                            <div className="grid grid-cols-[1fr_1fr_1fr_1fr_0.8fr] gap-4">
                                 {/* 고객사 */}
-                                <div className={styles.filterItem}>
-                                    <label className={styles.filterLabel}>고객사</label>
-                                    <select className={styles.filterSelect} value={searchSrvcCd} onChange={e => setSearchSrvcCd(e.target.value)}>
+                                <div className={filterItem}>
+                                    <label className={filterLabel}>고객사</label>
+                                    <select className={filterSelect} value={searchSrvcCd} onChange={e => setSearchSrvcCd(e.target.value)}>
                                         {srvcList.map(s => <option key={s.srvcCd} value={s.srvcCd}>{`${s.srvcCd} [${s.srvcNm}]`}</option>)}
                                     </select>
                                 </div>
                                 {/* 센터 */}
-                                <div className={styles.filterItem}>
-                                    <label className={styles.filterLabel}>센터</label>
-                                    <select className={styles.filterSelect} value={searchWhCd} onChange={e => setSearchWhCd(e.target.value)}>
+                                <div className={filterItem}>
+                                    <label className={filterLabel}>센터</label>
+                                    <select className={filterSelect} value={searchWhCd} onChange={e => setSearchWhCd(e.target.value)}>
                                         {whList.map(w => <option key={w.whCd} value={w.whCd}>{`${w.whCd} [${w.whNm}]`}</option>)}
                                     </select>
                                 </div>
                                 {/* 존 */}
-                                <div className={styles.filterItem}>
-                                    <label className={styles.filterLabel}>존</label>
-                                    <div className={styles.filterInputGroup}>
-                                        <input type="text" className={styles.filterInput} value={searchZoneCd} onChange={e => setSearchZoneCd(e.target.value)} />
-                                        <button className={styles.filterSearchBtn} onClick={() => setZonePopupOpen(true)}>
-                                            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>search</span>
+                                <div className={filterItem}>
+                                    <label className={filterLabel}>존</label>
+                                    <div className="flex items-center gap-1 min-w-0">
+                                        <input type="text" className="h-9 w-[70px] flex-none rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" value={searchZoneCd} onChange={e => setSearchZoneCd(e.target.value)} />
+                                        <button className={filterSearchBtn} onClick={() => setZonePopupOpen(true)}>
+                                            <span className="material-symbols-outlined text-[18px]">search</span>
                                         </button>
-                                        <input type="text" className={styles.filterInputReadonly} value={searchZoneNm} readOnly />
+                                        <input type="text" className={filterInputReadonly} value={searchZoneNm} readOnly />
                                     </div>
                                 </div>
                                 {/* 로케이션 */}
-                                <div className={styles.filterItem}>
-                                    <label className={styles.filterLabel}>로케이션</label>
-                                    <input type="text" className={styles.filterInput} value={searchLocCd} onChange={e => setSearchLocCd(e.target.value)} />
+                                <div className={filterItem}>
+                                    <label className={filterLabel}>로케이션</label>
+                                    <input type="text" className={filterInput} value={searchLocCd} onChange={e => setSearchLocCd(e.target.value)} />
                                 </div>
                                 {/* 사용여부 */}
-                                <div className={styles.filterItem}>
-                                    <label className={styles.filterLabel}>사용여부</label>
-                                    <select className={styles.filterSelect} value={searchUseYn} onChange={e => setSearchUseYn(e.target.value)}>
+                                <div className={filterItem}>
+                                    <label className={filterLabel}>사용여부</label>
+                                    <select className={filterSelect} value={searchUseYn} onChange={e => setSearchUseYn(e.target.value)}>
                                         <option value="">전체</option>
                                         <option value="Y">사용</option>
                                         <option value="N">미사용</option>
@@ -599,42 +610,41 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
                     </div>
 
                     {/* ── 패널 그리드 ── */}
-                    <div className={styles.panelGrid}>
+                    <div className="grid min-h-0 flex-1 grid-cols-[6fr_4fr] gap-4 p-4">
 
                         {/* ── 존 패널 ── */}
-                        <section className={styles.panel}>
-                            <div className={styles.panelHeader}>
-                                <div className={styles.panelTitleGroup}>
-                                    <span className={styles.panelAccent} />
-                                    <h4 className={styles.panelTitle}>존</h4>
-                                    <span className={styles.panelCount}>(Total: {zoneList.length})</span>
+                        <section className={panel}>
+                            <div className={panelHeader}>
+                                <div className="flex items-center gap-2">
+                                    <span className="h-4 w-1 shrink-0 rounded-full bg-primary" />
+                                    <h4 className="text-sm font-bold text-slate-800">존</h4>
+                                    <span className="text-xs text-muted">(Total: {zoneList.length})</span>
                                 </div>
-                                <div className={styles.panelToolbar}>
-                                    <button className={styles.btnToolbar} onClick={handleAddZoneRow}>
-                                        <span className="material-symbols-outlined" style={{ color: '#003f87', fontSize: '14px' }}>add</span>
+                                <div className="flex gap-1">
+                                    <button className={btnToolbar} onClick={handleAddZoneRow}>
+                                        <span className="material-symbols-outlined text-primary text-[14px]">add</span>
                                         행추가
                                     </button>
-                                    <button className={styles.btnToolbar} onClick={handleDeleteZoneRow}>
-                                        <span className="material-symbols-outlined" style={{ color: '#ba1a1a', fontSize: '14px' }}>delete</span>
+                                    <button className={btnToolbar} onClick={handleDeleteZoneRow}>
+                                        <span className="material-symbols-outlined text-danger text-[14px]">delete</span>
                                         행삭제
                                     </button>
-                                    <button className={styles.btnToolbar} onClick={handleTempletDownload}>
-                                        <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>description</span>
+                                    <button className={btnToolbar} onClick={handleTempletDownload}>
+                                        <span className="material-symbols-outlined text-[14px]">description</span>
                                         양식다운로드
                                     </button>
                                     <label
-                                        className={styles.btnToolbar}
-                                        style={isUploading ? { opacity: 0.5, cursor: 'not-allowed', pointerEvents: 'none' } : {}}
+                                        className={btnToolbar + (isUploading ? ' opacity-50 cursor-not-allowed pointer-events-none' : '')}
                                     >
-                                        <input type="file" accept=".xlsx,.xls" style={{ display: 'none' }} onChange={handleExcelUpload} />
-                                        <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>upload_file</span>
+                                        <input type="file" accept=".xlsx,.xls" className="hidden" onChange={handleExcelUpload} />
+                                        <span className="material-symbols-outlined text-[14px]">upload_file</span>
                                         {isUploading ? "업로드 중..." : "엑셀업로드"}
                                     </label>
                                 </div>
                             </div>
 
-                            <div className={styles.tableWrapper}>
-                                <table className={styles.table}>
+                            <div className="min-h-0 flex-1 overflow-auto">
+                                <table className="w-full table-fixed border-collapse text-left">
                                     <colgroup>
                                         <col style={{ width: '120px' }} />
                                         <col style={{ width: '150px' }} />
@@ -646,71 +656,71 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
                                         <col style={{ width: '120px' }} />
                                         <col style={{ width: '300px' }} />
                                     </colgroup>
-                                    <thead className={styles.thead}>
+                                    <thead className="sticky top-0 z-10 bg-slate-50/80 text-slate-400">
                                         <tr>
-                                            <th>센터</th>
-                                            <th>존코드</th>
-                                            <th>존명</th>
-                                            <th className={styles.cellCenter}>사용여부</th>
-                                            <th>등록자</th>
-                                            <th>등록일자</th>
-                                            <th>수정자</th>
-                                            <th>수정일자</th>
-                                            <th>업로드결과</th>
+                                            <th className={thBase}>센터</th>
+                                            <th className={thBase}>존코드</th>
+                                            <th className={thBase}>존명</th>
+                                            <th className={thBase}>사용여부</th>
+                                            <th className={thBase}>등록자</th>
+                                            <th className={thBase}>등록일자</th>
+                                            <th className={thBase}>수정자</th>
+                                            <th className={thBase}>수정일자</th>
+                                            <th className={thBase}>업로드결과</th>
                                         </tr>
                                     </thead>
-                                    <tbody className={styles.tbody}>
+                                    <tbody className="divide-y divide-slate-50 text-slate-700">
                                         {zoneSearched && zoneList.length === 0 ? (
                                             <tr>
-                                                <td colSpan={8} className={styles.emptyRow}>
-                                                    <span className="material-symbols-outlined">inbox</span>
-                                                    <p>조회된 데이터가 없습니다.</p>
+                                                <td colSpan={9} className="px-4 py-12 text-center text-slate-400">
+                                                    <span className="material-symbols-outlined block text-[2rem]">inbox</span>
+                                                    <p className="mt-2 text-sm font-medium">조회된 데이터가 없습니다.</p>
                                                 </td>
                                             </tr>
                                         ) : zoneList.map((item, index) => (
                                             <tr key={index}
                                                 onClick={() => handleZoneSelect(item)}
-                                                className={selectedZoneCd === item.zoneCd ? styles.selectedRow : ''}>
-                                                <td className={styles.cellCenter}>
+                                                className={'cursor-pointer transition-colors hover:bg-slate-50 ' + (selectedZoneCd === item.zoneCd ? 'border-l-2 border-l-primary bg-primary/[0.06]' : '')}>
+                                                <td className={cellCenter}>
                                                     {(w => w ? `${w.whCd} [${w.whNm}]` : item.whCd)(whList.find(w => w.whCd === item.whCd))}
                                                 </td>
-                                                <td className={styles.cellCenter}>
-                                                    { 
-                                                        item.isNew 
-                                                        ? <input type="text" className={styles.cellInput} value={item.zoneCd} 
+                                                <td className={cellCenter}>
+                                                    {
+                                                        item.isNew
+                                                        ? <input type="text" className={cellInput} value={item.zoneCd}
                                                            onChange={e => handleZoneCellChange(index, "zoneCd", e.target.value)}
                                                            onClick={e => e.stopPropagation()}/>
                                                         : item.zoneCd
                                                     }
                                                 </td>
-                                                <td>
-                                                    <input type="text" className={styles.cellInput} value={item.zoneNm} 
+                                                <td className={tdBase}>
+                                                    <input type="text" className={cellInput} value={item.zoneNm}
                                                      onChange={e => handleZoneCellChange(index, "zoneNm", e.target.value)}
                                                      onClick={e => e.stopPropagation()}/>
                                                 </td>
-                                                <td className={styles.cellCenter}>
-                                                    <select className={styles.cellInput} value={item.useYn} 
+                                                <td className={cellCenter}>
+                                                    <select className={cellInput} value={item.useYn}
                                                         onChange={e => handleZoneCellChange(index, "useYn", e.target.value)}
                                                         onClick={e => e.stopPropagation()}>
                                                         <option value="Y">사용</option>
                                                         <option value="N">미사용</option>
                                                     </select>
                                                 </td>
-                                                <td className={styles.cellCenter}>{item.regId}</td>
-                                                <td className={styles.cellCenter}>{item.regDate}</td>
-                                                <td className={styles.cellCenter}>{item.updId}</td>
-                                                <td className={styles.cellCenter}>{item.updDate}</td>
-                                                <td className={styles.cellCenter}>
+                                                <td className={cellCenter}>{item.regId}</td>
+                                                <td className={cellCenter}>{item.regDate}</td>
+                                                <td className={cellCenter}>{item.updId}</td>
+                                                <td className={cellCenter}>{item.updDate}</td>
+                                                <td className={cellCenter}>
                                                     {item.uploadStatus === 'OK' ? (
-                                                        <span className={styles.chipOk}>
-                                                            <span className="material-symbols-outlined" style={{ fontSize: '11px' }}>check_circle</span>
+                                                        <span className="inline-flex items-center gap-0.5 rounded-full bg-green-700 px-2 py-0.5 text-[10px] font-bold text-white">
+                                                            <span className="material-symbols-outlined text-[11px]">check_circle</span>
                                                             OK
                                                         </span>
                                                     ) : item.uploadStatus && item.uploadStatus !== '검증중...' ? (
-                                                        <div className={styles.chipGroup}>
+                                                        <div className="flex flex-wrap justify-center gap-1">
                                                             {item.uploadStatus.split(' / ').filter(Boolean).map((err, i) => (
-                                                                <span key={i} className={styles.chipError}>
-                                                                    <span className="material-symbols-outlined" style={{ fontSize: '11px' }}>error</span>
+                                                                <span key={i} className="inline-flex items-center gap-0.5 whitespace-nowrap rounded-full bg-danger px-2 py-0.5 text-[10px] font-bold text-white">
+                                                                    <span className="material-symbols-outlined text-[11px]">error</span>
                                                                     {err.trim()}
                                                                 </span>
                                                             ))}
@@ -725,29 +735,29 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
                         </section>
 
                         {/* ── 로케이션 패널 ── */}
-                        <section className={styles.panel}>
-                            <div className={styles.panelHeader}>
-                                <div className={styles.panelTitleGroup}>
-                                    <span className={styles.panelAccentAlt} />
-                                    <h4 className={styles.panelTitle}>로케이션</h4>
-                                    <span className={styles.panelCount}>
+                        <section className={panel}>
+                            <div className={panelHeader}>
+                                <div className="flex items-center gap-2">
+                                    <span className="h-4 w-1 shrink-0 rounded-full bg-primary-hover" />
+                                    <h4 className="text-sm font-bold text-slate-800">로케이션</h4>
+                                    <span className="text-xs text-muted">
                                         {selectedZoneCd ? `${selectedZoneCd} · ` : ''}(Total: {locList.length})
                                     </span>
                                 </div>
-                                <div className={styles.panelToolbar}>
-                                    <button className={styles.btnToolbar} onClick={handleAddLocRow}>
-                                        <span className="material-symbols-outlined" style={{ color: '#003f87', fontSize: '14px' }}>add</span>
+                                <div className="flex gap-1">
+                                    <button className={btnToolbar} onClick={handleAddLocRow}>
+                                        <span className="material-symbols-outlined text-primary text-[14px]">add</span>
                                         행추가
                                     </button>
-                                    <button className={styles.btnToolbar} onClick={handleDeleteLocRow}>
-                                        <span className="material-symbols-outlined" style={{ color: '#ba1a1a', fontSize: '14px' }}>delete</span>
+                                    <button className={btnToolbar} onClick={handleDeleteLocRow}>
+                                        <span className="material-symbols-outlined text-danger text-[14px]">delete</span>
                                         행삭제
                                     </button>
                                 </div>
                             </div>
 
-                            <div className={styles.tableWrapper}>
-                                <table className={styles.table}>
+                            <div className="min-h-0 flex-1 overflow-auto">
+                                <table className="w-full table-fixed border-collapse text-left">
                                     <colgroup>
                                         <col style={{ width: '150px' }} />
                                         <col style={{ width: '120px' }} />
@@ -758,65 +768,65 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
                                         <col style={{ width: '100px' }} />
                                         <col style={{ width: '120px' }} />
                                     </colgroup>
-                                    <thead className={styles.thead}>
+                                    <thead className="sticky top-0 z-10 bg-slate-50/80 text-slate-400">
                                         <tr>
-                                            <th>로케이션코드</th>
-                                            <th>로케이션구분</th>
-                                            <th className={styles.cellCenter}>사용여부</th>
-                                            <th>비고</th>
-                                            <th>등록자</th>
-                                            <th>등록일자</th>
-                                            <th>수정자</th>
-                                            <th>수정일자</th>
+                                            <th className={thBase}>로케이션코드</th>
+                                            <th className={thBase}>로케이션구분</th>
+                                            <th className={thBase}>사용여부</th>
+                                            <th className={thBase}>비고</th>
+                                            <th className={thBase}>등록자</th>
+                                            <th className={thBase}>등록일자</th>
+                                            <th className={thBase}>수정자</th>
+                                            <th className={thBase}>수정일자</th>
                                         </tr>
                                     </thead>
-                                    <tbody className={styles.tbody}>
+                                    <tbody className="divide-y divide-slate-50 text-slate-700">
                                         { locSearched && locList.length === 0 ? (
                                             <tr>
-                                                <td colSpan={11} className={styles.emptyRow}>
-                                                    <span className="material-symbols-outlined">inbox</span>
-                                                    <p>조회된 데이터가 없습니다.</p>
+                                                <td colSpan={8} className="px-4 py-12 text-center text-slate-400">
+                                                    <span className="material-symbols-outlined block text-[2rem]">inbox</span>
+                                                    <p className="mt-2 text-sm font-medium">조회된 데이터가 없습니다.</p>
                                                 </td>
                                             </tr>
                                         ) : locList.map((item, index) => (
-                                            <tr key={index}>
-                                                <td className={styles.cellCenter}>
+                                            <tr key={index} className="cursor-pointer transition-colors hover:bg-slate-50">
+                                                <td className={cellCenter}>
                                                     {
-                                                        item.isNew 
-                                                        ? <input type="text" className={styles.cellInput} value={item.locCd} 
+                                                        item.isNew
+                                                        ? <input type="text" className={cellInput} value={item.locCd}
                                                            onChange={e => handleLocCellChange(index, "locCd", e.target.value)}
                                                            onClick={e => e.stopPropagation()}/>
                                                         : item.locCd
                                                     }
                                                 </td>
-                                                <td className={styles.cellCenter}>
-                                                    <select className={styles.cellInput} value={item.locClsCd} 
+                                                <td className={cellCenter}>
+                                                    <select className={cellInput} value={item.locClsCd}
                                                      onChange={e => handleLocCellChange(index, "locClsCd", e.target.value)}
                                                      onClick={e => e.stopPropagation()}>
-                                                        { 
+                                                        {
                                                             locClsList.map(v => (
                                                                 <option key={v.sys_cd} value={v.sys_cd}>{v.sys_cdnm}</option>
                                                             ))
                                                         }
                                                     </select>
                                                 </td>
-                                                <td className={styles.cellCenter}>
-                                                    <select className={styles.cellInput} value={item.useYn}
+                                                <td className={cellCenter}>
+                                                    <select className={cellInput} value={item.useYn}
                                                         onChange={e => handleLocCellChange(index, "useYn", e.target.value)}
                                                         onClick={e => e.stopPropagation()}>
                                                         <option value="Y">사용</option>
                                                         <option value="N">미사용</option>
                                                     </select>
                                                 </td>
-                                                <td className={styles.cellDim}>
-                                                    <input type="text" className={styles.cellInput} value={item.rmk} 
+                                                <td className="px-2 py-2 text-[11px] text-muted">
+                                                    <input type="text" className={cellInput} value={item.rmk}
                                                      onChange={e => handleLocCellChange(index, "rmk", e.target.value)}
                                                      onClick={e => e.stopPropagation()}/>
                                                 </td>
-                                                <td className={styles.cellCenter}>{item.regId}</td>
-                                                <td className={styles.cellCenter}>{item.regDate}</td>
-                                                <td className={styles.cellCenter}>{item.updId}</td>
-                                                <td className={styles.cellCenter}>{item.updDate}</td>
+                                                <td className={cellCenter}>{item.regId}</td>
+                                                <td className={cellCenter}>{item.regDate}</td>
+                                                <td className={cellCenter}>{item.updId}</td>
+                                                <td className={cellCenter}>{item.updDate}</td>
                                             </tr>
                                         ))}
                                     </tbody>

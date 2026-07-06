@@ -1,0 +1,89 @@
+/* TipTap / ProseMirror 전용 스타일 — 일반 CSS (module 아님) */
+
+/* editorWrapper: flex 컨테이너 */
+.editorWrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* EditorContent 내부 wrapper div에도 flex 전달 */
+.editorWrapper > div {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.editorWrapper .ProseMirror {
+    flex: 1;
+    padding: 25px;
+    line-height: 1.6;
+    color: #334155;
+    font-family: 'Inter', 'Noto Sans KR', sans-serif;
+    font-size: 14px;
+    outline: none;
+    overflow-y: auto;
+}
+
+.editorWrapper .ProseMirror p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    float: left;
+    color: #94a3b8;
+    pointer-events: none;
+    height: 0;
+}
+
+.textareaReadOnly .ProseMirror {
+    background-color: white;
+    cursor: default;
+}
+
+.textareaEditable .ProseMirror {
+    background-color: #fdfdfd;
+}
+
+/* Tiptap Content Styles */
+.editorWrapper .ProseMirror h1 { font-size: 1.8em; font-weight: 800; margin-top: 0.5em; }
+.editorWrapper .ProseMirror h2 { font-size: 1.5em; font-weight: 700; margin-top: 0.5em; }
+.editorWrapper .ProseMirror ul { padding-left: 1.5em; list-style-type: disc; margin: 1em 0; }
+.editorWrapper .ProseMirror ol { padding-left: 1.5em; list-style-type: decimal; margin: 1em 0; }
+.editorWrapper .ProseMirror blockquote { border-left: 3px solid #e2e8f0; padding-left: 1em; color: #64748b; font-style: italic; }
+.editorWrapper .ProseMirror a { color: #003f87; text-decoration: underline; cursor: pointer; }
+.editorWrapper .ProseMirror strong { font-weight: 800; }
+.editorWrapper .ProseMirror em,
+.editorWrapper .ProseMirror i {
+    display: inline-block;
+    transform: skewX(-12deg);
+    font-style: normal !important;
+}
+
+/* Toolbar 활성 버튼 */
+.btnActive {
+    background-color: #e0f2fe !important;
+}
+
+.btnActive .toolbarIcon {
+    color: #003f87;
+}
+
+/* Toolbar 아이콘 */
+.toolbarIcon {
+    color: #64748b;
+    font-size: 20px;
+}
+
+/* 커스텀 체크박스 체크 표시 (::after pseudo-element) */
+.customCheckbox:checked::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 1px;
+    width: 5px;
+    height: 9px;
+    border: 2px solid white;
+    border-top: none;
+    border-left: none;
+    transform: rotate(45deg);
+}

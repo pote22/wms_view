@@ -10,10 +10,41 @@ import { usePopup } from "../../components/common/usePopup";
 import { formatDate } from '../../utils/dateUtils';
 // 엑셀
 import ExcelJS from "exceljs";
-// CSS
+// CSS (datepicker 보정 전용)
 import styles from './cj_wms_stock_0090.module.css';
 // API
 import { getList, type Transaction } from '../../api/stock/stock_0090Service';
+
+// ── Tailwind 클래스 상수 ──
+const pageShell     = "flex min-h-0 flex-1 bg-surface";
+const contentShell  = "flex min-w-0 flex-1 flex-col";
+const sectionCard   = "flex min-h-0 flex-1 flex-col rounded-t-xl border border-slate-200/60 bg-surface-card shadow-sm";
+const sectionHeader = "shrink-0 border-b border-slate-100 p-6";
+
+const btnBase    = "inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition";
+const btnPrimary = `${btnBase} bg-primary text-white hover:bg-primary-hover`;
+const btnOutline = `${btnBase} border border-border-soft bg-white text-slate-700 hover:bg-slate-50`;
+
+const filterItem   = "flex min-w-0 flex-col gap-1.5";
+const filterLabel  = "text-xs font-semibold uppercase tracking-wide text-slate-500";
+const filterSelect = "h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
+const filterInput  = "h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
+
+const thBase = "border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide";
+
+const cellCenter        = "px-2 py-2 text-center";
+const cellMedium        = "px-2 py-2 font-medium text-slate-700";
+const cellQty           = "px-2 py-2 text-right tabular-nums font-bold text-blue-700";
+const cellApplyQtyUp    = "px-2 py-2 text-right tabular-nums font-bold text-success";
+const cellApplyQtyDown  = "px-2 py-2 text-right tabular-nums font-bold text-danger";
+const cellTxnKey        = "truncate px-2 py-2 font-mono text-xs";
+const cellDim           = "px-2 py-2 text-center text-[11px] text-muted";
+
+const badgeBase    = "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium";
+const badgeIn      = `${badgeBase} bg-green-50 text-success`;
+const badgeOut     = `${badgeBase} bg-red-50 text-danger`;
+const badgeMove    = `${badgeBase} bg-blue-50 text-blue-700`;
+const badgeDefault = `${badgeBase} bg-slate-100 text-slate-500`;
 
 // 구분 옵션
 const TXN_TP_OPTIONS = [
@@ -31,20 +62,20 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
     const { srvcList, whList, selectSrvcCd, selectWhCd } = useCommonWhList();
 
     // 조회조건
-    const [searchSrvcCd, setSearchSrvcCd]   = useState(selectSrvcCd);
-    const [searchWhCd,   setSearchWhCd]     = useState(selectWhCd);
+    const [searchSrvcCd,   setSearchSrvcCd]   = useState(selectSrvcCd);
+    const [searchWhCd,     setSearchWhCd]     = useState(selectWhCd);
     const [searchWorkDtFr, setSearchWorkDtFr] = useState('');
     const [searchWorkDtTo, setSearchWorkDtTo] = useState('');
-    const [searchRcptDt, setSearchRcptDt]   = useState('');
-    const [searchProdCd, setSearchProdCd]   = useState('');
-    const [searchTxnKey, setSearchTxnKey]   = useState('');
-    const [searchTxnTp,  setSearchTxnTp]    = useState('');
-    const [searchOrdNo,  setSearchOrdNo]    = useState('');
-    const [searchBarCd,  setSearchBarCd]    = useState('');
+    const [searchRcptDt,   setSearchRcptDt]   = useState('');
+    const [searchProdCd,   setSearchProdCd]   = useState('');
+    const [searchTxnKey,   setSearchTxnKey]   = useState('');
+    const [searchTxnTp,    setSearchTxnTp]    = useState('');
+    const [searchOrdNo,    setSearchOrdNo]    = useState('');
+    const [searchBarCd,    setSearchBarCd]    = useState('');
 
     // 조회결과
-    const [txnList,  setTxnList]    = useState<Transaction[]>([]);
-    const [searched, setSearched]   = useState(false);
+    const [txnList,  setTxnList]  = useState<Transaction[]>([]);
+    const [searched, setSearched] = useState(false);
 
     // 팝업
     const { popup, showAlert, closePopup } = usePopup();
@@ -178,10 +209,10 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
 
     // 구분 뱃지 클래스
     const badgeClass = (tp: string) =>
-        tp === 'I' ? styles.badgeIn
-      : tp === 'O' ? styles.badgeOut
-      : tp === 'M' ? styles.badgeMove
-      : styles.badgeDefault;
+        tp === 'I' ? badgeIn
+      : tp === 'O' ? badgeOut
+      : tp === 'M' ? badgeMove
+      : badgeDefault;
 
     // 구분명 표시 (txnTpNm 우선, 없으면 옵션 라벨)
     const txnTpLabel = (item: Transaction) =>
@@ -200,23 +231,23 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
             onConfirm={popup.onConfirm}
             onCancel={closePopup}
         />
-        <div className={styles.pageContainer}>
-            <div className={styles.contentWrapper}>
-                <div className={styles.sectionCard}>
+        <div className={pageShell}>
+            <div className={contentShell}>
+                <div className={sectionCard}>
 
                     {/* ── 섹션 헤더 ── */}
-                    <div className={styles.sectionHeader}>
-                        <div className={styles.headerTop}>
-                            <div className={styles.titleArea}>
-                                <h3>트랜잭션현황</h3>
-                                <p>재고 이동 및 수량 변화 이력을 상세하게 조회합니다.</p>
+                    <div className={sectionHeader}>
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <h3 className="font-display text-xl font-bold text-slate-950">트랜잭션현황</h3>
+                                <p className="mt-1 text-sm text-muted">재고 이동 및 수량 변화 이력을 상세하게 조회합니다.</p>
                             </div>
-                            <div className={styles.actionGroup}>
-                                <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleSearch}>
+                            <div className="flex items-center gap-2">
+                                <button className={btnPrimary} onClick={handleSearch}>
                                     <span className="material-symbols-outlined">search</span>
                                     조회
                                 </button>
-                                <button className={`${styles.btn} ${styles.btnOutline}`} onClick={handleExcel}>
+                                <button className={btnOutline} onClick={handleExcel}>
                                     <span className="material-symbols-outlined">download</span>
                                     엑셀
                                 </button>
@@ -224,30 +255,30 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
                         </div>
 
                         {/* ── 필터 영역 ── */}
-                        <div className={styles.filterBox}>
-                            <div className={styles.filterGrid}>
+                        <div className="rounded-lg border border-slate-100 bg-slate-50 p-4">
+                            <div className="grid grid-cols-5 gap-4">
 
                                 {/* 고객사 */}
-                                <div className={styles.filterItem}>
-                                    <label className={styles.filterLabel}>고객사</label>
-                                    <select className={styles.filterSelect} value={searchSrvcCd} onChange={e => setSearchSrvcCd(e.target.value)}>
+                                <div className={filterItem}>
+                                    <label className={filterLabel}>고객사</label>
+                                    <select className={filterSelect} value={searchSrvcCd} onChange={e => setSearchSrvcCd(e.target.value)}>
                                         {srvcList.map(s => <option key={s.srvcCd} value={s.srvcCd}>{`${s.srvcCd} [${s.srvcNm}]`}</option>)}
                                     </select>
                                 </div>
 
                                 {/* 센터 */}
-                                <div className={styles.filterItem}>
-                                    <label className={styles.filterLabel}>센터</label>
-                                    <select className={styles.filterSelect} value={searchWhCd} onChange={e => setSearchWhCd(e.target.value)}>
+                                <div className={filterItem}>
+                                    <label className={filterLabel}>센터</label>
+                                    <select className={filterSelect} value={searchWhCd} onChange={e => setSearchWhCd(e.target.value)}>
                                         {whList.map(w => <option key={w.whCd} value={w.whCd}>{`${w.whCd} [${w.whNm}]`}</option>)}
                                     </select>
                                 </div>
 
                                 {/* 작업일자 (범위) */}
-                                <div className={styles.filterItem}>
-                                    <label className={styles.filterLabel}>작업일자</label>
-                                    <div className={styles.filterDateRange}>
-                                        <div className={styles.filterDateWrapper}>
+                                <div className={filterItem}>
+                                    <label className={filterLabel}>작업일자</label>
+                                    <div className="flex items-center gap-1">
+                                        <div className={`${styles.datepickerWrapper} min-w-0 flex-1`}>
                                             <DatePicker
                                                 selected={toDate(searchWorkDtFr)}
                                                 onChange={(date: Date | null) => setSearchWorkDtFr(date ? formatDate(date) : '')}
@@ -257,8 +288,8 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
                                                 placeholderText=""
                                             />
                                         </div>
-                                        <span className={styles.filterDateTilde}>~</span>
-                                        <div className={styles.filterDateWrapper}>
+                                        <span className="shrink-0 text-xs text-slate-400">~</span>
+                                        <div className={`${styles.datepickerWrapper} min-w-0 flex-1`}>
                                             <DatePicker
                                                 selected={toDate(searchWorkDtTo)}
                                                 onChange={(date: Date | null) => setSearchWorkDtTo(date ? formatDate(date) : '')}
@@ -272,9 +303,9 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
                                 </div>
 
                                 {/* 입고일자 */}
-                                <div className={styles.filterItem}>
-                                    <label className={styles.filterLabel}>입고일자</label>
-                                    <div className={styles.filterDateWrapper}>
+                                <div className={filterItem}>
+                                    <label className={filterLabel}>입고일자</label>
+                                    <div className={styles.datepickerWrapper}>
                                         <DatePicker
                                             selected={toDate(searchRcptDt)}
                                             onChange={(date: Date | null) => setSearchRcptDt(date ? formatDate(date) : '')}
@@ -287,38 +318,38 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
                                 </div>
 
                                 {/* 품번 */}
-                                <div className={styles.filterItem}>
-                                    <label className={styles.filterLabel}>품번</label>
-                                    <input type="text" className={styles.filterInput} value={searchProdCd}
+                                <div className={filterItem}>
+                                    <label className={filterLabel}>품번</label>
+                                    <input type="text" className={filterInput} value={searchProdCd}
                                         onChange={e => setSearchProdCd(e.target.value)} placeholder="품번 입력" />
                                 </div>
 
                                 {/* 트랜잭션KEY */}
-                                <div className={styles.filterItem}>
-                                    <label className={styles.filterLabel}>트랜잭션KEY</label>
-                                    <input type="text" className={styles.filterInput} value={searchTxnKey}
+                                <div className={filterItem}>
+                                    <label className={filterLabel}>트랜잭션KEY</label>
+                                    <input type="text" className={filterInput} value={searchTxnKey}
                                         onChange={e => setSearchTxnKey(e.target.value)} placeholder="TXN-0000" />
                                 </div>
 
                                 {/* 구분 */}
-                                <div className={styles.filterItem}>
-                                    <label className={styles.filterLabel}>구분</label>
-                                    <select className={styles.filterSelect} value={searchTxnTp} onChange={e => setSearchTxnTp(e.target.value)}>
+                                <div className={filterItem}>
+                                    <label className={filterLabel}>구분</label>
+                                    <select className={filterSelect} value={searchTxnTp} onChange={e => setSearchTxnTp(e.target.value)}>
                                         {TXN_TP_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                                     </select>
                                 </div>
 
                                 {/* 지시번호 */}
-                                <div className={styles.filterItem}>
-                                    <label className={styles.filterLabel}>지시번호</label>
-                                    <input type="text" className={styles.filterInput} value={searchOrdNo}
+                                <div className={filterItem}>
+                                    <label className={filterLabel}>지시번호</label>
+                                    <input type="text" className={filterInput} value={searchOrdNo}
                                         onChange={e => setSearchOrdNo(e.target.value)} placeholder="지시번호 입력" />
                                 </div>
 
                                 {/* 바코드 */}
-                                <div className={styles.filterItem}>
-                                    <label className={styles.filterLabel}>바코드</label>
-                                    <input type="text" className={styles.filterInput} value={searchBarCd}
+                                <div className={filterItem}>
+                                    <label className={filterLabel}>바코드</label>
+                                    <input type="text" className={filterInput} value={searchBarCd}
                                         onChange={e => setSearchBarCd(e.target.value)} placeholder="바코드 입력" />
                                 </div>
 
@@ -326,14 +357,14 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
                         </div>
 
                         {/* ── 테이블 툴바 ── */}
-                        <div className={styles.tableToolbar}>
-                            <span className={styles.totalCount}>Total: {txnList.length} Items</span>
+                        <div className="mt-4 flex items-center justify-between gap-3">
+                            <span className="text-sm font-semibold text-primary">Total: {txnList.length} Items</span>
                         </div>
                     </div>
 
                     {/* ── 메인 테이블 ── */}
-                    <div className={styles.tableWrapper}>
-                        <table className={styles.table}>
+                    <div className="min-h-0 flex-1 overflow-auto">
+                        <table className="min-w-[2800px] table-fixed border-collapse text-xs">
                             <colgroup>
                                 <col style={{ width: '150px' }} />   {/* 센터명 */}
                                 <col style={{ width: '150px' }} />   {/* 고객사 */}
@@ -359,78 +390,78 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
                                 <col style={{ width: '90px' }} />    {/* 수정자 */}
                                 <col style={{ width: '150px' }} />   {/* 수정일자 */}
                             </colgroup>
-                            <thead className={styles.thead}>
+                            <thead className="sticky top-0 z-10 bg-slate-50 text-slate-500">
                                 <tr>
-                                    <th>센터명</th>
-                                    <th>고객사</th>
-                                    <th>트랜잭션KEY</th>
-                                    <th>구분</th>
-                                    <th>작업일자</th>
-                                    <th>품번</th>
-                                    <th>품명</th>
-                                    <th>입고일자(로트번호)</th>
-                                    <th>생산로트(로트번호)</th>
-                                    <th>존(이동전)</th>
-                                    <th>로케이션(이동전)</th>
-                                    <th>바코드(이동전)</th>
-                                    <th>존(이동후)</th>
-                                    <th>로케이션(이동후)</th>
-                                    <th>바코드(이동후)</th>
-                                    <th>지시번호</th>
-                                    <th>수량(재고)</th>
-                                    <th>재고반영(수량)</th>
-                                    <th>증차감구분자</th>
-                                    <th>등록자</th>
-                                    <th>등록일자</th>
-                                    <th>수정자</th>
-                                    <th>수정일자</th>
+                                    <th className={thBase}>센터명</th>
+                                    <th className={thBase}>고객사</th>
+                                    <th className={thBase}>트랜잭션KEY</th>
+                                    <th className={thBase}>구분</th>
+                                    <th className={thBase}>작업일자</th>
+                                    <th className={thBase}>품번</th>
+                                    <th className={thBase}>품명</th>
+                                    <th className={thBase}>입고일자(로트번호)</th>
+                                    <th className={thBase}>생산로트(로트번호)</th>
+                                    <th className={thBase}>존(이동전)</th>
+                                    <th className={thBase}>로케이션(이동전)</th>
+                                    <th className={thBase}>바코드(이동전)</th>
+                                    <th className={thBase}>존(이동후)</th>
+                                    <th className={thBase}>로케이션(이동후)</th>
+                                    <th className={thBase}>바코드(이동후)</th>
+                                    <th className={thBase}>지시번호</th>
+                                    <th className={thBase}>수량(재고)</th>
+                                    <th className={thBase}>재고반영(수량)</th>
+                                    <th className={thBase}>증차감구분자</th>
+                                    <th className={thBase}>등록자</th>
+                                    <th className={thBase}>등록일자</th>
+                                    <th className={thBase}>수정자</th>
+                                    <th className={thBase}>수정일자</th>
                                 </tr>
                             </thead>
-                            <tbody className={styles.tbody}>
+                            <tbody className="divide-y divide-slate-50 text-slate-700">
                                 {searched && txnList.length === 0 ? (
                                     <tr>
-                                        <td colSpan={23} className={styles.emptyRow}>
-                                            <span className="material-symbols-outlined">inbox</span>
-                                            <p>조회된 데이터가 없습니다.</p>
+                                        <td colSpan={23} className="px-4 py-12 text-center text-slate-400">
+                                            <span className="material-symbols-outlined block text-4xl">inbox</span>
+                                            <p className="mt-2 text-sm">조회된 데이터가 없습니다.</p>
                                         </td>
                                     </tr>
                                 ) : txnList.map((item, idx) => (
-                                    <tr key={idx}>
-                                        <td className={styles.cellCenter}>
+                                    <tr key={idx} className="hover:bg-slate-50">
+                                        <td className={cellCenter}>
                                             { (w => w ? `${w.whCd} [${w.whNm}]` : item.whCd)(whList.find(w => w.whCd === item.whCd)) }
                                         </td>
-                                        <td className={styles.cellCenter}>
+                                        <td className={cellCenter}>
                                             { (s => s ? `${s.srvcCd} [${s.srvcNm}]` : item.srvcCd)(srvcList.find(s => s.srvcCd === item.srvcCd)) }
                                         </td>
-                                        <td className={styles.cellTxnKey}>{item.txnKey}</td>
-                                        <td className={styles.cellCenter}>
-                                            <span className={`${styles.badge} ${badgeClass(item.txnTp)}`}>{txnTpLabel(item)}</span>
+                                        <td className={cellTxnKey}>{item.txnKey}</td>
+                                        <td className={cellCenter}>
+                                            <span className={badgeClass(item.txnTp)}>{txnTpLabel(item)}</span>
                                         </td>
-                                        <td className={styles.cellCenter}>{item.workDt}</td>
-                                        <td className={styles.cellMedium}>{item.prodCd}</td>
-                                        <td className={styles.cellMedium}>{item.prodNm}</td>
-                                        <td className={styles.cellCenter}>{item.rcptLotNo}</td>
-                                        <td className={styles.cellCenter}>{item.prodLotNo}</td>
-                                        <td className={styles.cellCenter}>{item.befZoneCd}</td>
-                                        <td className={styles.cellCenter}>{item.befLocCd}</td>
-                                        <td className={styles.cellCenter}>{item.befBarCd}</td>
-                                        <td className={styles.cellCenter}>{item.aftZoneCd}</td>
-                                        <td className={styles.cellCenter}>{item.aftLocCd}</td>
-                                        <td className={styles.cellCenter}>{item.aftBarCd}</td>
-                                        <td className={styles.cellCenter}>{item.ordNo}</td>
-                                        <td className={styles.cellQty}>{Number(item.stockQty).toLocaleString()}</td>
-                                        <td className={isUp(item) ? styles.cellApplyQtyUp : styles.cellApplyQtyDown}>
+                                        <td className={cellCenter}>{item.workDt}</td>
+                                        <td className={cellMedium}>{item.prodCd}</td>
+                                        <td className={cellMedium}>{item.prodNm}</td>
+                                        <td className={cellCenter}>{item.rcptLotNo}</td>
+                                        <td className={cellCenter}>{item.prodLotNo}</td>
+                                        <td className={cellCenter}>{item.befZoneCd}</td>
+                                        <td className={cellCenter}>{item.befLocCd}</td>
+                                        <td className={cellCenter}>{item.befBarCd}</td>
+                                        <td className={cellCenter}>{item.aftZoneCd}</td>
+                                        <td className={cellCenter}>{item.aftLocCd}</td>
+                                        <td className={cellCenter}>{item.aftBarCd}</td>
+                                        <td className={cellCenter}>{item.ordNo}</td>
+                                        <td className={cellQty}>{Number(item.stockQty).toLocaleString()}</td>
+                                        <td className={isUp(item) ? cellApplyQtyUp : cellApplyQtyDown}>
                                             {Number(item.applyQty) > 0 ? '+' : ''}{Number(item.applyQty).toLocaleString()}
                                         </td>
-                                        <td className={styles.cellCenter}>
-                                            <span className={`material-symbols-outlined ${isUp(item) ? styles.iconUp : styles.iconDown}`}>
+                                        <td className={cellCenter}>
+                                            <span className={`material-symbols-outlined ${isUp(item) ? 'text-success' : 'text-danger'}`}>
                                                 {isUp(item) ? 'trending_up' : 'trending_down'}
                                             </span>
                                         </td>
-                                        <td className={styles.cellCenter}>{item.regId}</td>
-                                        <td className={styles.cellDim}>{item.regDate}</td>
-                                        <td className={styles.cellCenter}>{item.updId || '-'}</td>
-                                        <td className={styles.cellDim}>{item.updDate || '-'}</td>
+                                        <td className={cellCenter}>{item.regId}</td>
+                                        <td className={cellDim}>{item.regDate}</td>
+                                        <td className={cellCenter}>{item.updId || '-'}</td>
+                                        <td className={cellDim}>{item.updDate || '-'}</td>
                                     </tr>
                                 ))}
                             </tbody>

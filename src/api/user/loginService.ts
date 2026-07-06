@@ -2,35 +2,26 @@ import { request } from "../common/transaction";
 import { API_USER_ROOT } from "../common/index";
 
 // API 요청에 필요한 인터페이스 정의
-export interface LoginRequest {
-    userId: string;
-    password: string;
+export interface Login {
+    userId      : string;
+    password    : string;
 }
 
 // API 응답에 필요한 인터페이스 정의
-export interface LoginResponse {
+export interface Response {
     resultCode: string;
     resultMessage: string;
     accessToken: string;
-    expireDate: any;
-    data: {
-        userId: string;
-        userNm: string;
-        adminYn: string;
-        userSts: string;
-        useYn: string;
-        role: string;
-        profileImgUrl?: string;
-    }
+    expireDate: string | null;
+    data: any;
 }
 
 export const loginService = (
-    data: LoginRequest,
-    onSuccess: (res: LoginResponse) => void,
+    data: Login,
+    onSuccess: (res: Response) => void,
     onError: (err: any) => void
 ) => {
-    // TODO: request 타입인자 2개 → 1개로 수정 필요 (transaction.ts의 request는 <R> 1개만 받음 / TS2558, build 시 오류) — 종합 수정 시 처리
-    return request<LoginRequest, LoginResponse>({
+    return request<Response>({
         config: {
             url: `${API_USER_ROOT}/login`,
             method: 'POST',

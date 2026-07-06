@@ -9,8 +9,6 @@ import { getTokenPayload } from '../../utils/auth';
 // 레이어 팝업
 import Popup from '../../components/common/Popup';
 import { usePopup } from '../../components/common/usePopup';
-// 모듈 CSS
-import styles from './cj_wms_receipt_0010.module.css';
 // 엑셀
 import ExcelJS from 'exceljs';
 import * as XLSX from 'xlsx';
@@ -24,6 +22,54 @@ import ProdSearchPopup from '../../components/common/ProdSearchPopup';
 import ZoneSearchPopup from '../../components/common/ZoneSearchPopup';
 import LocSearchPopup from '../../components/common/LocSearchPopup';
 import { formatDate } from '../../utils/dateUtils';
+
+// ── 레이아웃
+const pageShell    = "flex min-h-0 flex-1 bg-surface";
+const contentShell = "flex min-w-0 flex-1 flex-col";
+const sectionCard  = "flex min-h-0 flex-1 flex-col rounded-t-xl border border-slate-200/60 bg-surface-card shadow-sm";
+const sectionHeader = "shrink-0 border-b border-slate-100 p-6";
+
+// ── 버튼
+const btnBase    = "inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition";
+const btnPrimary = `${btnBase} bg-primary text-white hover:bg-primary-hover`;
+const btnOutline = `${btnBase} border border-border-soft bg-white text-slate-700 hover:bg-slate-50`;
+
+// ── 필터
+const filterBox   = "mt-5 rounded-lg border border-slate-100 bg-slate-50 p-4";
+const filterGrid  = "grid grid-cols-4 gap-4";
+const filterItem  = "flex min-w-0 flex-col gap-1.5";
+const filterItemWide = "col-span-2 flex min-w-0 flex-col gap-1.5";
+const filterLabel = "text-xs font-semibold uppercase tracking-wide text-slate-500";
+const filterSelect = "h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:opacity-50 disabled:cursor-not-allowed";
+const filterInput  = "h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:opacity-50 disabled:cursor-not-allowed";
+const filterInputGroup    = "flex min-w-0";
+const filterInputReadonly = "h-9 min-w-0 flex-1 rounded-r-md border border-slate-300 bg-slate-100 px-3 text-sm text-slate-600";
+const filterSearchBtn     = "inline-flex h-9 w-10 shrink-0 items-center justify-center bg-primary text-white hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed";
+
+// ── 툴바
+const toolbar      = "mt-4 flex items-center justify-between gap-3";
+const toolbarGroup = "flex items-center gap-1.5";
+const btnToolbar   = "inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed";
+
+// ── 테이블
+const tableWrapper = "min-h-0 flex-1 overflow-auto";
+const tableClass   = "min-w-[2000px] table-fixed border-collapse text-xs";
+const theadClass   = "sticky top-0 z-10 bg-slate-50 text-slate-500";
+const thCell       = "border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide";
+const tbodyClass   = "divide-y divide-slate-50 text-slate-700";
+const cellCenter   = "px-2 py-2 text-center";
+const emptyCell    = "px-4 py-12 text-center text-slate-400";
+
+// ── 인라인 편집
+const cellInput      = "h-7 w-full rounded border border-slate-200 bg-white px-2 text-xs outline-none focus:border-primary focus:ring-1 focus:ring-primary/20";
+const cellInputRight = "h-7 w-full rounded border border-slate-200 bg-white px-2 text-xs outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 text-right tabular-nums";
+const cellSearchBtn  = "inline-flex h-7 w-6 shrink-0 items-center justify-center rounded bg-primary text-white hover:bg-primary-hover";
+const cellInputGroup = "flex items-center gap-0.5";
+
+// ── 업로드 결과 칩
+const chipOk    = "inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-success";
+const chipError = "inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-danger";
+const chipGroup = "flex flex-col gap-1";
 
 const CJ_WMS_RECEIPT_0010: React.FC = () => {
     // 고객사&센터 리스트 조회
@@ -43,15 +89,15 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
     const [searchVehicleNm, setSearchVehicleNm]             = useState('');
     const [searchInExptDate, setSearchInExptDate]           = useState<string>('');
     const [searchInType, setSearchInType]                   = useState('');
-    // 공통코드 
-    const [receiptCategory, setReceiptCategory]             = useState<CommCode[]>([]);             // 입고구분 
+    // 공통코드
+    const [receiptCategory, setReceiptCategory]             = useState<CommCode[]>([]);             // 입고구분
     const [receiptStatus, setReceiptStatus]                 = useState<CommCode[]>([]);             // 입고상태
     const [receiptType, setReceiptType]                     = useState<CommCode[]>([]);             // 수불유형
     const [isNewMode, setIsNewMode]                         = useState(false);
     // 리스트
     const [receiptHdrList, setReceiptHdrList]               = useState<ReceiptHdrRow[]>([]);        // 입고리스트(헤더)
     const [receiptDtlList, setReceiptDtlList]               = useState<ReceiptDtlRow[]>([]);        // 입고리스트(디테일)
-    const [isSearched, setIsSearched]                       = useState(false);                      
+    const [isSearched, setIsSearched]                       = useState(false);
     // 팝업
     const [isClientSearchOpen,  setIsClientSearchOpen]      = useState(false);
     const [isVehicleSearchOpen, setIsVehicleSearchOpen]     = useState(false);
@@ -91,7 +137,7 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
     useEffect(() => {
         // 입고유형
         getCommCodeList(
-            { 
+            {
                   sys_grp_cd    : 'WM0020'
                 , sys_cd        : ''
                 , sys_cdnm      : ''
@@ -139,7 +185,7 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
             (err) => showAlert('공통코드 조회 실패 : ' + err?.message)
         );
     }, []);
-    
+
     // 조회
     const handleSearch = (inNo?: string) => {
         getList(
@@ -246,7 +292,7 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
             receiptType     : '',
             isNew           : true,
             isDirty         : false,
-            uploadStatus    : '', 
+            uploadStatus    : '',
         }]);
 
         // 3. 조회조건 필터 활성화
@@ -349,7 +395,7 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
         // 5. 중복 품목(prodCd + inZoneCd + inLocCd) 체크
         const seen = new Set<string>();
         let dupIdx = -1;
-        
+
         for (let idx = 0; idx < receiptDtlList.length; idx++) {
             const key = `${receiptDtlList[idx].prodCd}|${receiptDtlList[idx].inZoneCd}|${receiptDtlList[idx].inLocCd}`;
             if (seen.has(key)) { dupIdx = idx; break; }
@@ -493,13 +539,13 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
             uploadStatus    : ''
         }]);
     }
-    
+
     // 행삭제
     const handleDeleteRow = () => {
         const lastNewIdx = receiptDtlList.map((v, i) => v.isNew ? i : -1).filter(i => i >= 0).pop();
-        
+
         if (lastNewIdx === undefined) return;
-        
+
         setReceiptDtlList(prev => prev.filter((_, i) => i !== lastNewIdx));
     }
 
@@ -570,7 +616,7 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
 
         a.href          = url;
         a.download      = "입고등록_양식.xlsx";
-        
+
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -686,7 +732,7 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
                         inVNm           : searchVehicleNm,
                         inExpectedDate  : searchInExptDate
                     })));
-                    
+
                     // 입고상세 set
                     setReceiptDtlList(prev => prev.map((v, i) => {
                         const r = results.find(r => r.rowIndex === i);
@@ -788,67 +834,68 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
             onSelect={(locCd) => handleDtlChange(activeLocRowIdx, 'inLocCd', locCd)}
             onClose={() => setIsLocSearchOpen(false)}
         />
-        <div className={styles.pageContainer}>
-            <div className={styles.contentWrapper}>
-                <div className={styles.sectionCard}>
-                    <div className={styles.sectionHeader}>
+        <div className={pageShell}>
+            <div className={contentShell}>
+                <div className={sectionCard}>
+                    <div className={sectionHeader}>
                         {/* Title Row */}
-                        <div className={styles.titleRow}>
-                            <div className={styles.titleArea}>
-                                <h3>입고 등록</h3>
-                                <p>신규 입고 정보를 시스템에 등록합니다.</p>
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <h3 className="font-display text-xl font-bold text-slate-950">입고 등록</h3>
+                                <p className="mt-1 text-sm text-muted">신규 입고 정보를 시스템에 등록합니다.</p>
                             </div>
-                            <div className={styles.mainActions}>
-                                <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => handleSearch()}>
-                                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>search</span>
+                            <div className="flex items-center gap-2">
+                                <button className={btnPrimary} onClick={() => handleSearch()}>
+                                    <span className="material-symbols-outlined text-[18px]">search</span>
                                     조회
                                 </button>
-                                <button className={`${styles.btn} ${styles.btnOutline}`} onClick={handleNew}>
-                                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add_circle</span>
+                                <button className={btnOutline} onClick={handleNew}>
+                                    <span className="material-symbols-outlined text-[18px]">add_circle</span>
                                     신규
                                 </button>
-                                <button className={`${styles.btn} ${styles.btnOutline}`} onClick={handleSave}>
-                                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>save</span>
+                                <button className={btnOutline} onClick={handleSave}>
+                                    <span className="material-symbols-outlined text-[18px]">save</span>
                                     저장
                                 </button>
-                                <button className={`${styles.btn} ${styles.btnOutline}`} onClick={handleExcel}>
-                                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span>
+                                <button className={btnOutline} onClick={handleExcel}>
+                                    <span className="material-symbols-outlined text-[18px]">download</span>
                                     엑셀
                                 </button>
                             </div>
                         </div>
 
-                        {/* Filter — 4컬럼 × 1행 */}
-                        <div className={styles.filterBox}>
-                            <div className={styles.filterGrid}>
-                                <div className={styles.filterItem}>
-                                    <label className={styles.filterLabel}>고객사</label>
-                                    <select className={styles.filterSelect} value={searchSrvcCd} onChange={e => setSearchSrvcCd(e.target.value)}>
+                        {/* Filter 1행 — 고객사 / 센터 / 입고번호 */}
+                        <div className={filterBox}>
+                            <div className={filterGrid}>
+                                <div className={filterItem}>
+                                    <label className={filterLabel}>고객사</label>
+                                    <select className={filterSelect} value={searchSrvcCd} onChange={e => setSearchSrvcCd(e.target.value)}>
                                         {srvcList.map(s => (
                                             <option key={s.srvcCd} value={s.srvcCd}>{`${s.srvcCd} [${s.srvcNm}]`}</option>
                                         ))}
                                     </select>
                                 </div>
-                                <div className={styles.filterItem}>
-                                    <label className={styles.filterLabel}>센터</label>
-                                    <select className={styles.filterSelect} value={searchWhCd} onChange={e => setSearchWhCd(e.target.value)}>
+                                <div className={filterItem}>
+                                    <label className={filterLabel}>센터</label>
+                                    <select className={filterSelect} value={searchWhCd} onChange={e => setSearchWhCd(e.target.value)}>
                                         {whList.map(w => (
                                             <option key={w.whCd} value={w.whCd}>{`${w.whCd} [${w.whNm}]`}</option>
                                         ))}
                                     </select>
                                 </div>
-                                <div className={styles.filterItem}>
-                                    <label className={styles.filterLabel}>입고번호</label>
-                                    <input type="text" className={styles.filterInput} value={searchInNo} onChange={e => setSearchInNo(e.target.value)} placeholder=""/>
+                                <div className={filterItem}>
+                                    <label className={filterLabel}>입고번호</label>
+                                    <input type="text" className={filterInput} value={searchInNo} onChange={e => setSearchInNo(e.target.value)} placeholder=""/>
                                 </div>
                             </div>
                         </div>
 
-                        <div className={styles.filterBox}>
-                            <div className={styles.filterGrid}>
-                                <div className={styles.filterItem}>
-                                    <label className={styles.filterLabel}>입고구분</label>
-                                    <select className={styles.filterSelect} disabled={!isNewMode} value={searchInCategory} onChange={e => setSearchInCategory(e.target.value)} ref={filterInCategoryRef}>
+                        {/* Filter 2행 — 입고구분 / 매입처 / 차량번호 / 입고예정일 / 수불유형 */}
+                        <div className={filterBox}>
+                            <div className={filterGrid}>
+                                <div className={filterItem}>
+                                    <label className={filterLabel}>입고구분</label>
+                                    <select className={filterSelect} disabled={!isNewMode} value={searchInCategory} onChange={e => setSearchInCategory(e.target.value)} ref={filterInCategoryRef}>
                                         <option value="">-- 선택 --</option>
                                         {
                                             receiptCategory.map( t => (
@@ -857,30 +904,30 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
                                         }
                                     </select>
                                 </div>
-                                <div className={styles.filterItemWide}>
-                                    <label className={styles.filterLabel}>매입처</label>
-                                    <div className={styles.filterInputGroup}>
-                                        <input type="text" className={styles.filterInput} disabled={!isNewMode} value={searchClientCd} onChange={e => setSearchClientCd(e.target.value)} placeholder="" ref={filterClientCdRef}/>
-                                        <button className={styles.filterSearchBtn} disabled={!isNewMode} onClick={() => {setIsClientSearchOpen(true)}}>
-                                            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>search</span>
+                                <div className={filterItemWide}>
+                                    <label className={filterLabel}>매입처</label>
+                                    <div className={filterInputGroup}>
+                                        <input type="text" className={`h-9 min-w-0 flex-1 rounded-l-md border border-r-0 border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:opacity-50 disabled:cursor-not-allowed`} disabled={!isNewMode} value={searchClientCd} onChange={e => setSearchClientCd(e.target.value)} placeholder="" ref={filterClientCdRef}/>
+                                        <button className={filterSearchBtn} disabled={!isNewMode} onClick={() => {setIsClientSearchOpen(true)}}>
+                                            <span className="material-symbols-outlined text-[18px]">search</span>
                                         </button>
-                                        <input type="text" className={styles.filterInputReadonly} value={searchClientNm} onChange={e => setSearchClientNm(e.target.value)} placeholder="" readOnly/>
+                                        <input type="text" className={filterInputReadonly} value={searchClientNm} onChange={e => setSearchClientNm(e.target.value)} placeholder="" readOnly/>
                                     </div>
                                 </div>
-                                <div className={styles.filterItemWide}>
-                                    <label className={styles.filterLabel}>차량번호</label>
-                                    <div className={styles.filterInputGroup}>
-                                        <input type="text" className={styles.filterInput} disabled={!isNewMode} value={searchVehicleNo} onChange={e => setSearchVehicleNo(e.target.value)} placeholder="" ref={filterVehicleNoRef}/>
-                                        <button className={styles.filterSearchBtn} disabled={!isNewMode} onClick={() => {setIsVehicleSearchOpen(true)}}>
-                                            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>search</span>
+                                <div className={filterItemWide}>
+                                    <label className={filterLabel}>차량번호</label>
+                                    <div className={filterInputGroup}>
+                                        <input type="text" className={`h-9 min-w-0 flex-1 rounded-l-md border border-r-0 border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:opacity-50 disabled:cursor-not-allowed`} disabled={!isNewMode} value={searchVehicleNo} onChange={e => setSearchVehicleNo(e.target.value)} placeholder="" ref={filterVehicleNoRef}/>
+                                        <button className={filterSearchBtn} disabled={!isNewMode} onClick={() => {setIsVehicleSearchOpen(true)}}>
+                                            <span className="material-symbols-outlined text-[18px]">search</span>
                                         </button>
-                                        <input type="text" className={styles.filterInputReadonly} placeholder="" value={searchVehicleNm} onChange={e => setSearchVehicleNm(e.target.value)} readOnly/>
+                                        <input type="text" className={filterInputReadonly} placeholder="" value={searchVehicleNm} onChange={e => setSearchVehicleNm(e.target.value)} readOnly/>
                                     </div>
                                 </div>
-                                <div className={styles.filterItem}>
-                                    <label className={styles.filterLabel}>입고예정일</label>
-                                    <div className={styles.filterDateWrapper} ref={filterInExptDateRef}>
-                                        <span className={`material-symbols-outlined ${styles.filterDateIcon}`}>calendar_today</span>
+                                <div className={filterItem}>
+                                    <label className={filterLabel}>입고예정일</label>
+                                    <div className="datepicker-wrapper" ref={filterInExptDateRef}>
+                                        <span className="material-symbols-outlined pointer-events-none absolute left-2 z-[1] text-slate-400 text-[16px]">calendar_today</span>
                                         <DatePicker
                                             selected={searchInExptDate ? new Date(searchInExptDate.slice(0,4) + '-' + searchInExptDate.slice(4,6) + '-' + searchInExptDate.slice(6,8)) : null}
                                             onChange={(date: Date | null) => setSearchInExptDate(date ? formatDate(date) : '')}
@@ -888,14 +935,13 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
                                             locale={ko}
                                             disabled={!isNewMode}
                                             placeholderText=""
-                                            className={styles.filterInput}
                                             isClearable
                                         />
                                     </div>
                                 </div>
-                                <div className={styles.filterItem}>
-                                    <label className={styles.filterLabel}>수불유형</label>
-                                    <select className={styles.filterSelect} disabled={!isNewMode} value={searchInType} onChange={e => setSearchInType(e.target.value)}>
+                                <div className={filterItem}>
+                                    <label className={filterLabel}>수불유형</label>
+                                    <select className={filterSelect} disabled={!isNewMode} value={searchInType} onChange={e => setSearchInType(e.target.value)}>
                                          {
                                             receiptType.map( t => (
                                                 <option key={t.sys_cd} value={t.sys_cd}>{t.sys_cdnm}</option>
@@ -907,24 +953,24 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
                         </div>
 
                         {/* Toolbar */}
-                        <div className={styles.toolbar}>
-                            <div className={styles.toolbarGroup}>
-                                <button className={styles.btnToolbar} onClick={handleAddRow}>
-                                    <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#003f87' }}>add</span>
+                        <div className={toolbar}>
+                            <div className={toolbarGroup}>
+                                <button className={btnToolbar} onClick={handleAddRow}>
+                                    <span className="material-symbols-outlined text-[16px] text-primary">add</span>
                                     행추가
                                 </button>
-                                <button className={styles.btnToolbar} onClick={handleDeleteRow}>
-                                    <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#ba1a1a' }}>delete</span>
+                                <button className={btnToolbar} onClick={handleDeleteRow}>
+                                    <span className="material-symbols-outlined text-[16px] text-danger">delete</span>
                                     행삭제
                                 </button>
                             </div>
-                            <div className={styles.toolbarGroup}>
-                                <button className={styles.btnToolbar} onClick={handleTempletDownload}>
-                                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>description</span>
+                            <div className={toolbarGroup}>
+                                <button className={btnToolbar} onClick={handleTempletDownload}>
+                                    <span className="material-symbols-outlined text-[16px]">description</span>
                                     양식다운로드
                                 </button>
-                                <button className={styles.btnToolbar} onClick={handleExcelUpload} disabled={isUploading}>
-                                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>upload_file</span>
+                                <button className={btnToolbar} onClick={handleExcelUpload} disabled={isUploading}>
+                                    <span className="material-symbols-outlined text-[16px]">upload_file</span>
                                     {isUploading ? '업로드 중...' : '엑셀업로드'}
                                 </button>
                                 <input type="file" ref={fileInputRef} accept=".xlsx,.xls" style={{ display: 'none' }} onChange={handleExcelFileChange} />
@@ -933,8 +979,8 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
                     </div>
 
                     {/* Table */}
-                    <div className={styles.tableWrapper}>
-                        <table className={styles.table}>
+                    <div className={tableWrapper}>
+                        <table className={tableClass}>
                             <colgroup>
                                 <col style={{ width: '20px' }} />
                                 {/* 고객사 */}
@@ -970,89 +1016,89 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
                                 {/* 업로드결과 */}
                                 <col style={{ width: '300px' }} />
                             </colgroup>
-                            <thead className={styles.thead}>
+                            <thead className={theadClass}>
                                 <tr>
-                                    <th></th>
-                                    <th>고객사</th>
-                                    <th>센터</th>
-                                    <th>품목코드</th>
-                                    <th>품명</th>
-                                    <th>존</th>
-                                    <th>존명</th>
-                                    <th>로케이션</th>
-                                    <th>입고예정량</th>
-                                    <th>입고일자</th>
-                                    <th>비고</th>
-                                    <th>입고상태</th>
-                                    <th>등록자</th>
-                                    <th>등록일자</th>
-                                    <th>수정자</th>
-                                    <th>수정일자</th>
-                                    <th>업로드결과</th>
+                                    <th className={thCell}></th>
+                                    <th className={thCell}>고객사</th>
+                                    <th className={thCell}>센터</th>
+                                    <th className={thCell}>품목코드</th>
+                                    <th className={thCell}>품명</th>
+                                    <th className={thCell}>존</th>
+                                    <th className={thCell}>존명</th>
+                                    <th className={thCell}>로케이션</th>
+                                    <th className={thCell}>입고예정량</th>
+                                    <th className={thCell}>입고일자</th>
+                                    <th className={thCell}>비고</th>
+                                    <th className={thCell}>입고상태</th>
+                                    <th className={thCell}>등록자</th>
+                                    <th className={thCell}>등록일자</th>
+                                    <th className={thCell}>수정자</th>
+                                    <th className={thCell}>수정일자</th>
+                                    <th className={thCell}>업로드결과</th>
                                 </tr>
                             </thead>
-                            <tbody className={styles.tbody}>
+                            <tbody className={tbodyClass}>
                                 { isSearched && receiptDtlList.length === 0 ? (
                                     <tr>
-                                        <td colSpan={16} className={styles.emptyCell}>
-                                            <span className="material-symbols-outlined" style={{ fontSize: '2rem', display: 'block' }}>inbox</span>
+                                        <td colSpan={16} className={emptyCell}>
+                                            <span className="material-symbols-outlined text-[2rem] block">inbox</span>
                                             <p>조회된 데이터가 없습니다.</p>
                                         </td>
                                     </tr>
                                 ) : receiptDtlList.map((v, idx) => (
-                                    <tr style={{ backgroundColor: 'rgba(0, 63, 135, 0.04)' }}>
-                                        <td className={styles.cellCenter}></td>
-                                        <td className={styles.cellCenter}>
+                                    <tr key={idx} className="bg-primary/[0.04] hover:bg-slate-50">
+                                        <td className={cellCenter}></td>
+                                        <td className={cellCenter}>
                                             { (s => s ? `${s.srvcCd} [${s.srvcNm}]` : v.srvcCd)(srvcList.find( s => s.srvcCd === v.srvcCd)) }
                                         </td>
-                                        <td className={styles.cellCenter}>
+                                        <td className={cellCenter}>
                                             { (w => w ? `${w.whCd} [${w.whNm}]` : v.whCd)(whList.find( w => w.whCd === v.whCd)) }
                                         </td>
-                                        <td className={styles.cellCenter}>
-                                            <div className={styles.cellInputGroup}>
-                                                <input type='text' className={styles.cellInput} value={v.prodCd} 
-                                                       onChange={e => handleCellChange(idx, "prodCd", e.target.value)} 
+                                        <td className={cellCenter}>
+                                            <div className={cellInputGroup}>
+                                                <input type='text' className={cellInput} value={v.prodCd}
+                                                       onChange={e => handleCellChange(idx, "prodCd", e.target.value)}
                                                        ref={setCellRef(idx, "prodCd") as any}/>
-                                                <button className={styles.cellSearchBtn} onClick={() => {setActiveProdRowIdx(idx);setIsProdSearchOpen(true);}}>
-                                                    <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>search</span>
+                                                <button className={cellSearchBtn} onClick={() => {setActiveProdRowIdx(idx);setIsProdSearchOpen(true);}}>
+                                                    <span className="material-symbols-outlined text-[12px]">search</span>
                                                 </button>
                                             </div>
                                         </td>
-                                        <td className={styles.cellCenter}>{v.prodNm}</td>
-                                        <td className={styles.cellCenter}>
-                                            <div className={styles.cellInputGroup}>
-                                                <input type='text' className={styles.cellInput} value={v.inZoneCd}
-                                                       onChange={e => handleCellChange(idx, "inZoneCd", e.target.value)}   
+                                        <td className={cellCenter}>{v.prodNm}</td>
+                                        <td className={cellCenter}>
+                                            <div className={cellInputGroup}>
+                                                <input type='text' className={cellInput} value={v.inZoneCd}
+                                                       onChange={e => handleCellChange(idx, "inZoneCd", e.target.value)}
                                                        ref={setCellRef(idx, "inZoneCd") as any}/>
-                                                <button className={styles.cellSearchBtn} onClick={() => { setActiveZoneRowIdx(idx);setIsZoneSearchOpen(true);}}>
-                                                    <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>search</span>
+                                                <button className={cellSearchBtn} onClick={() => { setActiveZoneRowIdx(idx);setIsZoneSearchOpen(true);}}>
+                                                    <span className="material-symbols-outlined text-[12px]">search</span>
                                                 </button>
                                             </div>
                                         </td>
-                                        <td className={styles.cellCenter}>{v.inZoneNm}</td>
-                                        <td className={styles.cellCenter}>
-                                            <div className={styles.cellInputGroup}>
-                                                <input type='text' className={styles.cellInput} value={v.inLocCd}
-                                                       onChange={e => handleCellChange(idx, "inLocCd", e.target.value)} 
+                                        <td className={cellCenter}>{v.inZoneNm}</td>
+                                        <td className={cellCenter}>
+                                            <div className={cellInputGroup}>
+                                                <input type='text' className={cellInput} value={v.inLocCd}
+                                                       onChange={e => handleCellChange(idx, "inLocCd", e.target.value)}
                                                        ref={setCellRef(idx, "inLocCd") as any}/>
-                                                <button className={styles.cellSearchBtn} onClick={() => { if (!v.inZoneCd) { showAlert('존코드를 먼저 검색하세요.'); return; } setActiveLocRowIdx(idx); setIsLocSearchOpen(true); }}>
-                                                    <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>search</span>
+                                                <button className={cellSearchBtn} onClick={() => { if (!v.inZoneCd) { showAlert('존코드를 먼저 검색하세요.'); return; } setActiveLocRowIdx(idx); setIsLocSearchOpen(true); }}>
+                                                    <span className="material-symbols-outlined text-[12px]">search</span>
                                                 </button>
                                             </div>
                                         </td>
-                                        <td className={styles.cellCenter}>
+                                        <td className={cellCenter}>
                                             <input
                                                 type='number'
-                                                className={`${styles.cellInput} ${styles.cellInputRight}`}
+                                                className={cellInputRight}
                                                 value={v.originalQty}
                                                 onChange={e => handleDtlChange(idx, 'originalQty', Number(e.target.value))}
                                                 min={0}
                                                 ref={setCellRef(idx, "originalQty") as any}
                                             />
                                         </td>
-                                        <td className={styles.cellCenter}>
-                                            <div className={styles.cellDateWrapper}>
-                                                <span className={`material-symbols-outlined ${styles.cellDateIcon}`}>calendar_today</span>
+                                        <td className={cellCenter}>
+                                            <div className="relative flex items-center">
+                                                <span className="material-symbols-outlined pointer-events-none absolute left-2 z-[1] text-slate-400 text-[14px]">calendar_today</span>
                                                 <DatePicker
                                                     selected={v.lotNo ? new Date(v.lotNo.slice(0,4) + '-' + v.lotNo.slice(4,6) + '-' + v.lotNo.slice(6,8)) : null}
                                                     onChange={(date: Date | null) => handleDtlChange(idx, 'lotNo', date ? formatDate(date) : '')}
@@ -1065,26 +1111,26 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
                                                 />
                                             </div>
                                         </td>
-                                        <td className={styles.cellCenter}>
-                                            <input type='text' className={styles.cellInput} value={v.rmk} onChange={e => handleDtlChange(idx, 'rmk', e.target.value)}/>
+                                        <td className={cellCenter}>
+                                            <input type='text' className={cellInput} value={v.rmk} onChange={e => handleDtlChange(idx, 'rmk', e.target.value)}/>
                                         </td>
-                                        <td className={styles.cellCenter}>
+                                        <td className={cellCenter}>
                                             { receiptStatus.find(s => s.sys_cd === v.status) ?.sys_cdnm ?? v.status }
                                         </td>
-                                        <td className={styles.cellCenter}>{v.regId}</td>
-                                        <td className={styles.cellCenter}>{v.regDate}</td>
-                                        <td className={styles.cellCenter}>{v.updId}</td>
-                                        <td className={styles.cellCenter}>{v.updDate}</td>
-                                        <td className={styles.cellCenter}>
+                                        <td className={cellCenter}>{v.regId}</td>
+                                        <td className={cellCenter}>{v.regDate}</td>
+                                        <td className={cellCenter}>{v.updId}</td>
+                                        <td className={cellCenter}>{v.updDate}</td>
+                                        <td className={cellCenter}>
                                             {v.uploadStatus === 'OK' ? (
-                                                <span className={styles.chipOk}>
+                                                <span className={chipOk}>
                                                     <span className="material-symbols-outlined">check_circle</span>
                                                     OK
                                                 </span>
                                             ) : v.uploadStatus && v.uploadStatus !== '검증중...' ? (
-                                                <div className={styles.chipGroup}>
+                                                <div className={chipGroup}>
                                                     {v.uploadStatus.split(' / ').filter(Boolean).map((err, i) => (
-                                                        <span key={i} className={styles.chipError}>
+                                                        <span key={i} className={chipError}>
                                                             <span className="material-symbols-outlined">error</span>
                                                             {err.trim()}
                                                         </span>
@@ -1099,8 +1145,8 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
                     </div>
 
                     {/* Pagination */}
-                    <div className={styles.pagination}>
-                        <span className={styles.pageInfo}>총 {receiptDtlList.length} 건</span>
+                    <div className="shrink-0 border-t border-slate-100 px-4 py-2">
+                        <span className="text-xs text-muted">총 {receiptDtlList.length} 건</span>
                     </div>
                 </div>
             </div>

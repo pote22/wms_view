@@ -9,14 +9,51 @@ import Popup from "../../components/common/Popup";
 import { usePopup } from "../../components/common/usePopup";
 // 품목 검색 팝업
 import ProdSearchPopup from "../../components/common/ProdSearchPopup";
-import styles from './cj_wms_master_0030.module.css';
 // 엑셀
 import ExcelJS from "exceljs";
 import * as XLSX from "xlsx";
 
+// ── Tailwind 상수 ──────────────────────────────────────────────
+const pageShell     = "flex min-h-0 flex-1 bg-surface";
+const contentShell  = "flex min-w-0 flex-1 flex-col";
+const sectionCard   = "flex min-h-0 flex-1 flex-col rounded-t-xl border border-slate-200/60 bg-surface-card shadow-sm";
+const sectionHeader = "shrink-0 border-b border-slate-100 p-6";
+
+const btnBase       = "inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition";
+const btnPrimary    = `${btnBase} bg-primary text-white hover:bg-primary-hover`;
+const btnOutline    = `${btnBase} border border-border-soft bg-white text-slate-700 hover:bg-slate-50`;
+const btnDanger     = `${btnBase} border border-red-200 bg-white text-danger hover:bg-red-50`;
+const btnToolbar    = "inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50";
+
+const filterBox     = "rounded-lg border border-slate-100 bg-slate-50 p-4";
+const filterItem    = "flex min-w-0 flex-col gap-1.5";
+const filterLabel   = "text-xs font-semibold uppercase tracking-wide text-slate-500";
+const filterSelect  = "h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
+const filterInput   = "h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/15";
+const filterInputSearchOnly = "h-9 min-w-0 flex-1 rounded-l-md border border-r-0 border-slate-300 bg-white px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
+const filterInputReadonly   = "h-9 min-w-0 flex-1 rounded-r-md border border-slate-300 bg-slate-100 px-3 text-sm text-slate-600";
+const filterSearchBtn       = "inline-flex h-9 w-10 items-center justify-center bg-primary text-white hover:bg-primary-hover";
+
+const tableWrapper  = "min-h-0 flex-1 overflow-auto";
+const cellInput     = "h-7 w-full rounded border border-slate-200 bg-white px-2 text-xs outline-none focus:border-primary focus:ring-1 focus:ring-primary/20";
+const cellCenter    = "px-2 py-2 text-center";
+const cellMedium    = "px-2 py-2 font-medium text-slate-700";
+
+const chipOk    = "inline-flex items-center gap-1 rounded-full bg-green-700 px-2 py-0.5 text-[10px] font-bold text-white";
+const chipError = "inline-flex items-center gap-1 rounded-full bg-red-700 px-2 py-0.5 text-[10px] font-bold text-white whitespace-nowrap";
+
+// 그룹 헤더/셀 배경색 (Tailwind 임의값으로 표현하기 어려운 rgba 조합)
+const thGroupStyle    = { backgroundColor: 'rgba(219, 234, 254, 0.5)', borderBottom: '2px solid #bfdbfe', color: '#3b82f6' };
+const thGroupAltStyle = { backgroundColor: 'rgba(254, 243, 199, 0.5)', borderBottom: '2px solid #fde68a', color: '#f59e0b' };
+const thGroupSubStyle = { backgroundColor: 'rgba(219, 234, 254, 0.25)' };
+const thGroupSubAltStyle = { backgroundColor: 'rgba(254, 243, 199, 0.25)' };
+const cellGroupStyle    = { backgroundColor: 'rgba(219, 234, 254, 0.1)' };
+const cellGroupAltStyle = { backgroundColor: 'rgba(254, 243, 199, 0.1)' };
+// ───────────────────────────────────────────────────────────────
+
 // 화면에서 사용하는 품목정보
 interface ItemRow extends Item {
-    chk             : string;   // 체크박스 ('0'=미선택, '1'=선택)      
+    chk             : string;   // 체크박스 ('0'=미선택, '1'=선택)
     isNew           : boolean;  // 신규여부
     isDirty         : boolean;  // 수정여부
     uploadStatus    : string;   // 엑셀업로드 상태
@@ -71,14 +108,14 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
     const handleSelectRow = (idx : number) => {
         setItems(prev => prev.map((v, i) => i === idx ? { ...v, chk: v.chk === '1' ? '0' : '1' } : v));
     }
-    
+
      // 헤더 고객사/센터 변경시 동기화
-    useEffect(() => { 
-        setSearchSrvcCd(selectSrvcCd); 
+    useEffect(() => {
+        setSearchSrvcCd(selectSrvcCd);
     }, [selectSrvcCd]);
-    
-    useEffect(() => { 
-        setSearchWhCd(selectWhCd); 
+
+    useEffect(() => {
+        setSearchWhCd(selectWhCd);
     }, [selectWhCd]);
 
     // 조회
@@ -91,7 +128,7 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
                 useYn           : searchUseYn,
                 prodCategory    : searchProdCategory,
                 prodShape       : searchProdShape,
-                steItemNo       : searchSteItemNo 
+                steItemNo       : searchSteItemNo
             },
             (res) => {
                 const rows : ItemRow[] = (res.data ?? []).map((v: any) => ({
@@ -143,9 +180,9 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
         if (invalidProdCdIdx !== -1) {
             const el = cellRefs.current.get(`${invalidProdCdIdx}_prodCd`);
             showAlert("품목번호를 입력해주세요.", () => el?.focus());
-            return; 
+            return;
         }
-        
+
         // 단가 정수체크
         const invalidPriceIdx = items.findIndex(v => v.chk === '1' && v.price !== '' && !INT_REGEX.test(v.price));
         // 용기수량 정수체크
@@ -155,7 +192,7 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
         // 실중량 실수체크
         const invalidRealWeightIdx = items.findIndex(v => v.chk == '1' && v.realWeight !== '' && !FLOAT_REGEX.test(v.realWeight));
 
-        
+
         if (invalidPriceIdx !== -1) {
             const el = cellRefs.current.get(`${invalidPriceIdx}_price`);
             showAlert("단가는 정수만 입력 가능합니다.", () => el?.focus());
@@ -233,9 +270,9 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
         showConfirm(`삭제하시겠습니까?`, () => {
             closePopup();
             deleteProdInfo(
-                { 
+                {
                   srvcCd    : chkRow[0].srvcCd,
-                  whCd      : chkRow[0].whCd, 
+                  whCd      : chkRow[0].whCd,
                   prodList  : chkRow.map(v => ({ prodCd : v.prodCd }))
                 },
                 () => { handleSearch(); showAlert("삭제 되었습니다."); },
@@ -341,12 +378,12 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
         const blob      = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
         const url       = window.URL.createObjectURL(blob);
         const a         = document.createElement("a");
-        
+
         a.href = url;
         a.download = `폼목관리_${new Date().toISOString().slice(0, 10)}.xlsx`;
-        
+
         document.body.appendChild(a);
-        
+
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url)
@@ -386,9 +423,9 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
     // 행삭제
     const handleDeleteRow = () => {
         const lastNewIdx = items.map((v, i) => v.isNew ? i : -1).filter(i => i >= 0).pop();
-        
+
         if (lastNewIdx === undefined) return;
-        
+
         setItems(prev => prev.filter((_, i) => i !== lastNewIdx));
     };
 
@@ -466,7 +503,7 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
 
         a.href          = url;
         a.download      = "품목관리_양식.xlsx";
-        
+
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -577,29 +614,29 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
             }}
             onClose={() => setIsProdSearchOpen(false)}
         />
-        <div className={styles.pageContainer}>
-            <div className={styles.contentWrapper}>
-                <div className={styles.sectionCard}>
-                    <div className={styles.sectionHeader}>
+        <div className={pageShell}>
+            <div className={contentShell}>
+                <div className={sectionCard}>
+                    <div className={sectionHeader}>
                         {/* Title and Main Actions */}
-                        <div className={styles.headerTop}>
-                            <div className={styles.titleArea}>
-                                <h3>품목관리</h3>
-                                <p>등록된 품목의 상세 정보를 관리합니다.</p>
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <h3 className="font-display text-xl font-bold text-slate-950">품목관리</h3>
+                                <p className="mt-1 text-sm text-muted">등록된 품목의 상세 정보를 관리합니다.</p>
                             </div>
-                            <div className={styles.actionGroup}>
-                                <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleSearch}>
+                            <div className="flex items-center gap-2">
+                                <button className={btnPrimary} onClick={handleSearch}>
                                     <span className="material-symbols-outlined">search</span>
                                     조회
                                 </button>
-                                <button className={`${styles.btn} ${styles.btnOutline}`} onClick={handleSave}>
+                                <button className={btnOutline} onClick={handleSave}>
                                     <span className="material-symbols-outlined">save</span>
                                     저장
                                 </button>
-                                <button className={`${styles.btn} ${styles.btnDanger}`} onClick={handleDelete}>
+                                <button className={btnDanger} onClick={handleDelete}>
                                     <span className="material-symbols-outlined">delete_outline</span> 삭제
                                 </button>
-                                <button className={`${styles.btn} ${styles.btnOutline}`} onClick={handleExcel}>
+                                <button className={btnOutline} onClick={handleExcel}>
                                     <span className="material-symbols-outlined">download</span>
                                     엑셀
                                 </button>
@@ -607,78 +644,78 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
                         </div>
 
                         {/* Search Filter Box */}
-                        <div className={styles.filterBox}>
-                            <div className={styles.filterGrid}>
+                        <div className={filterBox}>
+                            <div className="grid grid-cols-4 gap-4">
                                 {/* 고객사 */}
-                                <div className={styles.filterItem}>
-                                    <label className={styles.filterLabel}>고객사</label>
-                                    <select className={styles.filterSelect} value={searchSrvcCd} onChange={(e) => setSearchSrvcCd(e.target.value)}>
+                                <div className={filterItem}>
+                                    <label className={filterLabel}>고객사</label>
+                                    <select className={filterSelect} value={searchSrvcCd} onChange={(e) => setSearchSrvcCd(e.target.value)}>
                                         { srvcList.map( s => <option key={s.srvcCd} value={s.srvcCd}>{`${s.srvcCd} [${s.srvcNm}]`}</option>)}
                                     </select>
                                 </div>
                                 {/* 센터 */}
-                                <div className={styles.filterItem}>
-                                    <label className={styles.filterLabel}>센터</label>
-                                    <select className={styles.filterSelect} value={searchWhCd} onChange={(e) => setSearchWhCd(e.target.value)}>
+                                <div className={filterItem}>
+                                    <label className={filterLabel}>센터</label>
+                                    <select className={filterSelect} value={searchWhCd} onChange={(e) => setSearchWhCd(e.target.value)}>
                                         { whList.map( w => <option key={w.whCd} value={w.whCd}>{`${w.whCd} [${w.whNm}]`}</option>)}
                                     </select>
                                 </div>
                                 {/* 품목코드 */}
-                                <div className={styles.filterItem}>
-                                    <label className={styles.filterLabel}>품목번호</label>
-                                    <div className={styles.filterInputGroup}>
-                                        <input type="text" className={styles.filterInput} value={searchProdCd} onChange={(e) => setSearchProdCd(e.target.value)} />
-                                        <button className={styles.filterSearchBtn} onClick={() => setIsProdSearchOpen(true)}>
+                                <div className={filterItem}>
+                                    <label className={filterLabel}>품목번호</label>
+                                    <div className="flex min-w-0">
+                                        <input type="text" className={filterInputSearchOnly} value={searchProdCd} onChange={(e) => setSearchProdCd(e.target.value)} />
+                                        <button className={filterSearchBtn} onClick={() => setIsProdSearchOpen(true)}>
                                             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>search</span>
                                         </button>
-                                        <input type="text" className={styles.filterInputReadonly} value={searchProdNm} onChange={(e) => setSearchProdNm(e.target.value)} readOnly />
+                                        <input type="text" className={filterInputReadonly} value={searchProdNm} onChange={(e) => setSearchProdNm(e.target.value)} readOnly />
                                     </div>
                                 </div>
                                 {/* 사용여부 */}
-                                <div className={styles.filterItem}>
-                                    <label className={styles.filterLabel}>사용여부</label>
-                                    <select className={styles.filterSelect} value={searchUseYn} onChange={(e) => setSearchUseYn(e.target.value)}>
+                                <div className={filterItem}>
+                                    <label className={filterLabel}>사용여부</label>
+                                    <select className={filterSelect} value={searchUseYn} onChange={(e) => setSearchUseYn(e.target.value)}>
                                         <option value="">전체</option>
                                         <option value="Y">사용</option>
                                         <option value="N">미사용</option>
                                     </select>
                                 </div>
                                 {/* 품목카테고리 */}
-                                <div className={styles.filterItem}>
-                                    <label className={styles.filterLabel}>품목카테고리</label>
-                                    <input type="text" className={styles.filterInput} value={searchProdCategory} onChange={(e) => setSearchProdCategory(e.target.value)}/>
+                                <div className={filterItem}>
+                                    <label className={filterLabel}>품목카테고리</label>
+                                    <input type="text" className={filterInput} value={searchProdCategory} onChange={(e) => setSearchProdCategory(e.target.value)}/>
                                 </div>
                                 {/* 품목형태 */}
-                                <div className={styles.filterItem}>
-                                    <label className={styles.filterLabel}>품목형태</label>
-                                    <input type="text" className={styles.filterInput} value={searchProdShape} onChange={(e) => setSearchProdShape(e.target.value)}/>
+                                <div className={filterItem}>
+                                    <label className={filterLabel}>품목형태</label>
+                                    <input type="text" className={filterInput} value={searchProdShape} onChange={(e) => setSearchProdShape(e.target.value)}/>
                                 </div>
                                 {/* 설계품목코드 */}
-                                <div className={`${styles.filterItem} ${styles.filterItemSm}`}>
-                                    <label className={styles.filterLabel}>설계품목코드</label>
-                                    <input type="text" className={styles.filterInput} value={searchSteItemNo} onChange={(e) => setSearchSteItemNo(e.target.value)}/>
+                                <div className={filterItem}>
+                                    <label className={filterLabel}>설계품목코드</label>
+                                    <input type="text" className={filterInput} value={searchSteItemNo} onChange={(e) => setSearchSteItemNo(e.target.value)}/>
                                 </div>
                             </div>
                         </div>
 
                         {/* Functional Toolbar */}
-                        <div className={styles.toolbar}>
-                            <div className={styles.toolbarGroup}>
-                                <button className={styles.btnToolbar} onClick={handleAddRow}>
+                        <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2">
+                                <button className={btnToolbar} onClick={handleAddRow}>
                                     <span className="material-symbols-outlined" style={{ color: '#003f87', fontSize: '16px' }}>add</span>
                                     행추가
                                 </button>
-                                <button className={styles.btnToolbar} onClick={handleDeleteRow}>
+                                <button className={btnToolbar} onClick={handleDeleteRow}>
                                     <span className="material-symbols-outlined" style={{ color: '#ba1a1a', fontSize: '16px' }}>delete</span>
                                     행삭제
                                 </button>
                             </div>
-                            <div className={styles.toolbarGroup}>
-                                <button className={styles.btnToolbar} onClick={handleTempletDownload}>
+                            <div className="flex items-center gap-2">
+                                <button className={btnToolbar} onClick={handleTempletDownload}>
                                     <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>description</span>
                                     양식다운로드
                                 </button>
-                                <button className={styles.btnToolbar} onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+                                <button className={btnToolbar} onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
                                     <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>upload_file</span>
                                     {isUploading ? "업로드 중..." : "엑셀업로드"}
                                 </button>
@@ -689,8 +726,8 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
                     </div>
 
                     {/* Data Table */}
-                    <div className={styles.tableWrapper}>
-                        <table className={styles.table}>
+                    <div className={tableWrapper}>
+                        <table className="min-w-[2760px] table-fixed border-collapse text-xs">
                             <colgroup>
                                 {/* 체크박스 */}
                                 <col style={{ width: '40px' }} />
@@ -739,157 +776,157 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
                                 {/* 업로드결과 */}
                                 <col style={{ width: '300px' }} />
                             </colgroup>
-                            <thead className={styles.thead}>
+                            <thead className="sticky top-0 z-10 bg-slate-50 text-slate-500">
                                 <tr>
-                                    <th rowSpan={2}>
-                                        <input type="checkbox" className={styles.checkbox} onChange={handleSelectAll} checked={items.length > 0 && 
+                                    <th rowSpan={2} className="border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide">
+                                        <input type="checkbox" className="customCheckbox" onChange={handleSelectAll} checked={items.length > 0 &&
                                             items.every(v => v.chk === '1')}/>
                                     </th>
-                                    <th rowSpan={2}>고객사</th>
-                                    <th rowSpan={2}>센터</th>
-                                    <th rowSpan={2}>품목번호</th>
-                                    <th rowSpan={2}>품목명</th>
-                                    <th rowSpan={2}>설계품번<br />(고객품번)</th>
-                                    <th rowSpan={2}>품목카테고리</th>
-                                    <th rowSpan={2}>품목형태</th>
-                                    <th rowSpan={2}>품목타입</th>
-                                    <th rowSpan={2}>생성일자</th>
-                                    <th rowSpan={2}>사용여부</th>
-                                    <th rowSpan={2}>선입선출<br/>여부</th>
-                                    <th rowSpan={2}>단가</th>
-                                    <th colSpan={2} className={styles.thGroup}>용기</th>
-                                    <th colSpan={3} className={styles.thGroupAlt}>무게</th>
-                                    <th rowSpan={2}>등록자</th>
-                                    <th rowSpan={2}>등록일자</th>
-                                    <th rowSpan={2}>수정자</th>
-                                    <th rowSpan={2}>수정일자</th>
-                                    <th rowSpan={2}>업로드결과</th>
+                                    <th rowSpan={2} className="border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide">고객사</th>
+                                    <th rowSpan={2} className="border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide">센터</th>
+                                    <th rowSpan={2} className="border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide">품목번호</th>
+                                    <th rowSpan={2} className="border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide">품목명</th>
+                                    <th rowSpan={2} className="border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide">설계품번<br />(고객품번)</th>
+                                    <th rowSpan={2} className="border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide">품목카테고리</th>
+                                    <th rowSpan={2} className="border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide">품목형태</th>
+                                    <th rowSpan={2} className="border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide">품목타입</th>
+                                    <th rowSpan={2} className="border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide">생성일자</th>
+                                    <th rowSpan={2} className="border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide">사용여부</th>
+                                    <th rowSpan={2} className="border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide">선입선출<br/>여부</th>
+                                    <th rowSpan={2} className="border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide">단가</th>
+                                    <th colSpan={2} className="px-2 py-2 text-center font-semibold uppercase tracking-wide" style={thGroupStyle}>용기</th>
+                                    <th colSpan={3} className="px-2 py-2 text-center font-semibold uppercase tracking-wide" style={thGroupAltStyle}>무게</th>
+                                    <th rowSpan={2} className="border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide">등록자</th>
+                                    <th rowSpan={2} className="border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide">등록일자</th>
+                                    <th rowSpan={2} className="border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide">수정자</th>
+                                    <th rowSpan={2} className="border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide">수정일자</th>
+                                    <th rowSpan={2} className="border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide">업로드결과</th>
                                 </tr>
                                 <tr>
-                                    <th className={styles.thGroupSub}>수량</th>
-                                    <th className={styles.thGroupSub}>단위</th>
-                                    <th className={styles.thGroupSubAlt}>중량</th>
-                                    <th className={styles.thGroupSubAlt}>실중량</th>
-                                    <th className={styles.thGroupSubAlt}>단위</th>
+                                    <th className="border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide" style={thGroupSubStyle}>수량</th>
+                                    <th className="border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide" style={thGroupSubStyle}>단위</th>
+                                    <th className="border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide" style={thGroupSubAltStyle}>중량</th>
+                                    <th className="border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide" style={thGroupSubAltStyle}>실중량</th>
+                                    <th className="border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide" style={thGroupSubAltStyle}>단위</th>
                                 </tr>
                             </thead>
-                            <tbody className={styles.tbody}>
+                            <tbody className="divide-y divide-slate-50 text-slate-700">
                                 {searched && items.length === 0 ? (
                                     <tr>
-                                        <td colSpan={23} className={styles.emptyRow}>
-                                            <span className="material-symbols-outlined">inbox</span>
-                                            <p>조회된 데이터가 없습니다.</p>
+                                        <td colSpan={23} className="px-4 py-12 text-center text-slate-400">
+                                            <span className="material-symbols-outlined block text-4xl">inbox</span>
+                                            <p className="mt-2 text-sm">조회된 데이터가 없습니다.</p>
                                         </td>
                                     </tr>
                                 ) : items.map((item, index) => (
-                                    <tr key={index} onClick={() => handleSelectRow(index)}>
-                                        <td className={styles.cellCenter}>
-                                            <input type="checkbox" className={styles.checkbox} onChange={() => {}} checked={item.chk === '1'}/>
+                                    <tr key={index} onClick={() => handleSelectRow(index)} className="hover:bg-slate-50">
+                                        <td className={cellCenter}>
+                                            <input type="checkbox" className="customCheckbox" onChange={() => {}} checked={item.chk === '1'}/>
                                         </td>
-                                        <td className={styles.cellCenter}>
+                                        <td className={cellCenter}>
                                             { (s => s ? `${s.srvcCd} [${s.srvcNm}]` : item.srvcCd)(srvcList.find( s => s.srvcCd === item.srvcCd)) }
                                         </td>
-                                        <td className={styles.cellCenter}>
+                                        <td className={cellCenter}>
                                             { (w => w ? `${w.whCd} [${w.whNm}]` : item.whCd)(whList.find( w => w.whCd === item.whCd)) }
                                         </td>
-                                        <td className={styles.cellCenter}>
-                                            {item.isNew 
-                                                ? <input type="text" className={styles.cellInput} value={item.prodCd}
+                                        <td className={cellCenter}>
+                                            {item.isNew
+                                                ? <input type="text" className={cellInput} value={item.prodCd}
                                                    onChange={e => handleCellChange(index, "prodCd", e.target.value)}
                                                    onClick={e => e.stopPropagation()} placeholder="품목번호"
                                                    ref={setCellRef(index, "prodCd") as any}/>
                                                 : item.prodCd}
                                         </td>
-                                        <td className={styles.cellMedium}>
-                                            <input type="text" className={styles.cellInput} value={item.prodNm}
+                                        <td className={cellMedium}>
+                                            <input type="text" className={cellInput} value={item.prodNm}
                                              onChange={e => handleCellChange(index, "prodNm", e.target.value)}
                                              onClick={e => e.stopPropagation()}/>
                                         </td>
-                                        <td className={styles.cellCenter}>
-                                            <input type="text" className={styles.cellInput} value={item.steitemNo}
+                                        <td className={cellCenter}>
+                                            <input type="text" className={cellInput} value={item.steitemNo}
                                              onChange={e => handleCellChange(index, "steitemNo", e.target.value)}
                                              onClick={e => e.stopPropagation()}/>
                                         </td>
-                                        <td className={styles.cellCenter}>
-                                            <input type="text" className={styles.cellInput} value={item.prodCategory}
+                                        <td className={cellCenter}>
+                                            <input type="text" className={cellInput} value={item.prodCategory}
                                              onChange={e => handleCellChange(index, "prodCategory", e.target.value)}
                                              onClick={e => e.stopPropagation()}/>
                                         </td>
-                                        <td className={styles.cellCenter}>
-                                            <input type="text" className={styles.cellInput} value={item.prodShape}
+                                        <td className={cellCenter}>
+                                            <input type="text" className={cellInput} value={item.prodShape}
                                              onChange={e => handleCellChange(index, "prodShape", e.target.value)}
                                              onClick={e => e.stopPropagation()}/>
                                         </td>
-                                        <td className={styles.cellCenter}>
-                                            <input type="text" className={styles.cellInput} value={item.prodType}
+                                        <td className={cellCenter}>
+                                            <input type="text" className={cellInput} value={item.prodType}
                                              onChange={e => handleCellChange(index, "prodType", e.target.value)}
                                              onClick={e => e.stopPropagation()}/>
                                         </td>
-                                        <td className={styles.cellCenter}>{item.createTime}</td>
-                                        <td className={styles.cellCenter}>
-                                            <select className={styles.cellInput} value={item.useYn}
+                                        <td className={cellCenter}>{item.createTime}</td>
+                                        <td className={cellCenter}>
+                                            <select className={cellInput} value={item.useYn}
                                                 onChange={e => handleCellChange(index, "useYn", e.target.value)}
                                                 onClick={e => e.stopPropagation()}>
                                                 <option value="Y">사용</option>
                                                 <option value="N">미사용</option>
                                             </select>
                                         </td>
-                                        <td className={styles.cellCenter}>
-                                            <select className={styles.cellInput} value={item.fifoYn}
+                                        <td className={cellCenter}>
+                                            <select className={cellInput} value={item.fifoYn}
                                                 onChange={e => handleCellChange(index, "fifoYn", e.target.value)}
                                                 onClick={e => e.stopPropagation()}>
                                                 <option value="Y">적용</option>
                                                 <option value="N">미적용</option>
                                             </select>
                                         </td>
-                                        <td className={styles.cellCenter}>
-                                            <input type="text" className={styles.cellInput} value={item.price}
+                                        <td className={cellCenter}>
+                                            <input type="text" className={cellInput} value={item.price}
                                              onChange={e => { const value = e.target.value.replace(/[^0-9.]/g, ''); handleCellChange(index, "price", value)}}
                                              onClick={e => e.stopPropagation()}
                                              ref={setCellRef(index, "price") as any}/>
                                         </td>
-                                        <td className={`${styles.cellCenter} ${styles.cellGroup}`}>
-                                            <input type="text" className={styles.cellInput} value={item.innerpack}
+                                        <td className={cellCenter} style={cellGroupStyle}>
+                                            <input type="text" className={cellInput} value={item.innerpack}
                                              onChange={e => { const value = e.target.value.replace(/[^0-9.]/g, ''); handleCellChange(index, "innerpack", value)}}
                                              onClick={e => e.stopPropagation()}
                                              ref={setCellRef(index, "innerpack") as any}/>
                                         </td>
-                                        <td className={`${styles.cellCenter} ${styles.cellGroup}`}>
-                                            <input type="text" className={styles.cellInput} value={item.prodUnit}
+                                        <td className={cellCenter} style={cellGroupStyle}>
+                                            <input type="text" className={cellInput} value={item.prodUnit}
                                              onChange={e => handleCellChange(index, "prodUnit", e.target.value)}
                                              onClick={e => e.stopPropagation()}/>
                                         </td>
-                                        <td className={`${styles.cellCenter} ${styles.cellGroupAlt}`}>
-                                            <input type="text" className={styles.cellInput} value={item.weight}
+                                        <td className={cellCenter} style={cellGroupAltStyle}>
+                                            <input type="text" className={cellInput} value={item.weight}
                                              onChange={e => { const value = e.target.value.replace(/[^0-9.]/g, ''); handleCellChange(index, "weight", value)}}
                                              onClick={e => e.stopPropagation()}
                                              ref={setCellRef(index, "weight") as any}/>
                                         </td>
-                                        <td className={`${styles.cellCenter} ${styles.cellGroupAlt}`}>
-                                            <input type="text" className={styles.cellInput} value={item.realWeight}
+                                        <td className={cellCenter} style={cellGroupAltStyle}>
+                                            <input type="text" className={cellInput} value={item.realWeight}
                                              onChange={e => { const value = e.target.value.replace(/[^0-9.]/g, ''); handleCellChange(index, "realWeight", value)}}
                                              onClick={e => e.stopPropagation()}
                                              ref={setCellRef(index, "realWeight") as any}/>
                                         </td>
-                                        <td className={`${styles.cellCenter} ${styles.cellGroupAlt}`}>
-                                            <input type="text" className={styles.cellInput} value={item.weightUnit}
+                                        <td className={cellCenter} style={cellGroupAltStyle}>
+                                            <input type="text" className={cellInput} value={item.weightUnit}
                                              onChange={e => handleCellChange(index, "weightUnit", e.target.value)}
                                              onClick={e => e.stopPropagation()}/>
                                         </td>
-                                        <td className={styles.cellCenter}>{item.regId}</td>
-                                        <td className={styles.cellCenter}>{item.regDate}</td>
-                                        <td className={styles.cellCenter}>{item.updId}</td>
-                                        <td className={styles.cellCenter}>{item.updDate}</td>
-                                        <td className={styles.cellCenter}>
+                                        <td className={cellCenter}>{item.regId}</td>
+                                        <td className={cellCenter}>{item.regDate}</td>
+                                        <td className={cellCenter}>{item.updId}</td>
+                                        <td className={cellCenter}>{item.updDate}</td>
+                                        <td className={cellCenter}>
                                             {item.uploadStatus === 'OK' ? (
-                                                <span className={styles.chipOk}>
+                                                <span className={chipOk}>
                                                     <span className="material-symbols-outlined" style={{ fontSize: '11px' }}>check_circle</span>
                                                     OK
                                                 </span>
                                             ) : item.uploadStatus && item.uploadStatus !== '검증중...' ? (
-                                                <div className={styles.chipGroup}>
+                                                <div className="flex flex-wrap justify-center gap-1">
                                                     {item.uploadStatus.split(' / ').filter(Boolean).map((err, i) => (
-                                                        <span key={i} className={styles.chipError}>
+                                                        <span key={i} className={chipError}>
                                                             <span className="material-symbols-outlined" style={{ fontSize: '11px' }}>error</span>
                                                             {err.trim()}
                                                         </span>
