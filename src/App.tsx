@@ -3,10 +3,12 @@ import Login from "./pages/Login/Login";
 import Container from "./pages/Container"
 import PrivateRoute from "./components/PrivateRoute";
 import LoadingOverlay from "./components/common/LoadingOverlay";
+import { PopupProvider } from './components/common/PopupProvider';
 
 const App: React.FC = () => {
   return (
     <BrowserRouter>
+      <PopupProvider>
       <LoadingOverlay />
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
@@ -20,6 +22,7 @@ const App: React.FC = () => {
         {/* 정의되지 않은 모든 경로에 대해 처리 (선택사항) */}
         <Route path="*" element={<div>페이지를 찾을 수 없습니다.</div>} />
       </Routes>
+      </PopupProvider>
     </BrowserRouter>
   );
 }
