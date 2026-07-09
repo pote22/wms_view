@@ -59,6 +59,9 @@ transaction.interceptors.response.use(
         }
 
         // 401외 모든 공통에러(500, 400) -> 화면에 에러메세지 출력
+        if (error.response?.data?.resultMessage) {
+            error.message = error.response.data.resultMessage;
+        }
         return Promise.reject(error);
     }
 );
