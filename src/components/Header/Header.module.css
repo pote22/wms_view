@@ -1,3 +1,21 @@
+/*
+ * [CSS Module 유지 사유 — Header.module.css]
+ *
+ * 1. 상태 기반 클래스 동적 토글이 다수 존재
+ *    - openDropdown: selectorArrowOpen (화살표 rotate)
+ *    - activeMainTab: mainTabActive (탭 border-bottom + 색상)
+ *    - srvcCd/whCd 일치 여부: dropdownItemActive
+ *    Tailwind 전환 시 JSX 내 삼항 연산자가 7~8곳 증가 → 가독성 저하
+ *
+ * 2. 중첩 선택자(hover 오버라이드) 필요
+ *    - .selectorBox:hover, .dropdownItem:hover, .mainTab:hover 등
+ *    Tailwind hover: 프리픽스로 대체 가능하나, 조건부 클래스 조합 시 문자열이 과도하게 길어짐
+ *
+ * 3. transition: transform 0.2s (화살표 회전 애니메이션)
+ *    Tailwind에 rotate-180 + transition-transform은 있으나,
+ *    조건부 적용 시 className 삼항 처리 필요
+ */
+
 .topHeader {
   background-color: #f8fafc;
   border-bottom: 1px solid #e2e8f0;

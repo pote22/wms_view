@@ -1,3 +1,18 @@
+/*
+ * [CSS Module 유지 사유 — Popup.module.css]
+ *
+ * 1. linear-gradient 버튼 배경 (btnConfirm)
+ *    Tailwind arbitrary value로 표현 가능하지만 className이 과도하게 길어짐
+ *    예) bg-[linear-gradient(to_right,#003f87,#0056b3)]
+ *
+ * 2. box-shadow rgba 커스텀 값 (btnConfirm:hover)
+ *    Tailwind shadow-* 프리셋에 없는 값 — arbitrary value 사용 시 hover:shadow-[...] 형태로 장황
+ *
+ * 3. position: fixed + inset: 0 오버레이 레이어 (z-index: 9999)
+ *    구조적으로 단순하지만 Popup.tsx가 호출되는 모든 화면에서 공유하는 공통 모달 쉘이므로
+ *    CSS Module로 중앙 관리하는 것이 적합
+ */
+
 .overlay {
   position: fixed;
   inset: 0;
@@ -12,7 +27,9 @@
   background-color: #fff;
   border-radius: 12px;
   padding: 36px 40px;
-  width: 320px;
+  min-width: 320px;
+  max-width: 540px;
+  width: fit-content;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -36,6 +53,9 @@
   text-align: center;
   line-height: 1.6;
   white-space: pre-line;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
 }
 
 .btnRow {

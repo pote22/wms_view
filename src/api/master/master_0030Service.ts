@@ -20,10 +20,15 @@ export interface Item {
     weight          : string;
     realWeight      : string;
     weightUnit      : string;
+    prodSpec        : string;
     regId           : string;
     regDate         : string;
     updId           : string;
     updDate         : string;
+    chk             : string;   // 체크박스 ('0'=미선택, '1'=선택)
+    isNew           : boolean;  // 신규여부
+    isDirty         : boolean;  // 수정여부
+    uploadStatus    : string;   // 엑셀업로드 상태
 }
 
 // 품목관리 조회결과

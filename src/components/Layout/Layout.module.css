@@ -1,3 +1,15 @@
+/*
+ * [CSS Module 유지 사유 — Layout.module.css]
+ *
+ * 1. ::-webkit-scrollbar 가상 선택자 사용 (pageCanvas 스크롤바 커스텀)
+ *    Tailwind 기본 유틸리티로는 지원 불가 — tailwind-scrollbar 플러그인 추가가 필요하며,
+ *    플러그인 도입 없이 이 파일 하나만을 위한 의존성 추가는 과잉
+ *
+ * 2. 전체 앱 레이아웃 쉘 역할 (mainWrapper / mainContent / pageCanvas)
+ *    변환해도 클래스가 3~4개에 불과하고, 위 스크롤바 이슈로 CSS 파일 자체를 제거할 수 없어
+ *    굳이 두 방식을 혼용할 필요가 없음
+ */
+
 .mainWrapper {
   display: flex;
   height: 100vh;

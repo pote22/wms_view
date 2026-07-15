@@ -40,9 +40,9 @@ const filterItemWide     = "col-span-2 flex min-w-0 flex-col gap-1.5";
 const filterLabel        = "text-xs font-semibold uppercase tracking-wide text-slate-500";
 const filterSelect       = "h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
 const filterInput        = "h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/15";
-const filterInputGroup   = "flex min-w-0";
-const filterInputReadonly = "h-9 min-w-0 flex-1 rounded-r-md border border-slate-300 bg-slate-100 px-3 text-sm text-slate-600";
-const filterSearchBtn    = "inline-flex h-9 w-10 shrink-0 items-center justify-center bg-primary text-white hover:bg-primary-hover";
+const filterInputGroup   = "flex min-w-0 gap-1.5";
+const filterInputReadonly = "h-9 min-w-0 flex-1 rounded-md border border-slate-300 bg-slate-100 px-3 text-sm text-slate-600";
+const filterSearchBtn    = "inline-flex h-9 w-9 flex-none items-center justify-center rounded-md bg-primary text-white hover:bg-primary-hover";
 
 // ── 툴바
 const toolbar      = "mt-4 flex items-center justify-end gap-3";
@@ -121,15 +121,15 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
         // 입고유형
         getCommCodeList(
             {
-                  sys_grp_cd    : 'WM0020'
-                , sys_cd        : ''
-                , sys_cdnm      : ''
-                , srvc_cd       : ''
-                , sys_etc1      : ''
-                , sys_etc2      : ''
-                , sys_etc3      : ''
-                , sys_etc4      : ''
-                , sys_etc5      : ''
+                  sysGrpCd    : 'WM0020'
+                , sysCd        : ''
+                , sysCdNm      : ''
+                , srvcCd       : ''
+                , sysEtc1      : ''
+                , sysEtc2      : ''
+                , sysEtc3      : ''
+                , sysEtc4      : ''
+                , sysEtc5      : ''
             },
             (res) => setReceiptCategory(res.data ?? []),
             (err) => showAlert('공통코드 조회 실패 : ' + err?.message)
@@ -138,15 +138,15 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
         // 입고상태
         getCommCodeList(
             {
-                  sys_grp_cd    : 'WM0010'
-                , sys_cd        : ''
-                , sys_cdnm      : ''
-                , srvc_cd       : ''
-                , sys_etc1      : ''
-                , sys_etc2      : ''
-                , sys_etc3      : ''
-                , sys_etc4      : ''
-                , sys_etc5      : ''
+                  sysGrpCd    : 'WM0010'
+                , sysCd        : ''
+                , sysCdNm      : ''
+                , srvcCd       : ''
+                , sysEtc1      : ''
+                , sysEtc2      : ''
+                , sysEtc3      : ''
+                , sysEtc4      : ''
+                , sysEtc5      : ''
             },
             (res) => setReceiptStatus(res.data ?? []),
             (err) => showAlert('공통코드 조회 실패 : ' + err?.message)
@@ -155,15 +155,15 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
         // 수불유형
         getCommCodeList(
             {
-                  sys_grp_cd    : 'WM0030'
-                , sys_cd        : ''
-                , sys_cdnm      : ''
-                , srvc_cd       : '1201'
-                , sys_etc1      : ''
-                , sys_etc2      : ''
-                , sys_etc3      : ''
-                , sys_etc4      : ''
-                , sys_etc5      : ''
+                  sysGrpCd    : 'WM0030'
+                , sysCd        : ''
+                , sysCdNm      : ''
+                , srvcCd       : '1201'
+                , sysEtc1      : ''
+                , sysEtc2      : ''
+                , sysEtc3      : ''
+                , sysEtc4      : ''
+                , sysEtc5      : ''
             },
             (res) => setReceiptType(res.data ?? []),
             (err) => showAlert('공통코드 조회 실패 : ' + err?.message)
@@ -172,15 +172,15 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
         // 수불유형
         getCommCodeList(
             {
-                  sys_grp_cd    : 'WM1090'
-                , sys_cd        : ''
-                , sys_cdnm      : ''
-                , srvc_cd       : ''
-                , sys_etc1      : ''
-                , sys_etc2      : ''
-                , sys_etc3      : ''
-                , sys_etc4      : ''
-                , sys_etc5      : ''
+                  sysGrpCd    : 'WM1090'
+                , sysCd        : ''
+                , sysCdNm      : ''
+                , srvcCd       : ''
+                , sysEtc1      : ''
+                , sysEtc2      : ''
+                , sysEtc3      : ''
+                , sysEtc4      : ''
+                , sysEtc5      : ''
             },
             (res) => setInNotRsnCd(res.data ?? []),
             (err) => showAlert('공통코드 조회 실패 : ' + err?.message)
@@ -210,7 +210,7 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
             (res) => {
                 const row : ReceiptRow[] = (res.data ?? []).map((v : any) => ({
                     chk             : v.chk                 ?? '0',
-                    srvcCd          : v.srvc_cd             ?? '',
+                    srvcCd          : v.srvcCd             ?? '',
                     whCd            : v.wh_cd               ?? '',
                     inNo            : v.in_no               ?? '',
                     inExpectedDate  : v.in_expected_date    ?? '',
@@ -331,8 +331,8 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                 inNo           : v.inNo,
                 inExpectedSeq  : v.inExpectedSeq,
                 status         : getStatusNm(v.status),
-                receiptClsCd   : receiptCategory.find(c => c.sys_cd === v.receiptClsCd)?.sys_cdnm ?? v.receiptClsCd,
-                receiptType    : receiptType.find(c => c.sys_cd === v.receiptType)?.sys_cdnm ?? v.receiptType,
+                receiptClsCd   : receiptCategory.find(c => c.sysCd === v.receiptClsCd)?.sysCdNm ?? v.receiptClsCd,
+                receiptType    : receiptType.find(c => c.sysCd === v.receiptType)?.sysCdNm ?? v.receiptType,
                 receiptDate    : v.receiptDate,
                 vendorCd       : v.vendorCd,
                 vendorNm       : v.vendorNm,
@@ -347,7 +347,7 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                 totInWeight    : v.totInWeight,
                 pdaScanQty     : v.pdaScanQty,
                 pdaScanCnt     : v.pdaScanCnt,
-                notRsnCd       : inNotRsnCd.find(c => c.sys_cd === v.notRsnCd)?.sys_cdnm ?? v.notRsnCd,
+                notRsnCd       : inNotRsnCd.find(c => c.sysCd === v.notRsnCd)?.sysCdNm ?? v.notRsnCd,
                 vendorAddress  : v.vendorAddress,
                 zipCd          : v.zipCd,
                 managerNm      : v.managerNm,
@@ -668,7 +668,7 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                         <option value="">전체</option>
                                         {
                                             receiptCategory.map(t => (
-                                                <option key={t.sys_cd} value={t.sys_cd}>{t.sys_cdnm}</option>
+                                                <option key={t.sysCd} value={t.sysCd}>{t.sysCdNm}</option>
                                             ))
                                         }
                                     </select>
@@ -679,7 +679,7 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                         <option value="">전체</option>
                                         {
                                             receiptStatus.map(t => (
-                                                <option key={t.sys_cd} value={t.sys_cd}>{t.sys_cdnm}</option>
+                                                <option key={t.sysCd} value={t.sysCd}>{t.sysCdNm}</option>
                                             ))
                                         }
                                     </select>
@@ -695,7 +695,7 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                         <option value="">전체</option>
                                         {
                                             receiptType.map(t => (
-                                                <option key={t.sys_cd} value={t.sys_cd}>{t.sys_cdnm}</option>
+                                                <option key={t.sysCd} value={t.sysCd}>{t.sysCdNm}</option>
                                             ))
                                         }
                                     </select>
@@ -738,7 +738,7 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                 <div className={filterItemWide}>
                                     <label className={filterLabel}>매입처</label>
                                     <div className={filterInputGroup}>
-                                        <input type="text" className="h-9 min-w-0 flex-1 rounded-l-md border border-r-0 border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/15" value={searchClientCd} placeholder=""/>
+                                        <input type="text" className="h-9 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/15" value={searchClientCd} placeholder=""/>
                                         <button className={filterSearchBtn} onClick={() => setIsClientPopupOpen(true)}>
                                             <span className="material-symbols-outlined text-[18px]">search</span>
                                         </button>
@@ -748,7 +748,7 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                 <div className={filterItemWide}>
                                     <label className={filterLabel}>품번</label>
                                     <div className={filterInputGroup}>
-                                        <input type="text" className="h-9 min-w-0 flex-1 rounded-l-md border border-r-0 border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/15" value={searchProdCd} placeholder=""/>
+                                        <input type="text" className="h-9 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/15" value={searchProdCd} placeholder=""/>
                                         <button className={filterSearchBtn} onClick={() => setIsProdPopupOpen(true)}>
                                             <span className="material-symbols-outlined text-[18px]">search</span>
                                         </button>
@@ -759,7 +759,7 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                 <div className={filterItemWide}>
                                     <label className={filterLabel}>차량번호</label>
                                     <div className={filterInputGroup}>
-                                        <input type="text" className="h-9 min-w-0 flex-1 rounded-l-md border border-r-0 border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/15" value={searchVehicleNo} placeholder=""/>
+                                        <input type="text" className="h-9 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/15" value={searchVehicleNo} placeholder=""/>
                                         <button className={filterSearchBtn} onClick={() => setIsVehiclePopupOpen(true)}>
                                             <span className="material-symbols-outlined text-[18px]">search</span>
                                         </button>
@@ -782,7 +782,7 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                     <option value="">** 선택 **</option>
                                     {
                                         inNotRsnCd.map(t => (
-                                            <option key={t.srvc_cd} value={t.sys_cd}>{t.sys_cd} | {t.sys_cdnm}</option>
+                                            <option key={t.srvcCd} value={t.sysCd}>{t.sysCd} | {t.sysCdNm}</option>
                                         ))
                                     }
                                 </select>
@@ -939,10 +939,10 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                         <td className={cellCenter}>{v.inExpectedSeq}</td>
                                         <td className={cellCenter}>{getStatusBadge(v.status)}</td>
                                         <td className={cellCenter}>
-                                            { (c => c ? `${c.sys_cdnm}` : v.receiptClsCd)(receiptCategory.find(c => c.sys_cd === v.receiptClsCd)) }
+                                            { (c => c ? `${c.sysCdNm}` : v.receiptClsCd)(receiptCategory.find(c => c.sysCd === v.receiptClsCd)) }
                                         </td>
                                         <td className={cellCenter}>
-                                            { (c => c ? `${c.sys_cdnm}` : v.receiptType)(receiptType.find(c => c.sys_cd === v.receiptType)) }
+                                            { (c => c ? `${c.sysCdNm}` : v.receiptType)(receiptType.find(c => c.sysCd === v.receiptType)) }
                                         </td>
                                         <td className={cellCenter}>{v.receiptDate}</td>
                                         <td className={cellCenter}>{v.vendorCd}</td>
@@ -966,7 +966,7 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                                 ref={setCellRef(idx, "notRsnCd") as any}>
                                                 <option value="">-- 선택 --</option>
                                                 { inNotRsnCd.map(t => (
-                                                    <option key={t.sys_cd} value={t.sys_cd}>{t.sys_cd} | {t.sys_cdnm}</option>
+                                                    <option key={t.sysCd} value={t.sysCd}>{t.sysCd} | {t.sysCdNm}</option>
                                                 ))}
                                             </select>
                                         </td>

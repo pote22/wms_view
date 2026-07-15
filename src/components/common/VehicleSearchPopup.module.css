@@ -1,3 +1,22 @@
+/*
+ * [CSS Module 유지 사유 — VehicleSearchPopup.module.css]
+ *
+ * 1. 자식/하위 요소 선택자 사용 (.thead th, .tbody tr, .tbody td, .empty span 등)
+ *    테이블 행·셀은 map() 렌더링으로 생성되며 각 요소에 개별 Tailwind 클래스를 부여해야 하므로
+ *    선택자 기반 일괄 스타일링이 훨씬 효율적
+ *
+ * 2. tr:hover 행 전체 하이라이트 (.tbody tr:hover)
+ *    Tailwind group/group-hover 패턴으로 대체 가능하지만,
+ *    동적 테이블 행에서는 CSS Module 하위 선택자가 더 간결하고 명확
+ *
+ * 3. position: sticky thead (검색 결과 스크롤 시 헤더 고정)
+ *    .thead에 sticky + top-0 + z-index를 조합해야 하며, 테이블 레이아웃 특성상
+ *    CSS Module로 관리하는 것이 구조적으로 안전
+ *
+ * 4. 검색 팝업 5종(Vehicle/Client/Prod/Loc/Zone)이 동일한 CSS 구조를 공유
+ *    CSS Module을 통해 중복 없이 각 팝업이 독립된 스코프를 유지
+ */
+
 .overlay {
     position: fixed;
     inset: 0;

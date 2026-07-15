@@ -1,3 +1,22 @@
+/*
+ * [일반 CSS 유지 사유 — cj_wms_home_0010.css]
+ *
+ * 1. TipTap(ProseMirror) 리치텍스트 에디터 내부 DOM 스타일링
+ *    .ProseMirror, .ProseMirror p, h1, h2, ul, ol, blockquote, a, strong, em 등
+ *    라이브러리가 렌더링하는 내부 요소에 직접 접근 — Tailwind 인라인 클래스 적용 불가
+ *
+ * 2. ::before 가상 요소로 placeholder 구현
+ *    .ProseMirror p.is-editor-empty:first-child::before { content: attr(data-placeholder) }
+ *    CSS pseudo-element + content: attr() 조합 — Tailwind 완전 불가 영역
+ *
+ * 3. CSS Module 대신 일반 CSS 사용하는 이유
+ *    .ProseMirror 클래스는 라이브러리가 직접 DOM에 부여하는 전역 클래스이므로
+ *    CSS Modules의 지역 스코프(해시 변환)가 적용되면 선택자가 깨짐 — :global() 없이 전역 필요
+ *
+ * 4. transform: skewX(-12deg) italic 효과 (em, i 태그 전체 선택자)
+ *    요소 전체 선택자(.ProseMirror em)로 적용 — Tailwind 유틸리티로는 불가
+ */
+
 /* TipTap / ProseMirror 전용 스타일 — 일반 CSS (module 아님) */
 
 /* editorWrapper: flex 컨테이너 */

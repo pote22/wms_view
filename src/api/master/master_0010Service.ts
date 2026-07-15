@@ -14,13 +14,9 @@ export interface Vehicle {
     regDate?        : string;
     updId?          : string;
     updDate?        : string;
-}
-
-// 화면에서 사용하는 차량 행
-export interface VehicleRow extends Vehicle {
-    isNew           : boolean;          // 신규여부
-    isDirty         : boolean;          // 수정여부
-    uploadStatus    : string;           // 엑셀업로드 상태
+    isNew           : boolean;      // 신규여부
+    isDirty         : boolean;      // 수정여부
+    uploadStatus    : string;       // 엑셀업로드 상태
 }
 
 export interface Response {

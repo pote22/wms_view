@@ -33,13 +33,11 @@ const VehicleSearchPopup: React.FC<Props> = ({ isOpen, srvcCd, whCd, initialVehi
             setSearched(false);
             setTimeout(() => inputRef.current?.focus(), 50);
 
-            if (initVal) {
-                getVehicleSearchList(
-                    { srvcCd, whCd, vehicleNo: initVal, useYn: '' },
-                    (res) => { setVehicleList((res.data ?? []) as any[]); setSearched(true); },
-                    () => {}
-                );
-            }
+            getVehicleSearchList(
+                { srvcCd, whCd, vehicleNo: initVal, useYn: '' },
+                (res) => { setVehicleList((res.data ?? []) as any[]); setSearched(true); },
+                () => {}
+            );
         }
     }, [isOpen]);
 

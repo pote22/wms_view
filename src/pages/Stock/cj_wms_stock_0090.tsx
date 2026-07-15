@@ -5,9 +5,8 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { ko } from 'date-fns/locale';
 // 공통 API
 import { useCommonWhList } from '../../api/common/commonWhList';
-import Popup from "../../components/common/Popup";
-import { usePopup } from "../../components/common/usePopup";
 import { formatDate } from '../../utils/dateUtils';
+import { usePopupContext } from "../../components/common/PopupProvider";
 // 엑셀
 import ExcelJS from "exceljs";
 // CSS (datepicker 보정 전용)
@@ -78,7 +77,7 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
     const [searched, setSearched] = useState(false);
 
     // 팝업
-    const { popup, showAlert, closePopup } = usePopup();
+    const { showAlert } = usePopupContext();
 
     // 조회
     const handleSearch = () => {
@@ -224,13 +223,6 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
 
     return (
         <>
-        <Popup
-            isOpen={popup.isOpen}
-            message={popup.message}
-            type={popup.type}
-            onConfirm={popup.onConfirm}
-            onCancel={closePopup}
-        />
         <div className={pageShell}>
             <div className={contentShell}>
                 <div className={sectionCard}>

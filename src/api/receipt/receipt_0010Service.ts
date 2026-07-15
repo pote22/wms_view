@@ -1,7 +1,7 @@
 ﻿import { request } from "../common/transaction";
 import { API_MASTER_ROOT, API_RECEIPT_ROOT } from "../common/index";
 
-export interface ReceiptH {
+export interface ReceiptHdr {
     srvcCd          : string;
     whCd            : string;
     inNo            : string;
@@ -20,9 +20,12 @@ export interface ReceiptH {
     inVId           : string;
     inVNm           : string;
     receiptType     : string;
+    isNew           : boolean;
+    isDirty         : boolean;
+    uploadStatus    : string;
 }
 
-export interface ReceiptD {
+export interface ReceiptDtl {
     srvcCd          : string;
     whCd            : string;
     inNo            : string;
@@ -44,15 +47,6 @@ export interface ReceiptD {
     regDate         : string;
     updId           : string;
     updDate         : string;
-}
-
-export interface ReceiptHdrRow extends ReceiptH {
-    isNew           : boolean;
-    isDirty         : boolean;
-    uploadStatus    : string;
-}
-
-export interface ReceiptDtlRow extends ReceiptD {
     isNew           : boolean;
     isDirty         : boolean;
     uploadStatus    : string;

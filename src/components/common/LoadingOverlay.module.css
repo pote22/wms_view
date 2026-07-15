@@ -1,3 +1,16 @@
+/*
+ * [CSS Module 유지 사유 — LoadingOverlay.module.css]
+ *
+ * 1. @keyframes spin 커스텀 애니메이션 정의 필요
+ *    Tailwind의 animate-spin은 내부적으로 동일한 keyframe을 사용하지만,
+ *    스피너 효과는 border-top-color만 불투명하게 두고 나머지 3방향을 반투명으로 처리하는
+ *    특수한 border 분리 지정 방식으로 구현됨 — Tailwind 유틸리티로는 표현 불가
+ *
+ * 2. border 방향별 개별 색상 지정 (border-top-color)
+ *    Tailwind는 방향별 border-color 유틸리티(border-t-*)를 지원하나,
+ *    rgba 반투명값 조합 시 arbitrary value 중복 사용으로 className이 복잡해짐
+ */
+
 .overlay {
     position: fixed;
     inset: 0;

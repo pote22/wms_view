@@ -5,12 +5,8 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { ko } from 'date-fns/locale';
 // 공통 API
 import { useCommonWhList } from '../../api/common/commonWhList';
-import Popup from "../../components/common/Popup";
-import { usePopup } from "../../components/common/usePopup";
-import ZoneSearchPopup from "../../components/common/ZoneSearchPopup";
-import LocSearchPopup from "../../components/common/LocSearchPopup";
-import ProdSearchPopup from "../../components/common/ProdSearchPopup";
 import { formatDate } from '../../utils/dateUtils';
+import { usePopupContext } from "../../components/common/PopupProvider";
 // 엑셀
 import ExcelJS from "exceljs";
 // CSS (datepicker 보정 전용)
@@ -32,8 +28,8 @@ const filterItem     = "flex min-w-0 flex-col gap-1.5";
 const filterLabel    = "text-xs font-semibold uppercase tracking-wide text-slate-500";
 const filterSelect   = "h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
 const filterInput    = "h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
-const filterReadonly = "h-9 min-w-0 flex-1 rounded-r-md border border-slate-300 bg-slate-100 px-3 text-sm text-slate-600";
-const filterSearchBtn = "inline-flex h-9 w-10 items-center justify-center bg-primary text-white hover:bg-primary-hover";
+const filterReadonly = "h-9 min-w-0 flex-1 rounded-md border border-slate-300 bg-slate-100 px-3 text-sm text-slate-600";
+const filterSearchBtn = "inline-flex h-9 w-9 flex-none items-center justify-center rounded-md bg-primary text-white hover:bg-primary-hover";
 
 const thBase = "border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide";
 const thQty  = "border-b border-slate-100 px-2 py-2 bg-blue-100 text-blue-700 font-semibold uppercase tracking-wide";
@@ -62,10 +58,7 @@ const CJ_WMS_STOCK_0010: React.FC = () => {
     const [searched,   setSearched]         = useState(false);
 
     // 팝업
-    const [zonePopupOpen, setZonePopupOpen] = useState(false);
-    const [locPopupOpen,  setLocPopupOpen]  = useState(false);
-    const [prodPopupOpen, setProdPopupOpen] = useState(false);
-    const { popup, showAlert, closePopup }  = usePopup();
+    const { showAlert, openZoneSearch, openLocSearch, openProdSearch } = usePopupContext();
 
     // 조회
     const handleSearch = () => {
@@ -187,38 +180,6 @@ const CJ_WMS_STOCK_0010: React.FC = () => {
 
     return (
         <>
-        <Popup
-            isOpen={popup.isOpen}
-            message={popup.message}
-            type={popup.type}
-            onConfirm={popup.onConfirm}
-            onCancel={closePopup}
-        />
-        <ZoneSearchPopup
-            isOpen={zonePopupOpen}
-            srvcCd={searchSrvcCd}
-            whCd={searchWhCd}
-            initialZoneCd={searchZoneCd}
-            onSelect={(zoneCd, zoneNm) => { setSearchZoneCd(zoneCd); setSearchZoneNm(zoneNm); }}
-            onClose={() => setZonePopupOpen(false)}
-        />
-        <LocSearchPopup
-            isOpen={locPopupOpen}
-            srvcCd={searchSrvcCd}
-            whCd={searchWhCd}
-            zoneCd={searchZoneCd}
-            initialLocCd={searchLocCd}
-            onSelect={(locCd) => setSearchLocCd(locCd)}
-            onClose={() => setLocPopupOpen(false)}
-        />
-        <ProdSearchPopup
-            isOpen={prodPopupOpen}
-            srvcCd={searchSrvcCd}
-            whCd={searchWhCd}
-            initialProdCd={searchItemCd}
-            onSelect={(prodCd, prodNm) => { setSearchItemCd(prodCd); setSearchItemNm(prodNm); }}
-            onClose={() => setProdPopupOpen(false)}
-        />
         <div className={pageShell}>
             <div className={contentShell}>
                 <div className={sectionCard}>
@@ -295,10 +256,10 @@ const CJ_WMS_STOCK_0010: React.FC = () => {
                                 {/* Col 1: 존 */}
                                 <div className={filterItem}>
                                     <label className={filterLabel}>존</label>
-                                    <div className="flex min-w-0">
-                                        <input type="text" className="h-9 w-[70px] rounded-l-md border border-r-0 border-slate-300 bg-white px-2 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" value={searchZoneCd}
+                                    <div className="flex min-w-0 gap-1.5">
+                                        <input type="text" className="h-9 w-[70px] rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" value={searchZoneCd}
                                             onChange={e => setSearchZoneCd(e.target.value)} />
-                                        <button className={filterSearchBtn} onClick={() => setZonePopupOpen(true)}>
+                                        <button className={filterSearchBtn} onClick={() => openZoneSearch((zoneCd, zoneNm) => { setSearchZoneCd(zoneCd); setSearchZoneNm(zoneNm); })}>
                                             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>search</span>
                                         </button>
                                         <input type="text" className={filterReadonly} value={searchZoneNm} readOnly />
@@ -308,10 +269,10 @@ const CJ_WMS_STOCK_0010: React.FC = () => {
                                 {/* Col 2: 로케이션 */}
                                 <div className={filterItem}>
                                     <label className={filterLabel}>로케이션</label>
-                                    <div className="flex min-w-0">
-                                        <input type="text" className="h-9 min-w-0 flex-1 rounded-l-md border border-r-0 border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" value={searchLocCd}
+                                    <div className="flex min-w-0 gap-1.5">
+                                        <input type="text" className="h-9 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" value={searchLocCd}
                                             onChange={e => setSearchLocCd(e.target.value)} />
-                                        <button className={filterSearchBtn} onClick={() => { if (!searchZoneCd) { showAlert('존코드를 먼저 입력하세요.'); return; } setLocPopupOpen(true); }}>
+                                        <button className={filterSearchBtn} onClick={() => { if (!searchZoneCd) { showAlert('존코드를 먼저 입력하세요.'); return; } openLocSearch((locCd) => setSearchLocCd(locCd), searchZoneCd); }}>
                                             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>search</span>
                                         </button>
                                     </div>
@@ -320,10 +281,10 @@ const CJ_WMS_STOCK_0010: React.FC = () => {
                                 {/* Col 3: 품번 */}
                                 <div className={filterItem}>
                                     <label className={filterLabel}>품번</label>
-                                    <div className="flex min-w-0">
-                                        <input type="text" className="h-9 w-[70px] rounded-l-md border border-r-0 border-slate-300 bg-white px-2 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" value={searchItemCd}
+                                    <div className="flex min-w-0 gap-1.5">
+                                        <input type="text" className="h-9 w-[70px] rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" value={searchItemCd}
                                             onChange={e => setSearchItemCd(e.target.value)} />
-                                        <button className={filterSearchBtn} onClick={() => setProdPopupOpen(true)}>
+                                        <button className={filterSearchBtn} onClick={() => openProdSearch((prodCd, prodNm) => { setSearchItemCd(prodCd); setSearchItemNm(prodNm); })}>
                                             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>search</span>
                                         </button>
                                         <input type="text" className={filterReadonly} value={searchItemNm} readOnly />

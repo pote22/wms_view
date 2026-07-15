@@ -1,26 +1,26 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
-import Popup from "../../components/common/Popup";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Bold from "@tiptap/extension-bold";
 import Italic from "@tiptap/extension-italic";
 import "./cj_wms_home_0010.css";
 import { getTokenPayload } from "../../utils/auth";
-import { usePopup } from "../../components/common/usePopup";
 import { getList, saveNotice, deleteNotice, getFileList, uploadFile, downloadFile, deleteFile, type Notice, type AttachedFile } from "../../api/home/home_0010Service";
+import { usePopupContext } from "../../components/common/PopupProvider";
 
-// 버튼 클래스 상수
+// ── Tailwind 상수 ──────────────────────────────────────────────
 const btn           = "inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-semibold transition";
 const btnSecondary  = `${btn} bg-slate-200 text-blue-700 hover:bg-slate-300`;
 const btnPrimary    = `${btn} bg-gradient-to-r from-primary to-primary-hover text-white shadow-sm hover:opacity-90`;
 const btnDanger     = `${btn} bg-red-100 text-danger hover:bg-red-200`;
+// ───────────────────────────────────────────────────────────────
 
 const CJ_WMS_HOME_0010: React.FC = () => {
     const payload                                        = getTokenPayload();
     const userId                                        = payload?.userId ?? "";
     const isAdmin                                       = payload?.adminYn === 'Y';
     const MAX_FILE_SIZE                                 = 20 * 1024 * 1024;
-    const { popup, showAlert, showConfirm, closePopup } = usePopup();
+    const { showAlert, showConfirm } = usePopupContext();
 
     const [attachedFiles,  setAttachedFiles]            = useState<AttachedFile[]>([]);
     const [noticeList,     setNoticeList]               = useState<Notice[]>([]);
@@ -200,11 +200,9 @@ const CJ_WMS_HOME_0010: React.FC = () => {
                         showAlert(res.resultMessage ?? "삭제 실패");
                     }
                     
-                    closePopup();
                 },
                 (err) => {
                     showAlert(err?.response?.data?.resultMessage ?? "삭제 중 오류가 발생했습니다.");
-                    closePopup();
                 }
             );
         });
@@ -331,13 +329,6 @@ const CJ_WMS_HOME_0010: React.FC = () => {
 
     return (
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-surface px-[15px] pb-[15px]">
-            <Popup
-                isOpen={popup.isOpen}
-                type={popup.type}
-                message={popup.message}
-                onConfirm={popup.onConfirm}
-                onCancel={closePopup}
-            />
             <input type="file" ref={fileInputRef} className="hidden" multiple onChange={handleFileChange} />
 
             {/* 헤더 행 */}

@@ -1,5 +1,13 @@
-/* cj_wms_stock_0010.module.css */
-/* ── react-datepicker 외부 라이브러리 보정 (Tailwind 불가 영역) ── */
+/*
+ * [CSS Module 유지 사유 — cj_wms_stock_0010.module.css]
+ *
+ * react-datepicker 외부 라이브러리 내부 클래스 오버라이드 목적
+ * CSS Modules의 :global() 선택자를 사용해 라이브러리가 생성하는 클래스에 접근
+ * (.react-datepicker-wrapper, .react-datepicker__input-container 등)
+ *
+ * Tailwind 인라인 클래스로는 외부 라이브러리 내부 DOM에 접근 불가 — CSS 필수 영역
+ * 대상 선택자: input, input:focus, day--selected, day:hover, close-icon 등
+ */
 
 .datepickerWrapper :global(.react-datepicker-wrapper) {
     width: 100%;

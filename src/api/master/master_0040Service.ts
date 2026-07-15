@@ -3,30 +3,35 @@ import { API_MASTER_ROOT } from "../common/index";
 
 // 존 데이터 인터페이스
 export interface Zone {
-    srvcCd  : string;
-    whCd    : string;
-    zoneCd  : string;
-    zoneNm  : string;
-    useYn   : string;
-    regId   : string;
-    regDate : string;
-    updId   : string;
-    updDate : string;
+    srvcCd          : string;
+    whCd            : string;
+    zoneCd          : string;
+    zoneNm          : string;
+    useYn           : string;
+    regId           : string;
+    regDate         : string;
+    updId           : string;
+    updDate         : string;
+    isNew           : boolean;
+    isDirty         : boolean;
+    uploadStatus    : string;
 }
 
 // 로케이션 데이터 인터페이스
 export interface Loc {
-    srvcCd      : string;
-    whCd        : string;
-    zoneCd      : string;
-    locCd       : string;
-    locClsCd    : string;
-    rmk         : string;
-    useYn       : string;
-    regId       : string;
-    regDate     : string;
-    updId       : string;
-    updDate     : string;
+    srvcCd          : string;
+    whCd            : string;
+    zoneCd          : string;
+    locCd           : string;
+    locClsCd        : string;
+    rmk             : string;
+    useYn           : string;
+    regId           : string;
+    regDate         : string;
+    updId           : string;
+    updDate         : string;
+    isNew           : boolean;
+    isDirty         : boolean;
 }
 
 // 공통 API 응답
@@ -40,9 +45,9 @@ export interface Response {
 
 // 엑셀업로드 유효성 체크 결과
 export interface CheckResult {
-    rowIndex    : number;
-    isValid     : boolean;
-    errors      : string[];
+    rowIndex        : number;
+    isValid         : boolean;
+    errors          : string[];
 }
 
 export interface CheckResponse {

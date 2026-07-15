@@ -1,3 +1,19 @@
+/*
+ * [CSS Module 유지 사유 — SideBar.module.css]
+ *
+ * 1. ::-webkit-scrollbar 가상 선택자 사용 (sidebarNav 스크롤바 커스텀)
+ *    Tailwind 기본 유틸리티 미지원, tailwind-scrollbar 플러그인 없이는 불가
+ *
+ * 2. 중첩 hover 오버라이드 필요
+ *    - .sidebarMenuItem:hover → transform: translateX(4px) (슬라이드 인 효과)
+ *    - .sidebarMenuItemActive:hover → transform: none (active 항목은 이동 없음)
+ *    Tailwind hover:translate-x-1 은 가능하나, active 상태에서 hover 오버라이드를
+ *    조건부 className 문자열로 처리하면 JSX가 복잡해짐
+ *
+ * 3. active 메뉴 상태 클래스 토글 (sidebarMenuItemActive)
+ *    현재 경로와 메뉴 항목을 비교해 동적으로 적용 — CSS Module이 더 관리하기 명확함
+ */
+
 .sidebar {
   width: 256px;
   flex-shrink: 0;

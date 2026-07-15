@@ -3,53 +3,48 @@ import { API_USER_ROOT } from "./index";
 import { API_COMMON_ROOT } from "./index";
 
 // 사용자 권한별 고객사 센터 조회 데이터
-export interface UserAuthSrvcWh {
-    srvc_cd         : string;
-    srvc_nm         : string;
-    wh_cd           : string;
-    wh_nm           : string;
-    base_yn         : string;
-}
-
-// 사용자 권한별 고객사 센터 조회
-export interface UserSrvcWhRequest {
-    userId          : string;
+export interface UserAuthCenter {
+    srvcCd         : string;
+    srvcNm         : string;
+    whCd           : string;
+    whNm           : string;
+    baseYn         : string;
 }
 
 // 사용자 권한별 고객사 센터 조회 응답
-export interface UserSrvcWhResponse {
+export interface UserAuthCenterResponse {
     resultCode      : string;
     resultMessage   : string;
-    data            : UserAuthSrvcWh[];
+    data            : any | null;
 }
 
 // 공통코드
 export interface CommCode {
-    sys_grp_cd  : string;
-    sys_cd      : string;
-    sys_cdnm    : string;
-    srvc_cd     : string;
-    sys_etc1    : string;
-    sys_etc2    : string;
-    sys_etc3    : string;
-    sys_etc4    : string;
-    sys_etc5    : string;
+    sysGrpCd        : string;
+    sysCd           : string;
+    sysCdNm         : string;
+    srvcCd          : string;
+    sysEtc1         : string;
+    sysEtc2         : string;
+    sysEtc3         : string;
+    sysEtc4         : string;
+    sysEtc5         : string;
 }
 
 // 공통코드 리스트
-export interface CommCodeList {
+export interface CommCodeResponse {
     resultCode      : string;
     resultMessage   : string;
     accessToken     : string;
     expireDate      : string;
-    data            : CommCode[] | null;
+    data            : any | null;
 }
 
 // 차량 검색 팝업 결과
 export interface VehicleSearch {
-    vehicle_no  : string;
-    drv_nm      : string;
-    use_yn      : string;
+    vehicle_no      : string;
+    drv_nm          : string;
+    use_yn          : string;
 }
 
 export interface VehicleSearchResponse {
@@ -61,9 +56,9 @@ export interface VehicleSearchResponse {
 }
 
 export interface ZoneSearch {
-    zone_cd : string;
-    zone_nm : string;
-    use_yn  : string;
+    zone_cd         : string;
+    zone_nm         : string;
+    use_yn          : string;
 }
 
 export interface ZoneSearchResponse {
@@ -74,10 +69,24 @@ export interface ZoneSearchResponse {
     data            : ZoneSearch[] | null;
 }
 
+export interface LocSearch {
+    loc_cd          : string;
+    zone_cd         : string;
+    use_yn          : string;
+}
+
+export interface LocSearchResponse {
+    resultCode      : string;
+    resultMessage   : string;
+    accessToken     : string;
+    expireDate      : string;
+    data            : LocSearch[] | null;
+}
+
 export interface ClientSearch {
-    client_cd   : string;
-    client_nm   : string;
-    use_yn      : string;
+    client_cd       : string;
+    client_nm       : string;
+    use_yn          : string;
 }
 
 export interface ClientSearchResponse {
@@ -91,6 +100,7 @@ export interface ClientSearchResponse {
 export interface ProdSearch {
     prod_cd         : string;
     prod_nm         : string;
+    use_yn          : string;
 }
 
 export interface ProdSearchResponse {
@@ -103,11 +113,11 @@ export interface ProdSearchResponse {
 
 // 사용자 권한별 고객사 센터 조회 API 호출
 export const getUserAuthSrvcWhList = (
-    data        : UserSrvcWhRequest,
-    onSuccess   : (res: UserSrvcWhResponse) => void,
+    data        : Record<string, any>,
+    onSuccess   : (res: UserAuthCenterResponse) => void,
     onError     : (err: any) => void
 ) => {
-    return request<UserSrvcWhResponse>({
+    return request<UserAuthCenterResponse>({
         config: {
             url: `${API_USER_ROOT}/getUserAuthWhList`,
             method: 'POST',
@@ -120,11 +130,11 @@ export const getUserAuthSrvcWhList = (
 
 // 공통코드 리스트 조회
 export const getCommCodeList = (
-    data        : CommCode,
-    onSuccess   : (res: CommCodeList) => void,
+    data        : Record<string, any>,
+    onSuccess   : (res: CommCodeResponse) => void,
     onError     : (err: any) => void
 ) => {
-    return request<CommCodeList>({
+    return request<CommCodeResponse>({
         config: {
             url     : `${API_COMMON_ROOT}/getCommonCodeList`,
             method  : 'POST',
@@ -185,20 +195,6 @@ export const getProdSearchList = (
         onError
     });
 };
-
-export interface LocSearch {
-    loc_cd  : string;
-    zone_cd : string;
-    use_yn  : string;
-}
-
-export interface LocSearchResponse {
-    resultCode      : string;
-    resultMessage   : string;
-    accessToken     : string;
-    expireDate      : string;
-    data            : LocSearch[] | null;
-}
 
 // 로케이션 검색 팝업 조회
 export const getLocSearchList = (

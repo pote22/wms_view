@@ -3,10 +3,9 @@ import React, { useState, useEffect, useRef } from "react";
 import * as XLSX from "xlsx";
 import { useCommonWhList } from "../../api/common/commonWhList";
 import { getTokenPayload } from "../../utils/auth";
-import { getList, saveVehicle, deleteVehicle, getCheckList, type VehicleRow, type CheckResult } from "../../api/master/master_0010Service";
-import Popup from "../../components/common/Popup";
-import { usePopup } from "../../components/common/usePopup";
+import { getList, saveVehicle, deleteVehicle, getCheckList, type Vehicle, type CheckResult } from "../../api/master/master_0010Service";
 import { getCommCodeList, type CommCode } from "../../api/common/commonService"
+import { usePopupContext } from "../../components/common/PopupProvider";
 
 // ── Tailwind 상수 ──────────────────────────────────────────────
 const pageShell     = "flex min-h-0 flex-1 bg-surface";
@@ -31,35 +30,38 @@ const tableWrapper  = "min-h-0 flex-1 overflow-auto";
 const cellInput     = "h-7 w-full rounded border border-slate-200 bg-white px-2 text-xs outline-none focus:border-primary focus:ring-1 focus:ring-primary/20";
 const cellCenter    = "px-2 py-2 text-center";
 
-const chipOk    = "inline-flex items-center gap-1 rounded-full bg-green-700 px-2 py-0.5 text-[10px] font-bold text-white";
-const chipError = "inline-flex items-center gap-1 rounded-full bg-red-700 px-2 py-0.5 text-[10px] font-bold text-white whitespace-nowrap";
+const chipOk        = "inline-flex items-center gap-1 rounded-full bg-green-700 px-2 py-0.5 text-[10px] font-bold text-white";
+const chipError     = "inline-flex items-center gap-1 rounded-full bg-red-700 px-2 py-0.5 text-[10px] font-bold text-white whitespace-nowrap";
 // ───────────────────────────────────────────────────────────────
 
 const CJ_WMS_MASTER_0010: React.FC = () => {
-    // 권한센터 목록 조회(공통)
-    const { srvcList, whList, selectSrvcCd, selectWhCd } = useCommonWhList();
-    // 차량톤급 조회(공통)
-    const [tonList, setTonList] = useState<CommCode[]>([]);
-    // 검색조건
-    const [searchSrvcCd, setSearchSrvcCd] = useState(selectSrvcCd);
-    const [searchWhCd, setSearchWhCd] = useState(selectWhCd);
-    const [searchVehicleNo, setSearchVehicleNo] = useState("");
-    const [searchUseYn, setSearchUseYn] = useState("");
-    // 공통팝업
-    const { popup, showAlert, showConfirm, closePopup } = usePopup();
-    // 차량 목록
-    const [vehicleIds, setVehicleIds] = useState<VehicleRow[]>([]);
-    // 엑셀문서 입력
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    // 사용자ID 정보 가져오기
-    const payload = getTokenPayload();
-    // 로딩바표시
-    const [isUploading, setIsUploading] = useState(false);
-    // confirm 다이얼로그
-    const [isSaving, setIsSaving] = useState(false);
     // HP 번호 정규식
-    const HP_NO_REGEX = /^0\d{1,2}-\d{3,4}-\d{4}$/;
-    const cellRefs = useRef<Map<string, HTMLInputElement | HTMLSelectElement>>(new Map());
+    const HP_NO_REGEX                                       = /^0\d{1,2}-\d{3,4}-\d{4}$/;
+    // 사용자ID 정보 가져오기
+    const payload                                           = getTokenPayload();
+    // 권한센터 목록 조회(공통)
+    const { srvcList, whList, selectSrvcCd, selectWhCd }    = useCommonWhList();
+    // 공통팝업
+    const { showAlert, showConfirm } = usePopupContext();
+    // 차량톤급 조회(공통)
+    const [tonList,         setTonList]                     = useState<CommCode[]>([]);
+    // 검색조건
+    const [searchSrvcCd,    setSearchSrvcCd]                = useState(selectSrvcCd);
+    const [searchWhCd,      setSearchWhCd]                  = useState(selectWhCd);
+    const [searchVehicleNo, setSearchVehicleNo]             = useState("");
+    const [searchUseYn,     setSearchUseYn]                 = useState("");
+    
+    // 차량 목록
+    const [vehicleIds,      setVehicleIds]                  = useState<Vehicle[]>([]);
+    // 엑셀문서 입력
+    const fileInputRef                                      = useRef<HTMLInputElement>(null);
+    // 로딩바표시
+    const [isUploading,     setIsUploading]                 = useState(false);
+    // confirm 다이얼로그
+    const [isSaving,        setIsSaving]                    = useState(false);
+
+    const cellRefs                                          = useRef<Map<string, HTMLInputElement | HTMLSelectElement>>(new Map());
+    
     const setCellRef = (idx: number, field: string) => (
         el: HTMLInputElement | HTMLSelectElement | null) => {
             if (el) cellRefs.current.set(`${idx}_${field}`, el);
@@ -75,20 +77,29 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
         setSearchWhCd(selectWhCd);
     }, [selectWhCd]);
 
+    // 톤급 목록 조회
     useEffect(() => {
         getCommCodeList(
             {
-                  sys_grp_cd    : 'WM1010'
-                , sys_cd        : ''
-                , sys_cdnm      : ''
-                , srvc_cd       : ''
-                , sys_etc1      : ''
-                , sys_etc2      : ''
-                , sys_etc3      : ''
-                , sys_etc4      : ''
-                , sys_etc5      : ''
+                  sysGrpCd    : 'WM1010'
+                , sysCd        : ''
+                , sysCdNm      : ''
+                , srvcCd       : ''
+                , sysEtc1      : ''
+                , sysEtc2      : ''
+                , sysEtc3      : ''
+                , sysEtc4      : ''
+                , sysEtc5      : ''
             },
-            (res) => setTonList(res.data ?? []),
+            (res) => {
+                const rows : CommCode[] = (res.data ?? []).map((v : any) => ({
+                    sysCd       : v.sys_cd      ?? '',
+                    sysCdNm     : v.sys_cdnm    ?? ''
+                }));
+
+                setTonList(rows);
+            },
+
             (err) => console.error("톤급 목록 조회 실패 : ", err)
         );
     }, []);
@@ -102,23 +113,24 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
                 , useYn     : searchUseYn
             },
             (res) => {
-                const rows: VehicleRow[] = (res.data ?? []).map((v: any) => ({
-                    chk         : v.chk ?? '0',
-                    srvcCd      : v.srvc_cd ?? "",
-                    whCd        : v.wh_cd ?? "",
-                    vehicleNo   : v.vehicle_no ?? "",
-                    drvNm       : v.drv_nm ?? "",
-                    hpNo        : v.hp_no ?? "",
-                    tonClsCd    : v.ton_cls_cd ?? "",
-                    useYn       : v.use_yn ?? "",
-                    regId       : v.reg_id ?? "",
-                    regDate     : v.reg_date ?? "",
-                    updId       : v.upd_id ?? "",
-                    updDate     : v.upd_date ?? "",
+                const rows : Vehicle[] = (res.data ?? []).map((v: any) => ({
+                    chk         : v.chk         ?? '0',
+                    srvcCd      : v.srvc_cd     ?? '',
+                    whCd        : v.wh_cd       ?? '',
+                    vehicleNo   : v.vehicle_no  ?? '',
+                    drvNm       : v.drv_nm      ?? '',
+                    hpNo        : v.hp_no       ?? '',
+                    tonClsCd    : v.ton_cls_cd  ?? '',
+                    useYn       : v.use_yn      ?? '',
+                    regId       : v.reg_id      ?? '',
+                    regDate     : v.reg_date    ?? '',
+                    updId       : v.upd_id      ?? '',
+                    updDate     : v.upd_date    ?? '',
                     isNew       : false,
                     isDirty     : false,
                     uploadStatus: "",
                 }));
+
                 setVehicleIds(rows);
             },
             (err) => showAlert("조회 실패: " + err?.message)
@@ -135,7 +147,7 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
         }
 
         const inValidVNoIdx     = vehicleIds.findIndex(v => v.chk === '1' && !v.vehicleNo.trim());
-        const vehicleTonCdList  = tonList.map(t => t.sys_cd)
+        const vehicleTonCdList  = tonList.map(t => t.sysCd)
         const inValidIdx        = vehicleIds.findIndex(v => v.chk === '1' && v.tonClsCd && !vehicleTonCdList.includes(v.tonClsCd));
         const inValidHpNoIdx    = vehicleIds.findIndex(v => v.chk === '1' && v.hpNo && !HP_NO_REGEX.test(v.hpNo));
 
@@ -158,7 +170,6 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
         }
 
         showConfirm(`저장하시겠습니까?`, () => {
-            closePopup();
             setIsSaving(true);
 
             const vehicleList   = saveRows.map(v => ({
@@ -169,15 +180,14 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
                 hpNo        : v.hpNo,
                 tonClsCd    : v.tonClsCd,
                 useYn       : v.useYn,
-                userId      : payload?.userId ?? ""
+                userId      : payload?.userId ?? ''
             }));
 
             saveVehicle(
                 { vehicles: vehicleList },
                 () => {
                     setIsSaving(false);
-                    showAlert("저장 되었습니다.");
-                    handleSearch();
+                    showAlert("저장 되었습니다.", () => handleSearch());
                 },
                 (err) => {
                     setIsSaving(false);
@@ -197,10 +207,9 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
         }
 
         showConfirm(`선택한 ${dbRows.length}건을 삭제하시겠습니까?`, () => {
-            closePopup();
             deleteVehicle(
                 { vehicleNos: dbRows.map(v => v.vehicleNo), srvcCd: searchSrvcCd, whCd: searchWhCd },
-                () => { handleSearch(); showAlert("삭제 되었습니다."); },
+                () => { showAlert("삭제 되었습니다.", () => handleSearch()) },
                 (err) => showAlert("삭제 실패: " + err?.message)
             );
         });
@@ -414,8 +423,8 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
             const ws = wb.Sheets[wb.SheetNames[0]];
             const rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
 
-            const newVehicles: VehicleRow[] = rows.slice(1)
-                .filter(row => row.length > 0 && row[0])
+            const newVehicles: Vehicle[] = rows.slice(1)
+                .filter(row => row.some((cell: any) => cell !== null && cell !== undefined && cell !== ''))
                 .map((row) => ({
                     chk         : '1',
                     vehicleNo   : String(row[2] ?? "").trim(),
@@ -462,19 +471,12 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
     };
 
     // 인라인 컬럼 편집
-    const handleCellChange = (idx: number, field: keyof VehicleRow, value: string) => {
-        setVehicleIds(prev => prev.map((v, i) => i === idx ? { ...v, [field]: value, isDirty: true } : v));
+    const handleCellChange = (idx: number, field: keyof Vehicle, value: string) => {
+        setVehicleIds(prev => prev.map((v, i) => i === idx ? { ...v, [field] : value, isDirty: true, chk: '1' } : v));
     };
 
     return (
         <>
-        <Popup
-            isOpen={popup.isOpen}
-            message={popup.message}
-            type={popup.type}
-            onConfirm={popup.onConfirm}
-            onCancel={closePopup}
-        />
         <div className={pageShell}>
             <div className={contentShell}>
                 <div className={sectionCard}>
@@ -503,7 +505,7 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
                         </div>
 
                         {/* Search Filter Box */}
-                        <div className={filterBox}>
+                        <div className={`${filterBox} mt-4`}>
                             <div className={filterGrid}>
                                 <div className={filterItem}>
                                     <label className={filterLabel}>고객사</label>
@@ -538,7 +540,7 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
                         </div>
 
                         {/* Toolbar */}
-                        <div className="flex items-center justify-between gap-3">
+                        <div className="mt-3 flex items-center justify-between gap-3">
                             <div className="flex items-center gap-2">
                                 <button className={btnToolbar} onClick={handleAddRow}>
                                     <span className="material-symbols-outlined" style={{ fontSize: '16px', color: '#003f87' }}>add</span> 행추가
@@ -566,7 +568,7 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
                     </div>
 
                     {/* Data Table */}
-                    <div className={tableWrapper}>
+                    <div className={tableWrapper} style={{ flex: 1 }}>
                         <table className="min-w-[1730px] table-fixed border-collapse text-xs">
                             <colgroup>
                                 {/* 체크박스 */}
@@ -592,7 +594,7 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
                                 {/* 수정자 */}
                                 <col style={{ width: '120px' }} />
                                 {/* 수정일자 */}
-                                <col style={{ width: '150px' }} />
+                                <col style={{ width: '220px' }} />
                                 {/* 업로드결과 */}
                                 <col style={{ width: '300px' }} />
                             </colgroup>
@@ -653,7 +655,7 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
                                                 ref={setCellRef(idx, "tonClsCd") as any}>
                                                 <option value="">선택</option>
                                                 { tonList.map(t => (
-                                                    <option key={t.sys_cd} value={t.sys_cd}>{t.sys_cdnm}</option>
+                                                    <option key={t.sysCd} value={t.sysCd}>{t.sysCdNm}</option>
                                                 ))}
                                             </select>
                                         </td>
@@ -696,6 +698,16 @@ const CJ_WMS_MASTER_0010: React.FC = () => {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+
+                    {/* 건수 표시 */}
+                    <div className="shrink-0 flex items-center justify-end gap-3 border-t border-slate-100 px-4 py-2 text-xs text-slate-500">
+                        <span>
+                            총 <span className="font-bold text-slate-800">{vehicleIds.length.toLocaleString()}</span> 건
+                        </span>
+                        <span>
+                            선택 <span className="font-bold text-primary">{vehicleIds.filter(v => v.chk === '1').length.toLocaleString()}</span> 건
+                        </span>
                     </div>
                 </div>
             </div>

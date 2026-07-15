@@ -3,9 +3,9 @@ import { getClientSearchList } from '../../api/common/commonService';
 import styles from './ClientSearchPopup.module.css';
 
 interface ClientResult {
-    client_cd : string;
-    client_nm : string;
-    use_yn    : string;
+    clientCd : string;
+    clientNm : string;
+    useYn    : string;
 }
 
 interface Props {
@@ -33,20 +33,36 @@ const ClientSearchPopup: React.FC<Props> = ({ isOpen, srvcCd, whCd, initialClien
             setSearched(false);
             setTimeout(() => inputRef.current?.focus(), 50);
 
-            if (initVal) {
-                getClientSearchList(
-                    { srvcCd, whCd, clientCd: initVal, clientNm: '', useYn: '' },
-                    (res) => { setClientList((res.data ?? []) as any[]); setSearched(true); },
-                    () => {}
-                );
-            }
+            getClientSearchList(
+                { srvcCd, whCd, clientCd: initVal, clientNm: '', useYn: '' },
+                (res) => { 
+                    const client : ClientResult[] = (res.data ?? []).map((v: any) => ({
+                        clientCd : v.client_cd,
+                        clientNm : v.client_nm,
+                        useYn    : v.use_yn,
+                    }));
+
+                    setClientList(client);
+                    setSearched(true); 
+                },
+                () => {}
+            );
         }
     }, [isOpen]);
 
     const handleSearch = () => {
         getClientSearchList(
             { srvcCd, whCd, clientCd: searchClientCd, useYn: searchUseYn },
-            (res) => { setClientList((res.data ?? []) as any[]); setSearched(true); },
+            (res) => {
+                const client : ClientResult[] = (res.data ?? []).map((v: any) => ({
+                    clientCd : v.client_cd,
+                    clientNm : v.client_nm,
+                    useYn    : v.use_yn,
+                }));
+
+                setClientList(client);
+                setSearched(true); 
+            },
             () => {}
         );
     };
@@ -105,9 +121,9 @@ const ClientSearchPopup: React.FC<Props> = ({ isOpen, srvcCd, whCd, initialClien
                     <table className={styles.table}>
                         <thead className={styles.thead}>
                             <tr>
-                                <th style={{ width: '20%' }}>거래처코드</th>
-                                <th style={{ width: '65%' }}>거래처명</th>
-                                <th style={{ width: '15%' }}>사용여부</th>
+                                <th style={{ width: '30%' }}>거래처코드</th>
+                                <th style={{ width: '50%' }}>거래처명</th>
+                                <th style={{ width: '20%' }}>사용여부</th>
                             </tr>
                         </thead>
                         <tbody className={styles.tbody}>
@@ -119,10 +135,10 @@ const ClientSearchPopup: React.FC<Props> = ({ isOpen, srvcCd, whCd, initialClien
                                     </td>
                                 </tr>
                             ) : clientList.map((v, i) => (
-                                <tr key={i} onDoubleClick={() => handleSelect(v.client_cd, v.client_nm)}>
-                                    <td className={styles.clientCd}>{v.client_cd}</td>
-                                    <td>{v.client_nm}</td>
-                                    <td>{v.use_yn === 'Y' ? '사용' : '미사용'}</td>
+                                <tr key={i} onDoubleClick={() => handleSelect(v.clientCd, v.clientNm)}>
+                                    <td className={styles.clientCd}>{v.clientCd}</td>
+                                    <td>{v.clientNm}</td>
+                                    <td style={{ textAlign: 'center' }}>{v.useYn === 'Y' ? '사용' : '미사용'}</td>
                                 </tr>
                             ))}
                         </tbody>

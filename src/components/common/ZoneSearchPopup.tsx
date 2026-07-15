@@ -33,13 +33,11 @@ const ZoneSearchPopup: React.FC<Props> = ({ isOpen, srvcCd, whCd, initialZoneCd,
             setSearched(false);
             setTimeout(() => inputRef.current?.focus(), 50);
 
-            if (initVal) {
-                getZoneSearchList(
-                    { srvcCd, whCd, zoneCd: initVal, zoneNm: '', locCd: '', useYn: '' },
-                    (res) => { setZoneList(res.data ?? []); setSearched(true); },
-                    () => {}
-                );
-            }
+            getZoneSearchList(
+                { srvcCd, whCd, zoneCd: initVal, zoneNm: '', locCd: '', useYn: '' },
+                (res) => { setZoneList(res.data ?? []); setSearched(true); },
+                () => {}
+            );
         }
     }, [isOpen]);
 

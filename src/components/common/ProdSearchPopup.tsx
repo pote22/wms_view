@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getProdSearchList, type ProdSearch } from '../../api/common/commonService';
+import { getProdSearchList } from '../../api/common/commonService';
 import styles from './ProdSearchPopup.module.css';
+
+interface ProdResult {
+    prodCd : string;
+    prodNm : string;
+    useYn  : string;
+}
 
 interface Props {
     isOpen        : boolean;
@@ -13,32 +19,48 @@ interface Props {
 
 const ProdSearchPopup: React.FC<Props> = ({ isOpen, srvcCd, whCd, initialProdCd, onSelect, onClose }) => {
     const [searchProdCd, setSearchProdCd] = useState('');
-    const [prodList, setProdList]         = useState<ProdSearch[]>([]);
-    const [searched, setSearched]         = useState(false);
+    const [searchUseYn,  setSearchUseYn]  = useState('');
+    const [prodList,     setProdList]     = useState<ProdResult[]>([]);
+    const [searched,     setSearched]     = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (isOpen) {
             const initVal = initialProdCd ?? '';
             setSearchProdCd(initVal);
+            setSearchUseYn('');
             setProdList([]);
             setSearched(false);
             setTimeout(() => inputRef.current?.focus(), 50);
 
-            if (initVal) {
-                getProdSearchList(
-                    { srvcCd, whCd, prodCd: initVal },
-                    (res) => { setProdList(res.data ?? []); setSearched(true); },
-                    () => {}
-                );
-            }
+            getProdSearchList(
+                { srvcCd, whCd, prodCd: initVal, useYn: '' },
+                (res) => {
+                    const prods: ProdResult[] = (res.data ?? []).map((v: any) => ({
+                        prodCd : v.prod_cd,
+                        prodNm : v.prod_nm,
+                        useYn  : v.use_yn,
+                    }));
+                    setProdList(prods);
+                    setSearched(true);
+                },
+                () => {}
+            );
         }
     }, [isOpen]);
 
     const handleSearch = () => {
         getProdSearchList(
-            { srvcCd, whCd, prodCd: searchProdCd },
-            (res) => { setProdList(res.data ?? []); setSearched(true); },
+            { srvcCd, whCd, prodCd: searchProdCd, useYn: searchUseYn },
+            (res) => {
+                const prods: ProdResult[] = (res.data ?? []).map((v: any) => ({
+                    prodCd : v.prod_cd,
+                    prodNm : v.prod_nm,
+                    useYn  : v.use_yn,
+                }));
+                setProdList(prods);
+                setSearched(true);
+            },
             () => {}
         );
     };
@@ -48,8 +70,8 @@ const ProdSearchPopup: React.FC<Props> = ({ isOpen, srvcCd, whCd, initialProdCd,
         if (e.key === 'Escape') onClose();
     };
 
-    const handleSelect = (prod_cd: string, prod_nm: string) => {
-        onSelect(prod_cd, prod_nm);
+    const handleSelect = (prodCd: string, prodNm: string) => {
+        onSelect(prodCd, prodNm);
         onClose();
     };
 
@@ -78,6 +100,14 @@ const ProdSearchPopup: React.FC<Props> = ({ isOpen, srvcCd, whCd, initialProdCd,
                         onChange={e => setSearchProdCd(e.target.value)}
                         onKeyDown={handleKeyDown}
                     />
+                    <select
+                        className={styles.select}
+                        value={searchUseYn}
+                        onChange={e => setSearchUseYn(e.target.value)}>
+                        <option value="">전체</option>
+                        <option value="Y">사용</option>
+                        <option value="N">미사용</option>
+                    </select>
                     <button className={styles.searchBtn} onClick={handleSearch}>
                         <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>search</span>
                         조회
@@ -89,29 +119,30 @@ const ProdSearchPopup: React.FC<Props> = ({ isOpen, srvcCd, whCd, initialProdCd,
                     <table className={styles.table}>
                         <thead className={styles.thead}>
                             <tr>
-                                <th style={{ width: '45%' }}>품목번호</th>
-                                <th>품목명</th>
+                                <th style={{ width: '30%' }}>품목번호</th>
+                                <th style={{ width: '50%' }}>품목명</th>
+                                <th style={{ width: '20%' }}>사용여부</th>
                             </tr>
                         </thead>
                         <tbody className={styles.tbody}>
                             {searched && prodList.length === 0 ? (
                                 <tr>
-                                    <td colSpan={2} className={styles.empty}>
+                                    <td colSpan={3} className={styles.empty}>
                                         <span className="material-symbols-outlined">inbox</span>
                                         <p>조회된 데이터가 없습니다.</p>
                                     </td>
                                 </tr>
                             ) : prodList.map((v, i) => (
-                                <tr key={i} onDoubleClick={() => handleSelect(v.prod_cd, v.prod_nm)}>
-                                    <td className={styles.prodCd}>{v.prod_cd}</td>
-                                    <td>{v.prod_nm}</td>
+                                <tr key={i} onDoubleClick={() => handleSelect(v.prodCd, v.prodNm)}>
+                                    <td className={styles.prodCd}>{v.prodCd}</td>
+                                    <td>{v.prodNm}</td>
+                                    <td style={{ textAlign: 'center' }}>{v.useYn === 'Y' ? '사용' : '미사용'}</td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
 
-                {/* 안내 */}
                 <p className={styles.hint}>행을 더블클릭하면 선택됩니다.</p>
             </div>
         </div>

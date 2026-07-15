@@ -13,20 +13,20 @@ interface MsgState {
     onConfirm : () => void;
 }
 
-interface VehicleState { isOpen: boolean; onSelect: (vehicleNo: string, drvNm: string) => void; }
+interface VehicleState { isOpen: boolean; vehicleNo?: string; onSelect: (vehicleNo: string, drvNm: string) => void; }
 interface ClientState  { isOpen: boolean; clientCd?: string; onSelect: (clientCd: string, clientNm: string) => void; }
 interface ProdState    { isOpen: boolean; prodCd?: string; onSelect: (prodCd: string, prodNm: string) => void; }
-interface LocState     { isOpen: boolean; zoneCd?: string; onSelect: (locCd: string) => void; }
+interface LocState     { isOpen: boolean; zoneCd?: string; locCd?: string; onSelect: (locCd: string) => void; }
 interface ZoneState    { isOpen: boolean; zoneCd?: string; onSelect: (zoneCd: string, zoneNm: string) => void; }
 
 interface PopupContextType {
     showAlert         : (message: string, onClose?: () => void) => void;
     showConfirm       : (message: string, onConfirm: () => void) => void;
     closeAlert        : () => void;
-    openVehicleSearch : (onSelect: (vehicleNo: string, drvNm: string) => void) => void;
+    openVehicleSearch : (onSelect: (vehicleNo: string, drvNm: string) => void, vehicleNo?: string) => void;
     openClientSearch  : (onSelect: (clientCd: string, clientNm: string) => void, clientCd?: string) => void;
     openProdSearch    : (onSelect: (prodCd: string, prodNm: string) => void, prodCd?: string) => void;
-    openLocSearch     : (onSelect: (locCd: string) => void, zoneCd?: string) => void;
+    openLocSearch     : (onSelect: (locCd: string) => void, zoneCd?: string, locCd?: string) => void;
     openZoneSearch    : (onSelect: (zoneCd: string, zoneNm: string) => void, zoneCd?: string) => void;
 }
 
@@ -58,8 +58,8 @@ export const PopupProvider: React.FC<{
     const showConfirm = (message: string, onConfirm: () => void) =>
         setMsg({ isOpen: true, type: 'confirm', message, onConfirm: () => { closeMsg(); onConfirm(); } });
 
-    const openVehicleSearch = (onSelect: (vehicleNo: string, drvNm: string) => void) =>
-        setVehicle({ isOpen: true, onSelect });
+    const openVehicleSearch = (onSelect: (vehicleNo: string, drvNm: string) => void, vehicleNo?: string) =>
+        setVehicle({ isOpen: true, vehicleNo, onSelect });
 
     const openClientSearch = (onSelect: (clientCd: string, clientNm: string) => void, clientCd?: string) =>
         setClient({ isOpen: true, clientCd, onSelect });
@@ -67,8 +67,8 @@ export const PopupProvider: React.FC<{
     const openProdSearch = (onSelect: (prodCd: string, prodNm: string) => void, prodCd?: string) =>
         setProd({ isOpen: true, prodCd, onSelect });
 
-    const openLocSearch = (onSelect: (locCd: string) => void, zoneCd?: string) =>
-        setLoc({ isOpen: true, onSelect, zoneCd });
+    const openLocSearch = (onSelect: (locCd: string) => void, zoneCd?: string, locCd?: string) =>
+        setLoc({ isOpen: true, onSelect, zoneCd, locCd });
 
     const openZoneSearch = (onSelect: (zoneCd: string, zoneNm: string) => void, zoneCd?: string) =>
         setZone({ isOpen: true, zoneCd, onSelect });
@@ -84,11 +84,12 @@ export const PopupProvider: React.FC<{
                 onCancel  = {closeMsg}
             />
             <VehicleSearchPopup
-                isOpen   = {vehicle.isOpen}
-                srvcCd   = {srvcCd}
-                whCd     = {whCd}
-                onSelect = {vehicle.onSelect}
-                onClose  = {() => setVehicle(CLOSED_VEHICLE)}
+                isOpen            = {vehicle.isOpen}
+                srvcCd            = {srvcCd}
+                whCd              = {whCd}
+                initialVehicleNo  = {vehicle.vehicleNo}
+                onSelect          = {vehicle.onSelect}
+                onClose           = {() => setVehicle(CLOSED_VEHICLE)}
             />
             <ClientSearchPopup
                 isOpen          = {client.isOpen}
@@ -107,12 +108,13 @@ export const PopupProvider: React.FC<{
                 onClose       = {() => setProd(CLOSED_PROD)}
             />
             <LocSearchPopup
-                isOpen   = {loc.isOpen}
-                srvcCd   = {srvcCd}
-                whCd     = {whCd}
-                zoneCd   = {loc.zoneCd}
-                onSelect = {loc.onSelect}
-                onClose  = {() => setLoc(CLOSED_LOC)}
+                isOpen        = {loc.isOpen}
+                srvcCd        = {srvcCd}
+                whCd          = {whCd}
+                zoneCd        = {loc.zoneCd}
+                initialLocCd  = {loc.locCd}
+                onSelect      = {loc.onSelect}
+                onClose       = {() => setLoc(CLOSED_LOC)}
             />
             <ZoneSearchPopup
                 isOpen        = {zone.isOpen}

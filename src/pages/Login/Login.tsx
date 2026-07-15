@@ -2,8 +2,7 @@ import { useState, useRef } from "react";
 import themeImg from "../../images/theme.png";
 import { useNavigate } from 'react-router-dom';
 import { loginService } from "../../api/user/loginService.ts";
-import Popup from "../../components/common/Popup";
-import { usePopup } from "../../components/common/usePopup";
+import { usePopupContext } from "../../components/common/PopupProvider";
 
 const Login: React.FC = () => {
   const [showPassword, setShowPassword]   = useState(false);
@@ -15,7 +14,7 @@ const Login: React.FC = () => {
   const passwordRef                       = useRef<HTMLInputElement>(null);
 
   const navigate                          = useNavigate();
-  const { popup, showAlert, closePopup }  = usePopup();
+  const { showAlert }                     = usePopupContext();
 
   const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
@@ -40,32 +39,27 @@ const Login: React.FC = () => {
         if (err.response) {
           const resultCode = err.response.data.resultCode;
           const resultMsg  = err.response.data.resultMessage || '오류가 발생했습니다. 담당자에게 문의하여 주십시오.';
+          
           if (resultCode === "0002") showAlert(resultMsg);
         } else {
           console.error('네트워크 에러:', err.message);
-          showAlert('서버와 통신할 수 없습니다.');
+          showAlert('서버와 통신할 수 없습니다. 담당자에게 문의하여 주십시오.');
         }
       }
     );
   };
 
+  // ── Tailwind 상수 ──────────────────────────────────────────────
   const inputBase   = "block w-full rounded-lg border-0 border-b-2 border-transparent bg-slate-100 "  +
                       "py-3.5 pl-11 text-sm text-slate-900 placeholder:text-slate-400 outline-none " +
                       "transition-all duration-200 focus:border-primary focus:bg-white";
 
   const inputCls    = inputBase + " pr-4";
   const inputClsPw  = inputBase + " pr-12";
-
+  // ───────────────────────────────────────────────────────────────
+  
   return (
     <>
-      <Popup
-        isOpen={popup.isOpen}
-        message={popup.message}
-        type={popup.type}
-        onConfirm={popup.onConfirm}
-        onCancel={closePopup}
-      />
-
       <div className="flex min-h-screen items-center justify-center bg-[#eceeef] p-4">
         <div className="grid w-full max-w-275 overflow-hidden rounded-xl border border-slate-200/10 bg-white shadow-2xl shadow-slate-900/10 lg:grid-cols-12" style={{ minHeight: '600px' }}>
 

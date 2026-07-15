@@ -3,16 +3,23 @@ import { useNavigate } from "react-router-dom";
 import styles from "./Header.module.css";
 import { getTokenPayload } from "../../utils/auth";
 
-interface SrvcCdOption { srvcCd: string; srvcNm: string; }
-interface WhCdOption   { whCd: string;  whNm: string;  }
+interface ServiceCompanyCd { 
+    srvcCd: string; 
+    srvcNm: string; 
+}
+
+interface WarehouseCd { 
+    whCd: string;  
+    whNm: string;  
+}
 
 // 헤더 컴포넌트
 interface HeaderProps {
     selectSrvcCd        : string;
     selectWhCd          : string;
     activeMainTab       : "home" | "storage" | "common";
-    srvcCdList          : SrvcCdOption[];
-    whCdList            : WhCdOption[];
+    srvcCdList          : ServiceCompanyCd[];
+    whCdList            : WarehouseCd[];
     onSrvcCdChange      : (val: string) => void;
     onWhCdChange        : (val: string) => void;
     onTabChange         : (tab: "home" | "storage" | "common") => void;

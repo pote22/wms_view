@@ -23,9 +23,6 @@ export interface Client {
     regDate         : string;
     updId           : string;
     updDate         : string;
-}
-
-export interface ClientRow extends Client {
     isNew           : boolean;
     isDirty         : boolean;
     uploadStatus    : string;

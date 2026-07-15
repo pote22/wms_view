@@ -4,12 +4,9 @@ import { useCommonWhList } from '../../api/common/commonWhList';
 // JWT 토큰 정보
 import { getTokenPayload } from '../../utils/auth';
 // 서비스정보
-import { getList, saveClient, deleteClient, getCheckList,
-    type Client, type ClientRow, type CheckResult } from '../../api/master/master_0020Service'
+import { getList, saveClient, deleteClient, getCheckList, type Client, type CheckResult } from '../../api/master/master_0020Service'
 // 레이어 팝업
-import Popup from '../../components/common/Popup';
-import { usePopup } from '../../components/common/usePopup';
-import ClientSearchPopup from '../../components/common/ClientSearchPopup';
+import { usePopupContext } from '../../components/common/PopupProvider';
 // 엑셀
 import ExcelJS from 'exceljs';
 import * as XLSX from 'xlsx';
@@ -27,13 +24,10 @@ const btnDanger     = `${btnBase} border border-red-200 bg-white text-danger hov
 const btnToolbar    = "inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50";
 
 const filterBox     = "rounded-lg border border-slate-100 bg-slate-50 p-4";
-const filterGrid    = "grid grid-cols-4 gap-4";
 const filterItem    = "flex min-w-0 flex-col gap-1.5";
 const filterLabel   = "text-xs font-semibold uppercase tracking-wide text-slate-500";
 const filterSelect  = "h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
-const filterInput   = "h-9 min-w-0 flex-1 rounded-l-md border border-r-0 border-slate-300 bg-white px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
-const filterInputReadonly = "h-9 min-w-0 flex-1 rounded-r-md border border-slate-300 bg-slate-100 px-3 text-sm text-slate-600";
-const filterSearchBtn = "inline-flex h-9 w-10 items-center justify-center bg-primary text-white hover:bg-primary-hover";
+
 
 const tableWrapper  = "min-h-0 flex-1 overflow-auto";
 const cellInput     = "h-7 w-full rounded border border-slate-200 bg-white px-2 text-xs outline-none focus:border-primary focus:ring-1 focus:ring-primary/20";
@@ -44,20 +38,33 @@ const chipError = "inline-flex items-center gap-1 rounded-full bg-red-700 px-2 p
 // ───────────────────────────────────────────────────────────────
 
 const CJ_WMS_MASTER_0020: React.FC = () => {
+    // 정규식
+    const hpNoRegx  = /^0\d{1,2}-\d{3,4}-\d{4}$/;
+    const emailRegx = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
     const { srvcList, whList, selectSrvcCd, selectWhCd }    = useCommonWhList();
     const payload                                           = getTokenPayload();
+    
+    // 공통 팝업
+    const { showAlert, showConfirm, openClientSearch }      = usePopupContext();
     // 조회조건
-    const [searchSrvcCd, setSearchSrvcCd]                   = useState(selectSrvcCd);
-    const [searchWhCd, setSearchWhCd]                       = useState(selectWhCd);
-    const [searchClientCd, setSearchClientCd]               = useState('');
-    const [searchClientNm, setSearchClientNm]               = useState('');
-    const [searchUseYn, setSearchUseYn]                     = useState('');
+    const [searchSrvcCd,        setSearchSrvcCd]            = useState(selectSrvcCd);
+    const [searchWhCd,          setSearchWhCd]              = useState(selectWhCd);
+    const [searchClientCd,      setSearchClientCd]          = useState('');
+    const [searchClientNm,      setSearchClientNm]          = useState('');
+    const [searchUseYn,         setSearchUseYn]             = useState('');
     // 조회결과
-    const [clientList, setClientList]                       = useState<ClientRow[]>([]);
+    const [clientList,          setClientList]              = useState<Client[]>([]);
     // 조회실행여부
-    const [isSearched, setIsSearched]                       = useState(false);
+    const [isSearched,          setIsSearched]              = useState(false);
     // confirm 다이얼로그
-    const [isSaved, setIsSaved]                             = useState(false);
+    const [isSaved,             setIsSaved]                 = useState(false);
+    // 업로드 표시
+    const [isUploading,         setIsUploading]             = useState(false); 
+    // 거래처 검색 팝업
+    // 엑셀문서 입력
+    const fileInputRef                                      = useRef<HTMLInputElement>(null);
+    
     // 포커싱
     const cellRefs = useRef<Map<string, HTMLInputElement | HTMLSelectElement>>(new Map());
     const setCellRef = (idx: number, field: string) => (
@@ -65,18 +72,6 @@ const CJ_WMS_MASTER_0020: React.FC = () => {
             if (el) cellRefs.current.set(`${idx}_${field}`, el);
             else cellRefs.current.delete(`${idx}_${field}`);
     };
-
-    // 업로드 표시
-    const [isUploading, setIsUploading]                     = useState(false);
-    // 공통 팝업
-    const { popup, showAlert, showConfirm, closePopup }     = usePopup();
-    // 거래처 검색 팝업
-    const [clientSearchOpen, setClientSearchOpen]           = useState(false);
-    // 엑셀문서 입력
-    const fileInputRef                                      = useRef<HTMLInputElement>(null);
-    // 정규식
-    const hpNoRegx  = /^0\d{1,2}-\d{3,4}-\d{4}$/;
-    const emailRegx = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
     useEffect(() => {
         setSearchSrvcCd(selectSrvcCd);
@@ -97,7 +92,7 @@ const CJ_WMS_MASTER_0020: React.FC = () => {
                 useYn       : searchUseYn
             },
             (res) => {
-                const rows : ClientRow[] = (res.data ?? []).map((v : any) => ({
+                const rows : Client[] = (res.data ?? []).map((v : any) => ({
                     chk             : v.chk             ?? '',
                     srvcCd          : v.srvc_cd         ?? '',
                     whCd            : v.wh_cd           ?? '',
@@ -138,7 +133,7 @@ const CJ_WMS_MASTER_0020: React.FC = () => {
 
         // 유효체크 검사
         if (list.length <= 0) {
-            showAlert("저장할 항목을 선택해주세요.");
+            showAlert('저장할 항목을 선택해주세요.');
             return;
         }
 
@@ -155,24 +150,23 @@ const CJ_WMS_MASTER_0020: React.FC = () => {
 
         if (businessNoIdx !== -1) {
             const el = cellRefs.current.get(`${businessNoIdx}_businessNo`);
-            showAlert("사업자등록번호는 10자리로 입력하세요.", () => el?.focus());
+            showAlert('사업자등록번호는 10자리로 입력하세요.', () => el?.focus());
             return;
         }
 
         if (presidentHpIdx !== -1) {
             const el = cellRefs.current.get(`${presidentHpIdx}_presidentHp`);
-            showAlert("연락처를 다시 입력해주세요.", () => el?.focus());
+            showAlert('연락처를 다시 입력해주세요.', () => el?.focus());
             return;
         }
 
         if (presidentEmailIdx !== -1) {
             const el = cellRefs.current.get(`${presidentEmailIdx}_presidentEmail`);
-            showAlert("이메일 양식을 다시 입력해주세요.", () => el?.focus());
+            showAlert('이메일 양식을 다시 입력해주세요.', () => el?.focus());
             return;
         }
 
         showConfirm(`저장하시겠습니까?`, () => {
-            closePopup();
             setIsSaved(true);
 
             const clientList = list.map(v => ({
@@ -189,7 +183,7 @@ const CJ_WMS_MASTER_0020: React.FC = () => {
                 bsnTypeNm       : v.bsnTypeNm.trim(),
                 bsnItemNm       : v.bsnItemNm.trim(),
                 zipCd           : v.zipCd.trim(),
-                telNo           : v.telNo.trim(),
+                telNo           : v.telNo.trim().replace(/-/g, ''),
                 tradeType       : v.tradeType.trim(),
                 useYn           : v.useYn.trim(),
                 userId          : payload?.userId ?? ''
@@ -199,12 +193,11 @@ const CJ_WMS_MASTER_0020: React.FC = () => {
                 { clientList },
                 (res) => {
                     setIsSaved(false);
-                    showAlert(res.resultMessage ?? "저장되었습니다.");
-                    handleSearch();
+                    showAlert(res.resultMessage ?? '저장되었습니다.', () => handleSearch()); 
                 },
                 (err) => {
                     setIsSaved(false);
-                    showAlert("저장 실패: " + err?.message);
+                    showAlert('저장 실패 : ' + err?.message);
                 }
             )
         });
@@ -216,12 +209,11 @@ const CJ_WMS_MASTER_0020: React.FC = () => {
 
         // 유효체크 검사
         if (list.length <= 0) {
-            showAlert("삭제할 항목을 선택해주세요.");
+            showAlert('삭제할 항목을 선택해주세요.');
             return;
         }
 
         showConfirm(`삭제하시겠습니까?`, () => {
-            closePopup();
             deleteClient(
                 {
                     srvcCd          : list[0].srvcCd,
@@ -229,9 +221,9 @@ const CJ_WMS_MASTER_0020: React.FC = () => {
                     clientCdList    : list.map(v => ({ clientCd : v.clientCd}))
                 },
                 () => {
-                    handleSearch(); showAlert("삭제 되었습니다.");
+                    showAlert('삭제 되었습니다.', () => handleSearch());
                 },
-                (err) => showAlert("삭제 실패: " + err?.message)
+                (err) => showAlert('삭제 실패 : ' + err?.message)
             );
         });
     }
@@ -239,7 +231,7 @@ const CJ_WMS_MASTER_0020: React.FC = () => {
     // 엑셀다운로드
     const handleExcel = async () => {
         if (clientList.length === 0) {
-            showAlert("다운로드할 데이터가 없습니다.");
+            showAlert('다운로드할 데이터가 없습니다.');
             return;
         }
 
@@ -396,8 +388,8 @@ const CJ_WMS_MASTER_0020: React.FC = () => {
         ];
 
         const exampleRows = [
-            { srvcCd: selectSrvcCd, whCd: selectWhCd, clientCd: '', clientNm: '(주)대동상사', businessNo : '3128510164', address : '충남 아산시 인주면 현대로 1077', nationCd : 'KR', presidentNm : '김충훤', presidentEmail : '234324', presidentHp : '5267' },
-            { srvcCd: selectSrvcCd, whCd: selectWhCd, clientCd: '999999', clientNm: '㈜명강기업', businessNo : '1338500011', address : '경기 광명시 소하동 781-1번지', nationCd : 'KR', presidentNm : '서복동', presidentEmail : 'navercom', presidentHp : '6562-8732' }
+            { srvcCd: selectSrvcCd, whCd: selectWhCd, clientCd: '888888', clientNm: '㈜대동상사', businessNo : '3128510164', address : '충남 아산시 인주면 현대로 1077', nationCd : 'KR', presidentNm : '김충훤', presidentEmail : 'wms01@cjlogistics.com', presidentHp : '5267-8892' },
+            { srvcCd: selectSrvcCd, whCd: selectWhCd, clientCd: '999999', clientNm: '㈜명강기업', businessNo : '1338500011', address : '경기 광명시 소하동 781-1번지', nationCd : 'KR', presidentNm : '서복동', presidentEmail : 'wms02@cjlogistics.com', presidentHp : '6562-8732' }
         ];
 
         // 헤더 행 스타일
@@ -468,7 +460,7 @@ const CJ_WMS_MASTER_0020: React.FC = () => {
             const ws = wb.Sheets[wb.SheetNames[0]];
             const rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
 
-            const newItems: ClientRow[] = rows.slice(1)
+            const newItems: Client[] = rows.slice(1)
                 .filter(row => row.some(cell => cell !== null && cell !== undefined && cell !== ''))
                 .map(row => ({
                     chk             : '1',
@@ -481,7 +473,7 @@ const CJ_WMS_MASTER_0020: React.FC = () => {
                     nationCd        : String(row[6]  ?? '').trim(),
                     presidentNm     : String(row[7]  ?? '').trim(),
                     presidentEmail  : String(row[8]  ?? '').trim(),
-                    presidentHp     : String(row[9]  ?? '').trim(),
+                    presidentHp     : formatPhone(String(row[9]  ?? '').trim()),
                     bsnTypeNm       : String(row[10] ?? '').trim(),
                     bsnItemNm       : String(row[11] ?? '').trim(),
                     zipCd           : String(row[12] ?? '').trim(),
@@ -544,30 +536,29 @@ const CJ_WMS_MASTER_0020: React.FC = () => {
     }
 
     // 인라인 컬럼 편집(존)
-    const handleCellChange = (idx: number, field: keyof ClientRow, value: string) => {
-        setClientList(prev => prev.map((v, i) => i === idx ? { ...v, [field]: value, isDirty: true } : v));
+    const handleCellChange = (idx: number, field: keyof Client, value: string) => {
+        setClientList(prev => prev.map((v, i) => i === idx ? { ...v, [field]: value, isDirty: true, chk: '1' } : v));
+    };
+
+    // 연락처 포멧 변환(XXX-XXXX-XXXX)
+    const formatPhone = (value: string): string => {
+        const digits = value.replace(/\D/g, '');
+
+        if (digits.startsWith('02')) {
+            if (digits.length <= 2) return digits;
+            if (digits.length <= 5) return `${digits.slice(0,2)}-${digits.slice(2)}`;
+            if (digits.length <= 9) return `${digits.slice(0,2)}-${digits.slice(2,5)}-${digits.slice(5)}`;
+            return `${digits.slice(0,2)}-${digits.slice(2,6)}-${digits.slice(6,10)}`;
+        } else {
+            if (digits.length <= 3) return digits;
+            if (digits.length <= 6) return `${digits.slice(0,3)}-${digits.slice(3)}`;
+            if (digits.length <= 10) return `${digits.slice(0,3)}-${digits.slice(3,6)}-${digits.slice(6)}`;
+            return `${digits.slice(0,3)}-${digits.slice(3,7)}-${digits.slice(7,11)}`;
+        }
     };
 
     return (
         <>
-        <Popup
-            isOpen={popup.isOpen}
-            message={popup.message}
-            type={popup.type}
-            onConfirm={popup.onConfirm}
-            onCancel={closePopup}
-        />
-        <ClientSearchPopup
-            isOpen={clientSearchOpen}
-            srvcCd={searchSrvcCd}
-            whCd={searchWhCd}
-            initialClientCd={searchClientCd}
-            onSelect={(clientCd, clientNm) => {
-                setSearchClientCd(clientCd);
-                setSearchClientNm(clientNm);
-            }}
-            onClose={() => setClientSearchOpen(false)}
-        />
         <div className={pageShell}>
             <div className={contentShell}>
                 <div className={sectionCard}>
@@ -598,8 +589,8 @@ const CJ_WMS_MASTER_0020: React.FC = () => {
                         </div>
 
                         {/* Search Filter Box */}
-                        <div className={filterBox}>
-                            <div className={filterGrid}>
+                        <div className={`${filterBox} mt-4`}>
+                            <div className="grid grid-cols-5 gap-4">
                                 {/* 고객사 */}
                                 <div className={filterItem}>
                                     <label className={filterLabel}>고객사</label>
@@ -615,14 +606,14 @@ const CJ_WMS_MASTER_0020: React.FC = () => {
                                     </select>
                                 </div>
                                 {/* 거래처 */}
-                                <div className={filterItem}>
+                                <div className={`${filterItem} col-span-2`}>
                                     <label className={filterLabel}>거래처</label>
-                                    <div className="flex min-w-0">
-                                        <input type="text" className={filterInput} value={searchClientCd} onChange={(e) => setSearchClientCd(e.target.value)}/>
-                                        <button className={filterSearchBtn} onClick={() => setClientSearchOpen(true)}>
+                                    <div className="flex min-w-0 gap-1.5">
+                                        <input type="text" className="h-9 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" value={searchClientCd} onChange={(e) => {setSearchClientCd(e.target.value); setSearchClientNm(''); }}/>
+                                        <button className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-md bg-primary text-white hover:bg-primary-hover" onClick={() => openClientSearch((clientCd, clientNm) => { setSearchClientCd(clientCd); setSearchClientNm(clientNm); }, searchClientCd)}>
                                             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>search</span>
                                         </button>
-                                        <input type="text" className={filterInputReadonly} value={searchClientNm} onChange={(e) => setSearchClientNm(e.target.value)} readOnly />
+                                        <input type="text" className="h-9 min-w-0 flex-1 rounded-md border border-slate-300 bg-slate-100 px-3 text-sm text-slate-600" value={searchClientNm} onChange={(e) => setSearchClientNm(e.target.value)} readOnly />
                                     </div>
                                 </div>
                                 {/* 사용여부 */}
@@ -638,7 +629,7 @@ const CJ_WMS_MASTER_0020: React.FC = () => {
                         </div>
 
                         {/* Functional Toolbar */}
-                        <div className="flex items-center justify-between gap-3">
+                        <div className="mt-3 flex items-center justify-between gap-3">
                             <div className="flex items-center gap-2">
                                 <button className={btnToolbar} onClick={handleAddRow}>
                                     <span className="material-symbols-outlined" style={{ color: '#003f87', fontSize: '16px' }}>add</span>
@@ -694,13 +685,13 @@ const CJ_WMS_MASTER_0020: React.FC = () => {
                                 {/* 종목명 */}
                                 <col style={{ width: '180px' }}/>
                                 {/* 등록자 */}
-                                <col style={{ width: '90px' }}/>
+                                <col style={{ width: '120px' }}/>
                                 {/* 등록일자 */}
-                                <col style={{ width: '120px' }}/>
+                                <col style={{ width: '220px' }}/>
                                 {/* 수정자 */}
-                                <col style={{ width: '90px' }}/>
-                                {/* 수정일자 */}
                                 <col style={{ width: '120px' }}/>
+                                {/* 수정일자 */}
+                                <col style={{ width: '220px' }}/>
                                 {/* 업로드결과 */}
                                 <col style={{ width: '300px' }}/>
                             </colgroup>
@@ -789,8 +780,8 @@ const CJ_WMS_MASTER_0020: React.FC = () => {
                                     </td>
 
                                     <td className={cellCenter}>
-                                        <input type='text' className={cellInput} value={v.presidentHp}
-                                            onChange={ e => handleCellChange(idx, "presidentHp", e.target.value) }
+                                        <input type='tel' className={cellInput} maxLength={13} value={v.presidentHp}
+                                            onChange={ e => handleCellChange(idx, "presidentHp", formatPhone(e.target.value)) }
                                             ref={ setCellRef(idx, "presidentHp") as any }/>
                                     </td>
                                     <td className={cellCenter}>
@@ -831,6 +822,16 @@ const CJ_WMS_MASTER_0020: React.FC = () => {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+
+                    {/* 건수 표시 */}
+                    <div className="shrink-0 flex items-center justify-end gap-3 border-t border-slate-100 px-4 py-2 text-xs text-slate-500">
+                        <span>
+                            총 <span className="font-bold text-slate-800">{clientList.length.toLocaleString()}</span> 건
+                        </span>
+                        <span>
+                            선택 <span className="font-bold text-primary">{clientList.filter(v => v.chk === '1').length.toLocaleString()}</span> 건
+                        </span>
                     </div>
                 </div>
             </div>

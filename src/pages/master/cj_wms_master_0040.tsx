@@ -1,53 +1,39 @@
-import React, { useState, useEffect } from 'react';
-// 고객사, 센터 공통 리스트
+import React, { useState, useEffect, useRef } from 'react';
+// 서비스코드 창고코드 공통 로드
 import { useCommonWhList } from '../../api/common/commonWhList';
 // JWT 토큰 정보
 import { getTokenPayload } from '../../utils/auth';
-// 서비스 정보
+// 구역/로케이션 서비스 임포트
 import { getZoneList, getLocList, saveInfo, getCheckList, type Zone, type Loc, type CheckResult } from '../../api/master/master_0040Service'
-// 레이어 팝업
-import Popup from "../../components/common/Popup";
-import { usePopup } from "../../components/common/usePopup";
-// 존 검색 팝업
-import ZoneSearchPopup from "../../components/common/ZoneSearchPopup";
+// 팝업 컨텍스트
+import { usePopupContext } from "../../components/common/PopupProvider";
 // 엑셀
 import ExcelJS from "exceljs";
 import * as XLSX from "xlsx";
 import { type CommCode, getCommCodeList } from '../../api/common/commonService';
 
-// 존객체 정보
-interface ZoneRow extends Zone {
-    isNew           : boolean;
-    isDirty         : boolean;
-    uploadStatus    : string;
-}
-
-// 로케이션 객체정보
-interface LocRow extends Loc {
-    isNew   : boolean;
-    isDirty : boolean;
-}
-
-const pageShell   = "flex min-h-0 flex-1 bg-surface";
-const contentShell = "flex min-w-0 flex-1 flex-col";
-const sectionCard = "flex min-h-0 flex-1 flex-col rounded-t-xl border border-slate-200/60 bg-white shadow-sm";
-const sectionHeader = "shrink-0 border-b border-slate-100 p-6 flex flex-col gap-5";
-const btnBase     = "inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition";
-const btnPrimary  = `${btnBase} bg-primary text-white hover:bg-primary-hover`;
-const btnOutline  = `${btnBase} border border-slate-200 bg-white text-slate-700 hover:bg-slate-50`;
-const filterItem  = "flex min-w-0 flex-col gap-1.5";
-const filterLabel = "text-xs font-semibold uppercase tracking-wide text-slate-500";
-const filterSelect = "h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
-const filterInput  = "h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
-const filterInputReadonly = "h-9 min-w-0 flex-1 rounded-md border border-slate-300 bg-slate-100 px-2 text-sm text-slate-600";
-const filterSearchBtn = "inline-flex h-9 w-10 shrink-0 items-center justify-center rounded-md bg-primary text-white hover:bg-primary-hover";
-const panel       = "flex min-h-0 flex-col overflow-hidden rounded-lg border border-slate-200/50 bg-white shadow-sm";
-const panelHeader = "flex shrink-0 items-center justify-between border-b border-slate-100 bg-slate-50/50 px-4 py-3";
-const btnToolbar  = "inline-flex items-center gap-1 whitespace-nowrap rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50";
-const thBase      = "border-b border-slate-100 px-2 py-2.5 text-center text-[10px] font-black uppercase tracking-wide whitespace-nowrap";
-const tdBase      = "overflow-hidden text-ellipsis whitespace-nowrap px-2 py-2 text-xs";
-const cellCenter  = "px-2 py-2 text-center text-xs";
-const cellInput   = "w-full min-w-0 rounded border border-slate-300 bg-white px-2 py-1 text-xs outline-none focus:border-primary";
+// ── Tailwind 상수 ──────────────────────────────────────────────
+const pageShell             = "flex min-h-0 flex-1 bg-surface";
+const contentShell          = "flex min-w-0 flex-1 flex-col";
+const sectionCard           = "flex min-h-0 flex-1 flex-col rounded-t-xl border border-slate-200/60 bg-white shadow-sm";
+const sectionHeader         = "shrink-0 border-b border-slate-100 p-6 flex flex-col gap-5";
+const btnBase               = "inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition";
+const btnPrimary            = `${btnBase} bg-primary text-white hover:bg-primary-hover`;
+const btnOutline            = `${btnBase} border border-slate-200 bg-white text-slate-700 hover:bg-slate-50`;
+const filterItem            = "flex min-w-0 flex-col gap-1.5";
+const filterLabel           = "text-xs font-semibold uppercase tracking-wide text-slate-500";
+const filterSelect          = "h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
+const filterInput           = "h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
+const filterInputReadonly   = "h-9 min-w-0 flex-1 rounded-md border border-slate-300 bg-slate-100 px-2 text-sm text-slate-600";
+const filterSearchBtn       = "inline-flex h-9 w-10 shrink-0 items-center justify-center rounded-md bg-primary text-white hover:bg-primary-hover";
+const panel                 = "flex min-h-0 flex-col overflow-hidden rounded-lg border border-slate-200/50 bg-white shadow-sm";
+const panelHeader           = "flex shrink-0 items-center justify-between border-b border-slate-100 bg-slate-50/50 px-4 py-3";
+const btnToolbar            = "inline-flex items-center gap-1 whitespace-nowrap rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50";
+const thBase                = "border-b border-slate-100 px-2 py-2.5 text-center text-[10px] font-black uppercase tracking-wide whitespace-nowrap";
+const tdBase                = "overflow-hidden text-ellipsis whitespace-nowrap px-2 py-2 text-xs";
+const cellCenter            = "px-2 py-2 text-center text-xs";
+const cellInput             = "w-full min-w-0 rounded border border-slate-300 bg-white px-2 py-1 text-xs outline-none focus:border-primary";
+// ───────────────────────────────────────────────────────────────
 
 const CJ_WMS_MASTER_0040: React.FC = () => {
     const { srvcList, whList, selectSrvcCd, selectWhCd }    = useCommonWhList();
@@ -60,19 +46,27 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
     const [searchLocCd,    setSearchLocCd]                  = useState('');
     const [searchUseYn,    setSearchUseYn]                  = useState('');
     // 조회결과
-    const [zoneList,       setZoneList]                     = useState<ZoneRow[]>([]);
-    const [locList,        setLocList]                      = useState<LocRow[]>([]);
+    const [zoneList,       setZoneList]                     = useState<Zone[]>([]);
+    const [locList,        setLocList]                      = useState<Loc[]>([]);
     const [selectedZoneCd, setSelectedZoneCd]               = useState('');
     const [zoneSearched,   setZoneSearched]                 = useState(false);
     const [locSearched,    setLocSearched]                  = useState(false);
 
     const [locClsList,     setLocClsList]                   = useState<CommCode[]>([]);
-    const [zonePopupOpen,  setZonePopupOpen]                = useState(false);
 
-    // 로딩바표시
+    // 업로드 진행중
     const [isUploading, setIsUploading] = useState(false);
-    // 공통 팝업
-    const { popup, showAlert, showConfirm, closePopup } = usePopup();
+    // 공통 임포트
+    const { showAlert, showConfirm, openZoneSearch } = usePopupContext();
+
+    // 포커싱
+    const cellRefs                                          = useRef<Map<string, HTMLInputElement | HTMLSelectElement>>(new Map());
+    
+    const setCellRef = (idx: number, field: string) => (
+        el: HTMLInputElement | HTMLSelectElement | null) => {
+            if (el) cellRefs.current.set(`${idx}_${field}`, el);
+            else cellRefs.current.delete(`${idx}_${field}`);
+    };
 
     // 조회
     const handleSearch = () => {
@@ -89,16 +83,16 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
                 const resultCode = res.resultCode;
 
                 if (resultCode === "0000") {
-                    const rows : ZoneRow[] = (res.data ?? []).map((v : any) => ({
-                        srvcCd      : v.srvc_cd         ?? '',
-                        whCd        : v.wh_cd           ?? '',
-                        zoneCd      : v.zone_cd         ?? '',
-                        zoneNm      : v.zone_nm         ?? '',
-                        useYn       : v.use_yn          ?? '',
-                        regId       : v.reg_id          ?? '',
-                        regDate     : v.reg_date        ?? '',
-                        updId       : v.upd_id          ?? '',
-                        updDate     : v.upd_date        ?? '',
+                    const rows : Zone[] = (res.data ?? []).map((v : any) => ({
+                        srvcCd      : v.srvc_cd        ?? '',
+                        whCd        : v.wh_cd          ?? '',
+                        zoneCd      : v.zone_cd        ?? '',
+                        zoneNm      : v.zone_nm        ?? '',
+                        useYn       : v.use_yn         ?? '',
+                        regId       : v.reg_id         ?? '',
+                        regDate     : v.reg_date       ?? '',
+                        updId       : v.upd_id         ?? '',
+                        updDate     : v.upd_date       ?? '',
                         isNew       : false,
                         isDirty     : false,
                         uploadStatus: ''
@@ -106,34 +100,70 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
 
                     setZoneList(rows);
                     setZoneSearched(true);
-                    setLocList([]);
-                    setSelectedZoneCd('');
-                    setLocSearched(false);
+
+                    if (searchLocCd.trim() && rows.length > 0) {
+                        const firstZone = rows[0];
+                        setSelectedZoneCd(firstZone.zoneCd);
+                        getLocList(
+                            {
+                                srvcCd  : firstZone.srvcCd || searchSrvcCd,
+                                whCd    : firstZone.whCd   || searchWhCd,
+                                zoneCd  : firstZone.zoneCd,
+                                locCd   : searchLocCd
+                            },
+                            (locRes) => {
+                                if (locRes.resultCode === "0000") {
+                                    const locRows: Loc[] = (locRes.data ?? []).map((lv: any) => ({
+                                        srvcCd   : lv.srvc_cd    ?? '',
+                                        whCd     : lv.wh_cd      ?? '',
+                                        zoneCd   : lv.zone_cd    ?? '',
+                                        locCd    : lv.loc_cd     ?? '',
+                                        locClsCd : lv.loc_cls_cd ?? '',
+                                        rmk      : lv.rmk        ?? '',
+                                        useYn    : lv.use_yn     ?? '',
+                                        regId    : lv.reg_id     ?? '',
+                                        regDate  : lv.reg_date   ?? '',
+                                        updId    : lv.upd_id     ?? '',
+                                        updDate  : lv.upd_date   ?? '',
+                                        isNew    : false,
+                                        isDirty  : false
+                                    }));
+                                    setLocList(locRows);
+                                    setLocSearched(true);
+                                }
+                            },
+                            (err) => showAlert("로케이션 조회 실패: " + err?.message)
+                        );
+                    } else {
+                        setLocList([]);
+                        setSelectedZoneCd('');
+                        setLocSearched(false);
+                    }
                 }
             },
             (err) => showAlert("조회 실패: " + err?.message)
         )
     }
 
-    const handleZoneSelect = (v : ZoneRow) => {
+    const handleZoneSelect = (v : Zone) => {
         setSelectedZoneCd(v.zoneCd);
         getLocList (
             {
-                srvcCd  : v.srvcCd,
-                whCd    : v.whCd,
+                srvcCd  : v.srvcCd || searchSrvcCd,
+                whCd    : v.whCd || searchWhCd,
                 zoneCd  : v.zoneCd,
                 locCd   : searchLocCd
             },
             (res) => {
                 if (res.resultCode == "0000") {
-                    const rows : LocRow[] = (res.data ?? []).map((v : any) => ({
+                    const rows : Loc[] = (res.data ?? []).map((v : any) => ({
                         srvcCd      : v.srvc_cd     ?? '',
                         whCd        : v.wh_cd       ?? '',
                         zoneCd      : v.zone_cd     ?? '',
                         locCd       : v.loc_cd      ?? '',
                         locClsCd    : v.loc_cls_cd  ?? '',
                         rmk         : v.rmk         ?? '',
-                        useYn       : v.use_yn       ?? '',
+                        useYn       : v.use_yn      ?? '',
                         regId       : v.reg_id      ?? '',
                         regDate     : v.reg_date    ?? '',
                         updId       : v.upd_id      ?? '',
@@ -148,8 +178,6 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
             },
             (err) => showAlert("해당 로케이션 조회 실패: " + err?.message)
         )
-
-
     }
 
     // 저장
@@ -158,7 +186,37 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
         const isDirtyLoc    = locList.filter(v => v.isNew || v.isDirty);
 
         if (isDirtyZone.length === 0 && isDirtyLoc.length === 0) {
-            showAlert("저장할 변경 내용이 없습니다.");
+            showAlert("저장할 변경사항이 없습니다.");
+            return;
+        }
+
+        const invalidZoneCdInfo = zoneList.filter(v => v.isNew && !v.zoneCd.trim())[0];
+        const invalidZoneNmInfo = zoneList.filter(v => v.isNew && v.zoneCd.trim() && !v.zoneNm.trim())[0];
+
+        if (zoneList.indexOf(invalidZoneCdInfo) !== -1) {
+            const el = cellRefs.current.get(`${zoneList.indexOf(invalidZoneCdInfo)}_zoneCd`);
+            showAlert("존 코드를 입력하세요.", () => el?.focus());
+            return;
+        }
+
+        if (zoneList.indexOf(invalidZoneNmInfo) !== -1) {
+            const el = cellRefs.current.get(`${zoneList.indexOf(invalidZoneNmInfo)}_zoneNm`);
+            showAlert("존명을 입력하세요.", () => el?.focus());
+            return;
+        }
+
+        const invalidLocCdInfo    = locList.filter(v => v.isNew && v.zoneCd && !v.locCd.trim())[0];
+        const invalidLocClsCdInfo = locList.filter(v => v.isNew && v.zoneCd && !v.locClsCd.trim())[0];
+        
+        if (locList.indexOf(invalidLocCdInfo) !== -1) {
+            const el = cellRefs.current.get(`${locList.indexOf(invalidLocCdInfo)}_locCd`);
+            showAlert("로케이션 코드를 입력하세요.", () => el?.focus());
+            return;
+        }
+
+        if (locList.indexOf(invalidLocClsCdInfo) !== -1) {
+            const el = cellRefs.current.get(`${locList.indexOf(invalidLocClsCdInfo)}_locClsCd`);
+            showAlert("로케이션 구분을 입력하세요.", () => el?.focus());
             return;
         }
 
@@ -187,8 +245,7 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
               },
               (res) => {
                   if (res.resultCode === "0000") {
-                      showAlert("저장되었습니다.");
-                      handleSearch();
+                    showAlert("저장되었습니다.", () => handleSearch()); 
                   }
               },
               (err) => showAlert("저장 실패: " + err?.message)
@@ -196,7 +253,7 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
       });
     }
 
-    // 엑셀다운로드
+    // 엑셀 다운로드
     const handleExcel = async () => {
         if (zoneList.length === 0) {
             showAlert("다운로드할 데이터가 없습니다.");
@@ -204,14 +261,14 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
         }
 
         const wb = new ExcelJS.Workbook();
-        const ws = wb.addWorksheet("존 마스터");
+        const ws = wb.addWorksheet("구역목록");
 
-        // 컬럼 정의
+        // 헤더 정의
         ws.columns = [
-            { header: "고객사"      ,   key: "srvcCd",          width: 20 },
-            { header: "센터"        ,   key: "whCd",            width: 15 },
-            { header: "존코드"      ,   key: "zoneCd",          width: 15 },
-            { header: "존명"        ,   key: "zoneNm",          width: 15 },
+            { header: "서비스코드"      ,   key: "srvcCd",          width: 20 },
+            { header: "창고코드"        ,   key: "whCd",            width: 15 },
+            { header: "구역코드"      ,   key: "zoneCd",          width: 15 },
+            { header: "구역명"        ,   key: "zoneNm",          width: 15 },
             { header: "사용여부"    ,   key: "useYn",           width: 15 },
             { header: "등록자"      ,   key: "regId",           width: 14 },
             { header: "등록일자"    ,   key: "regDate",         width: 14 },
@@ -219,7 +276,7 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
             { header: "수정일자"    ,   key: "updDate",         width: 14 },
         ];
 
-        // 헤더 스타일
+        // 헤더 행 서식
         const headerRow = ws.getRow(1);
 
         headerRow.eachCell((cell) => {
@@ -250,7 +307,7 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
 
         headerRow.height = 22;
 
-        // 데이터 행 추가
+        // 데이터 추가
         zoneList.forEach(v => {
             const row = ws.addRow({
                 srvcCd      : v.srvcCd          ?? selectSrvcCd,
@@ -287,7 +344,7 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
         const a         = document.createElement("a");
 
         a.href = url;
-        a.download = `폼목관리_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        a.download = `구역목록_${new Date().toISOString().slice(0, 10)}.xlsx`;
 
         document.body.appendChild(a);
 
@@ -296,7 +353,7 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
         window.URL.revokeObjectURL(url)
     }
 
-    // 행추가(존)
+    // 행추가(구역)
     const handleAddZoneRow = () => {
         setZoneList(prev => [...prev, {
             srvcCd      : selectSrvcCd,
@@ -314,7 +371,7 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
         }]);
     }
 
-    // 행삭제(존)
+    // 행삭제구역
     const handleDeleteZoneRow = () => {
         const lastNewIdx = zoneList.map((v, i) => v.isNew ? i : -1).filter(i => i >= 0).pop();
 
@@ -323,10 +380,10 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
         setZoneList(prev => prev.filter((_, i) => i !== lastNewIdx));
     }
 
-    // 양식다운로드
+    // 템플릿다운로드
     const handleTempletDownload = async () => {
         const wb = new ExcelJS.Workbook();
-        const ws = wb.addWorksheet("존마스터_양식");
+        const ws = wb.addWorksheet("존 관리_템플릿");
 
         ws.columns = [
             { header: "고객사",     key: "srvcCd",       width: 20 },
@@ -336,12 +393,12 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
         ];
 
         const exampleRows = [
-            { srvcCd: selectSrvcCd, whCd: selectWhCd, zoneCd : 'A',     zoneNm : '존명 - 첫번째'},
-            { srvcCd: selectSrvcCd, whCd: selectWhCd, zoneCd : 'B',     zoneNm : '존명 - 두번째'},
+            { srvcCd: selectSrvcCd, whCd: selectWhCd, zoneCd : 'A',     zoneNm : '존명 - 일반구역'},
+            { srvcCd: selectSrvcCd, whCd: selectWhCd, zoneCd : 'B',     zoneNm : '존명 - 불량구역'},
             { srvcCd: selectSrvcCd, whCd: selectWhCd, zoneCd: 'STAGE',  zoneNm : 'STAGE' }
         ];
 
-        // 헤더 행 스타일
+        // 헤더 행 서식
         const headerRow = ws.getRow(1);
         headerRow.eachCell((cell) => {
             cell.fill = {
@@ -386,7 +443,7 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
         const a         = document.createElement("a");
 
         a.href          = url;
-        a.download      = "존마스터_양식.xlsx";
+        a.download      = "존 관리_템플릿.xlsx";
 
         document.body.appendChild(a);
         a.click();
@@ -394,7 +451,7 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
         window.URL.revokeObjectURL(url);
     }
 
-    // 엑셀양식업로드
+    // 엑셀 업로드
     const handleExcelUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -408,9 +465,8 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
             const ws = wb.Sheets[wb.SheetNames[0]];
             const rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
 
-            const newZone : ZoneRow[] = rows.slice(1)
-                .filter(row => row.length > 0 && row[2])
-                .map(row => ({
+            const newZone : Zone[] = rows.slice(1)
+                .filter(row => row.some((cell: any) => cell !== null && cell !== undefined && cell !== '')).map(row => ({
                     srvcCd       : String(row[0] ?? selectSrvcCd).trim(),
                     whCd         : String(row[1] ?? selectWhCd).trim(),
                     zoneCd       : String(row[2] ?? '').trim(),
@@ -425,10 +481,8 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
                     uploadStatus : '검증중...',
                 }));
 
-            console.log("----> newZone : " + newZone);
-
             setZoneList(newZone);
-
+            
             getCheckList(
                 { zoneList: newZone.map(v => ({
                     zoneCd     : v.zoneCd
@@ -477,13 +531,13 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
         }]);
     }
 
-     // 인라인 컬럼 편집(존)
-    const handleZoneCellChange = (idx: number, field: keyof ZoneRow, value: string) => {
+     // 셀값 변경(구역)
+    const handleZoneCellChange = (idx: number, field: keyof Zone, value: string) => {
         setZoneList(prev => prev.map((v, i) => i === idx ? { ...v, [field]: value, isDirty: true } : v));
     };
 
-    // 인라인 컬럼 편집(로케이션)
-    const handleLocCellChange = (idx: number, field: keyof LocRow, value: string) => {
+    // 셀값 변경(로케이션)
+    const handleLocCellChange = (idx: number, field: keyof Loc, value: string) => {
         setLocList(prev => prev.map((v, i) => i === idx ? { ...v, [field]: value, isDirty: true } : v));
     };
 
@@ -506,43 +560,35 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
 
     useEffect(() => {
         getCommCodeList(
-            {     sys_grp_cd    : 'WM1040'
-                , sys_cd        : ''
-                , sys_cdnm      : ''
-                , srvc_cd       : ''
-                , sys_etc1      : ''
-                , sys_etc2      : ''
-                , sys_etc3      : ''
-                , sys_etc4      : ''
-                , sys_etc5      : ''
+            {     sysGrpCd    : 'WM1040'
+                , sysCd       : ''
+                , sysCdNm     : ''
+                , srvcCd      : ''
+                , sysEtc1     : ''
+                , sysEtc2     : ''
+                , sysEtc3     : ''
+                , sysEtc4     : ''
+                , sysEtc5     : ''
             },
-            (res) => setLocClsList(res.data ?? []),
+            (res) => {
+                const rows : CommCode[] = (res.data ?? []).map((v : any) => ({
+                    sysCd       : v.sys_cd      ?? '',
+                    sysCdNm     : v.sys_cdnm    ?? ''
+                }));
+                
+                setLocClsList(rows);
+            },
             (err) => showAlert("공통코드 조회 실패 : " + err?.message)
         );
     }, [])
 
     return (
         <>
-        <Popup
-            isOpen={popup.isOpen}
-            message={popup.message}
-            type={popup.type}
-            onConfirm={popup.onConfirm}
-            onCancel={closePopup}
-        />
-        <ZoneSearchPopup
-            isOpen={zonePopupOpen}
-            srvcCd={searchSrvcCd}
-            whCd={searchWhCd}
-            initialZoneCd={searchZoneCd}
-            onSelect={(zoneCd, zoneNm) => { setSearchZoneCd(zoneCd); setSearchZoneNm(zoneNm); }}
-            onClose={() => setZonePopupOpen(false)}
-        />
         <div className={pageShell}>
             <div className={contentShell}>
                 <div className={sectionCard}>
 
-                    {/* ── 섹션 헤더 ── */}
+                    {/* 검색 영역 헤더 */}
                     <div className={sectionHeader}>
                         <div className="flex items-center justify-between">
                             <div>
@@ -565,8 +611,8 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
                             </div>
                         </div>
                         <div className="rounded-lg border border-slate-100 bg-slate-50 p-4">
-                            <div className="grid grid-cols-[1fr_1fr_1fr_1fr_0.8fr] gap-4">
-                                {/* 고객사 */}
+                            <div className="grid grid-cols-[0.7fr_0.7fr_1.6fr_1fr_0.8fr] gap-4">
+                                {/* 고객사*/}
                                 <div className={filterItem}>
                                     <label className={filterLabel}>고객사</label>
                                     <select className={filterSelect} value={searchSrvcCd} onChange={e => setSearchSrvcCd(e.target.value)}>
@@ -580,12 +626,12 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
                                         {whList.map(w => <option key={w.whCd} value={w.whCd}>{`${w.whCd} [${w.whNm}]`}</option>)}
                                     </select>
                                 </div>
-                                {/* 존 */}
+                                {/* 구역*/}
                                 <div className={filterItem}>
                                     <label className={filterLabel}>존</label>
                                     <div className="flex items-center gap-1 min-w-0">
-                                        <input type="text" className="h-9 w-[70px] flex-none rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" value={searchZoneCd} onChange={e => setSearchZoneCd(e.target.value)} />
-                                        <button className={filterSearchBtn} onClick={() => setZonePopupOpen(true)}>
+                                        <input type="text" className="h-9 w-[300px] flex-none rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" value={searchZoneCd} onChange={e => { setSearchZoneCd(e.target.value); setSearchZoneNm(''); }} />
+                                        <button className={filterSearchBtn} onClick={() => openZoneSearch((zoneCd, zoneNm) => { setSearchZoneCd(zoneCd); setSearchZoneNm(zoneNm); }, searchZoneCd)}>
                                             <span className="material-symbols-outlined text-[18px]">search</span>
                                         </button>
                                         <input type="text" className={filterInputReadonly} value={searchZoneNm} readOnly />
@@ -609,16 +655,15 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* ── 패널 그리드 ── */}
+                    {/* 좌우 패널 레이아웃 */}
                     <div className="grid min-h-0 flex-1 grid-cols-[6fr_4fr] gap-4 p-4">
 
-                        {/* ── 존 패널 ── */}
+                        {/* 좌 구역 패널 */}
                         <section className={panel}>
                             <div className={panelHeader}>
                                 <div className="flex items-center gap-2">
                                     <span className="h-4 w-1 shrink-0 rounded-full bg-primary" />
                                     <h4 className="text-sm font-bold text-slate-800">존</h4>
-                                    <span className="text-xs text-muted">(Total: {zoneList.length})</span>
                                 </div>
                                 <div className="flex gap-1">
                                     <button className={btnToolbar} onClick={handleAddZoneRow}>
@@ -627,23 +672,22 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
                                     </button>
                                     <button className={btnToolbar} onClick={handleDeleteZoneRow}>
                                         <span className="material-symbols-outlined text-danger text-[14px]">delete</span>
-                                        행삭제
-                                    </button>
+                                        행삭제                                    </button>
                                     <button className={btnToolbar} onClick={handleTempletDownload}>
                                         <span className="material-symbols-outlined text-[14px]">description</span>
-                                        양식다운로드
+                                        템플릿다운로드
                                     </button>
                                     <label
                                         className={btnToolbar + (isUploading ? ' opacity-50 cursor-not-allowed pointer-events-none' : '')}
                                     >
                                         <input type="file" accept=".xlsx,.xls" className="hidden" onChange={handleExcelUpload} />
                                         <span className="material-symbols-outlined text-[14px]">upload_file</span>
-                                        {isUploading ? "업로드 중..." : "엑셀업로드"}
+                                        {isUploading ? "업로드중.." : "엑셀업로드"}
                                     </label>
                                 </div>
                             </div>
 
-                            <div className="min-h-0 flex-1 overflow-auto">
+                            <div className="min-h-0 flex-1 overflow-auto" style={{ flex: 1 }}>
                                 <table className="w-full table-fixed border-collapse text-left">
                                     <colgroup>
                                         <col style={{ width: '120px' }} />
@@ -666,7 +710,7 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
                                             <th className={thBase}>등록일자</th>
                                             <th className={thBase}>수정자</th>
                                             <th className={thBase}>수정일자</th>
-                                            <th className={thBase}>업로드결과</th>
+                                            <th className={thBase}>업로드상태</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-50 text-slate-700">
@@ -689,14 +733,16 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
                                                         item.isNew
                                                         ? <input type="text" className={cellInput} value={item.zoneCd}
                                                            onChange={e => handleZoneCellChange(index, "zoneCd", e.target.value)}
-                                                           onClick={e => e.stopPropagation()}/>
+                                                           onClick={e => e.stopPropagation()}
+                                                           ref={setCellRef(index, "zoneCd") as any}/>
                                                         : item.zoneCd
                                                     }
                                                 </td>
                                                 <td className={tdBase}>
                                                     <input type="text" className={cellInput} value={item.zoneNm}
                                                      onChange={e => handleZoneCellChange(index, "zoneNm", e.target.value)}
-                                                     onClick={e => e.stopPropagation()}/>
+                                                     onClick={e => e.stopPropagation()}
+                                                     ref={setCellRef(index, "zoneNm") as any}/>
                                                 </td>
                                                 <td className={cellCenter}>
                                                     <select className={cellInput} value={item.useYn}
@@ -716,7 +762,7 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
                                                             <span className="material-symbols-outlined text-[11px]">check_circle</span>
                                                             OK
                                                         </span>
-                                                    ) : item.uploadStatus && item.uploadStatus !== '검증중...' ? (
+                                    ) : item.uploadStatus && item.uploadStatus !== '검증중...' ? (
                                                         <div className="flex flex-wrap justify-center gap-1">
                                                             {item.uploadStatus.split(' / ').filter(Boolean).map((err, i) => (
                                                                 <span key={i} className="inline-flex items-center gap-0.5 whitespace-nowrap rounded-full bg-danger px-2 py-0.5 text-[10px] font-bold text-white">
@@ -732,17 +778,18 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
                                     </tbody>
                                 </table>
                             </div>
+                            {/* 건수 표시 */}
+                            <div className="shrink-0 flex items-center justify-end border-t border-slate-100 px-4 py-2 text-xs text-slate-500">
+                                <span>총 <span className="font-bold text-slate-800">{zoneList.length.toLocaleString()}</span> 건</span>
+                            </div>
                         </section>
 
-                        {/* ── 로케이션 패널 ── */}
+                        {/* 우 로케이션 패널 */}
                         <section className={panel}>
                             <div className={panelHeader}>
                                 <div className="flex items-center gap-2">
                                     <span className="h-4 w-1 shrink-0 rounded-full bg-primary-hover" />
                                     <h4 className="text-sm font-bold text-slate-800">로케이션</h4>
-                                    <span className="text-xs text-muted">
-                                        {selectedZoneCd ? `${selectedZoneCd} · ` : ''}(Total: {locList.length})
-                                    </span>
                                 </div>
                                 <div className="flex gap-1">
                                     <button className={btnToolbar} onClick={handleAddLocRow}>
@@ -751,8 +798,7 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
                                     </button>
                                     <button className={btnToolbar} onClick={handleDeleteLocRow}>
                                         <span className="material-symbols-outlined text-danger text-[14px]">delete</span>
-                                        행삭제
-                                    </button>
+                                        행삭제                                    </button>
                                 </div>
                             </div>
 
@@ -795,7 +841,8 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
                                                         item.isNew
                                                         ? <input type="text" className={cellInput} value={item.locCd}
                                                            onChange={e => handleLocCellChange(index, "locCd", e.target.value)}
-                                                           onClick={e => e.stopPropagation()}/>
+                                                           onClick={e => e.stopPropagation()}
+                                                           ref={setCellRef(index, "locCd") as any}/>
                                                         : item.locCd
                                                     }
                                                 </td>
@@ -805,7 +852,7 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
                                                      onClick={e => e.stopPropagation()}>
                                                         {
                                                             locClsList.map(v => (
-                                                                <option key={v.sys_cd} value={v.sys_cd}>{v.sys_cdnm}</option>
+                                                                <option key={v.sysCd} value={v.sysCd}>{v.sysCdNm}</option>
                                                             ))
                                                         }
                                                     </select>
@@ -821,7 +868,8 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
                                                 <td className="px-2 py-2 text-[11px] text-muted">
                                                     <input type="text" className={cellInput} value={item.rmk}
                                                      onChange={e => handleLocCellChange(index, "rmk", e.target.value)}
-                                                     onClick={e => e.stopPropagation()}/>
+                                                     onClick={e => e.stopPropagation()}
+                                                     ref={setCellRef(index, "rmk") as any}/>
                                                 </td>
                                                 <td className={cellCenter}>{item.regId}</td>
                                                 <td className={cellCenter}>{item.regDate}</td>
@@ -831,6 +879,10 @@ const CJ_WMS_MASTER_0040: React.FC = () => {
                                         ))}
                                     </tbody>
                                 </table>
+                            </div>
+                            {/* 건수 표시 */}
+                            <div className="shrink-0 flex items-center justify-end border-t border-slate-100 px-4 py-2 text-xs text-slate-500">
+                                <span>총 <span className="font-bold text-slate-800">{locList.length.toLocaleString()}</span> 건</span>
                             </div>
                         </section>
                     </div>

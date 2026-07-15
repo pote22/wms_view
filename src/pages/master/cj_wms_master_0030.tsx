@@ -5,87 +5,78 @@ import { useCommonWhList } from '../../api/common/commonWhList';
 import { getTokenPayload } from '../../utils/auth';
 import { getList, saveProdInfo, deleteProdInfo, getCheckList, type Item, type CheckResult } from '../../api/master/master_0030Service'
 // 레이어 팝업
-import Popup from "../../components/common/Popup";
-import { usePopup } from "../../components/common/usePopup";
-// 품목 검색 팝업
-import ProdSearchPopup from "../../components/common/ProdSearchPopup";
+import { usePopupContext } from "../../components/common/PopupProvider";
 // 엑셀
 import ExcelJS from "exceljs";
 import * as XLSX from "xlsx";
 
 // ── Tailwind 상수 ──────────────────────────────────────────────
-const pageShell     = "flex min-h-0 flex-1 bg-surface";
-const contentShell  = "flex min-w-0 flex-1 flex-col";
-const sectionCard   = "flex min-h-0 flex-1 flex-col rounded-t-xl border border-slate-200/60 bg-surface-card shadow-sm";
-const sectionHeader = "shrink-0 border-b border-slate-100 p-6";
+const pageShell             = "flex min-h-0 flex-1 bg-surface";
+const contentShell          = "flex min-w-0 flex-1 flex-col";
+const sectionCard           = "flex min-h-0 flex-1 flex-col rounded-t-xl border border-slate-200/60 bg-surface-card shadow-sm";
+const sectionHeader         = "shrink-0 border-b border-slate-100 p-6";
 
-const btnBase       = "inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition";
-const btnPrimary    = `${btnBase} bg-primary text-white hover:bg-primary-hover`;
-const btnOutline    = `${btnBase} border border-border-soft bg-white text-slate-700 hover:bg-slate-50`;
-const btnDanger     = `${btnBase} border border-red-200 bg-white text-danger hover:bg-red-50`;
-const btnToolbar    = "inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50";
+const btnBase               = "inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition";
+const btnPrimary            = `${btnBase} bg-primary text-white hover:bg-primary-hover`;
+const btnOutline            = `${btnBase} border border-border-soft bg-white text-slate-700 hover:bg-slate-50`;
+const btnDanger             = `${btnBase} border border-red-200 bg-white text-danger hover:bg-red-50`;
+const btnToolbar            = "inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50";
 
-const filterBox     = "rounded-lg border border-slate-100 bg-slate-50 p-4";
-const filterItem    = "flex min-w-0 flex-col gap-1.5";
-const filterLabel   = "text-xs font-semibold uppercase tracking-wide text-slate-500";
-const filterSelect  = "h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
-const filterInput   = "h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/15";
-const filterInputSearchOnly = "h-9 min-w-0 flex-1 rounded-l-md border border-r-0 border-slate-300 bg-white px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
-const filterInputReadonly   = "h-9 min-w-0 flex-1 rounded-r-md border border-slate-300 bg-slate-100 px-3 text-sm text-slate-600";
-const filterSearchBtn       = "inline-flex h-9 w-10 items-center justify-center bg-primary text-white hover:bg-primary-hover";
+const filterBox             = "rounded-lg border border-slate-100 bg-slate-50 p-4";
+const filterItem            = "flex min-w-0 flex-col gap-1.5";
+const filterLabel           = "text-xs font-semibold uppercase tracking-wide text-slate-500";
+const filterSelect          = "h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
+const filterInput           = "h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/15";
+const filterInputSearchOnly = "h-9 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
+const filterInputReadonly   = "h-9 min-w-0 flex-1 rounded-md border border-slate-300 bg-slate-100 px-3 text-sm text-slate-600";
+const filterSearchBtn       = "inline-flex h-9 w-9 flex-none items-center justify-center rounded-md bg-primary text-white hover:bg-primary-hover";
 
-const tableWrapper  = "min-h-0 flex-1 overflow-auto";
-const cellInput     = "h-7 w-full rounded border border-slate-200 bg-white px-2 text-xs outline-none focus:border-primary focus:ring-1 focus:ring-primary/20";
-const cellCenter    = "px-2 py-2 text-center";
-const cellMedium    = "px-2 py-2 font-medium text-slate-700";
+const tableWrapper          = "min-h-0 flex-1 overflow-auto";
+const cellInput             = "h-7 w-full rounded border border-slate-200 bg-white px-2 text-xs outline-none focus:border-primary focus:ring-1 focus:ring-primary/20";
+const cellCenter            = "px-2 py-2 text-center";
+const cellMedium            = "px-2 py-2 font-medium text-slate-700";
 
-const chipOk    = "inline-flex items-center gap-1 rounded-full bg-green-700 px-2 py-0.5 text-[10px] font-bold text-white";
-const chipError = "inline-flex items-center gap-1 rounded-full bg-red-700 px-2 py-0.5 text-[10px] font-bold text-white whitespace-nowrap";
+const chipOk                = "inline-flex items-center gap-1 rounded-full bg-green-700 px-2 py-0.5 text-[10px] font-bold text-white";
+const chipError             = "inline-flex items-center gap-1 rounded-full bg-red-700 px-2 py-0.5 text-[10px] font-bold text-white whitespace-nowrap";
 
 // 그룹 헤더/셀 배경색 (Tailwind 임의값으로 표현하기 어려운 rgba 조합)
-const thGroupStyle    = { backgroundColor: 'rgba(219, 234, 254, 0.5)', borderBottom: '2px solid #bfdbfe', color: '#3b82f6' };
-const thGroupAltStyle = { backgroundColor: 'rgba(254, 243, 199, 0.5)', borderBottom: '2px solid #fde68a', color: '#f59e0b' };
-const thGroupSubStyle = { backgroundColor: 'rgba(219, 234, 254, 0.25)' };
-const thGroupSubAltStyle = { backgroundColor: 'rgba(254, 243, 199, 0.25)' };
-const cellGroupStyle    = { backgroundColor: 'rgba(219, 234, 254, 0.1)' };
-const cellGroupAltStyle = { backgroundColor: 'rgba(254, 243, 199, 0.1)' };
+const thGroupStyle          = { backgroundColor: '#dbeafe', borderBottom: '2px solid #bfdbfe', color: '#3b82f6' };
+const thGroupAltStyle       = { backgroundColor: '#fef3c7', borderBottom: '2px solid #fde68a', color: '#f59e0b' };
+const thGroupSubStyle       = { backgroundColor: '#eff6ff' };
+const thGroupSubAltStyle    = { backgroundColor: '#fffbeb' };
+const cellGroupStyle        = { backgroundColor: 'rgba(219, 234, 254, 0.1)' };
+const cellGroupAltStyle     = { backgroundColor: 'rgba(254, 243, 199, 0.1)' };
 // ───────────────────────────────────────────────────────────────
 
-// 화면에서 사용하는 품목정보
-interface ItemRow extends Item {
-    chk             : string;   // 체크박스 ('0'=미선택, '1'=선택)
-    isNew           : boolean;  // 신규여부
-    isDirty         : boolean;  // 수정여부
-    uploadStatus    : string;   // 엑셀업로드 상태
-}
 
 const CJ_WMS_MASTER_0030: React.FC = () => {
     // 정수&실수 정규식
     const INT_REGEX     = /^[0-9]+$/;
     const FLOAT_REGEX   = /^[0-9]*\.?[0-9]*$/
     // 고객사&센터 리스트 조회
-    const { srvcList, whList, selectSrvcCd, selectWhCd } = useCommonWhList();
+    const { srvcList, whList, selectSrvcCd, selectWhCd }    = useCommonWhList();
     // 공통 팝업
-    const { popup, showAlert, showConfirm, closePopup } = usePopup();
+    const { showAlert, showConfirm, openProdSearch }        = usePopupContext();
     // 토큰 정보
-    const payload = getTokenPayload();
+    const payload                                           = getTokenPayload();
     // 조회조건
-    const [searchSrvcCd, setSearchSrvcCd]               = useState(selectSrvcCd);
-    const [searchWhCd, setSearchWhCd]                   = useState(selectWhCd);
-    const [searchProdCd, setSearchProdCd]               = useState('');
-    const [searchProdNm, setSearchProdNm]               = useState('');
-    const [searchUseYn, setSearchUseYn]                 = useState('Y');
-    const [searchProdCategory, setSearchProdCategory]   = useState('');
-    const [searchProdShape, setSearchProdShape]         = useState('');
-    const [searchSteItemNo, setSearchSteItemNo]         = useState('');
+    const [searchSrvcCd,        setSearchSrvcCd]            = useState(selectSrvcCd);
+    const [searchWhCd,          setSearchWhCd]              = useState(selectWhCd);
+    const [searchProdCd,        setSearchProdCd]            = useState('');
+    const [searchProdNm,        setSearchProdNm]            = useState('');
+    const [searchUseYn,         setSearchUseYn]             = useState('Y');
+    const [searchProdCategory,  setSearchProdCategory]      = useState('');
+    const [searchProdShape,     setSearchProdShape]         = useState('');
+    const [searchSteItemNo,     setSearchSteItemNo]         = useState('');
     // 리스트 객체
-    const [items, setItems]                             = useState<ItemRow[]>([]);
+    const [itemList,            setItemList]                = useState<Item[]>([]);
     // 조회 실행 여부
-    const [searched, setSearched]                       = useState(false);
+    const [searched,            setSearched]                = useState(false);
     // confirm 다이얼로그
-    const [isSaved, setIsSaved]                         = useState(false);
+    const [isSaved,             setIsSaved]                 = useState(false);
     // 포커싱
-    const cellRefs = useRef<Map<string, HTMLInputElement | HTMLSelectElement>>(new Map());
+    const cellRefs                                          = useRef<Map<string, HTMLInputElement | HTMLSelectElement>>(new Map());
+    
     const setCellRef = (idx: number, field: string) => (
         el: HTMLInputElement | HTMLSelectElement | null) => {
             if (el) cellRefs.current.set(`${idx}_${field}`, el);
@@ -97,16 +88,15 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
     // 로딩바표시
     const [isUploading, setIsUploading] = useState(false);
     // 품목검색 팝업
-    const [isProdSearchOpen, setIsProdSearchOpen] = useState(false);
 
     // 체크박스(전체선택)
     const handleSelectAll = (e : React.ChangeEvent<HTMLInputElement>) => {
         const val = e.target.checked ? '1' : '0';
-        setItems(prev => prev.map(v => ({ ...v, chk: val })));
+        setItemList(prev => prev.map(v => ({ ...v, chk: val })));
     };
     // 체크박스(선택)
     const handleSelectRow = (idx : number) => {
-        setItems(prev => prev.map((v, i) => i === idx ? { ...v, chk: v.chk === '1' ? '0' : '1' } : v));
+        setItemList(prev => prev.map((v, i) => i === idx ? { ...v, chk: v.chk === '1' ? '0' : '1' } : v));
     }
 
      // 헤더 고객사/센터 변경시 동기화
@@ -131,7 +121,7 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
                 steItemNo       : searchSteItemNo
             },
             (res) => {
-                const rows : ItemRow[] = (res.data ?? []).map((v: any) => ({
+                const item : Item[] = (res.data ?? []).map((v: any) => ({
                     chk             : v.chk             ?? '0',
                     srvcCd          : v.srvc_cd         ?? '',
                     whCd            : v.wh_cd           ?? '',
@@ -150,6 +140,7 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
                     weight          : v.weight          ?? '',
                     realWeight      : v.real_weight     ?? '',
                     weightUnit      : v.weight_unit     ?? '',
+                    prodSpec        : v.prod_spec       ?? '',
                     regId           : v.reg_id          ?? '',
                     regDate         : v.reg_date        ?? '',
                     updId           : v.upd_id          ?? '',
@@ -158,7 +149,7 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
                     isDirty         : false,
                     uploadStatus    : '',
                 }));
-                setItems(rows);
+                setItemList(item);
                 setSearched(true);
             },
             (err) => showAlert("조회 실패: " + err?.message)
@@ -167,7 +158,7 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
 
     // 저장
     const handleSave = () => {
-        var chkRow = items.filter(v => v.chk === '1');
+        var chkRow = itemList.filter(v => v.chk === '1');
 
         if (chkRow.length <= 0) {
             showAlert("저장할 항목을 선택해주세요.");
@@ -175,8 +166,8 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
         }
 
         // 품번 필수체크
-        const invalidProdCdIdx = items.findIndex(v => v.chk === '1' && !v.prodCd?.trim());
-
+        const invalidProdCdIdx = itemList.findIndex(v => v.chk === '1' && !v.prodCd?.trim());
+        
         if (invalidProdCdIdx !== -1) {
             const el = cellRefs.current.get(`${invalidProdCdIdx}_prodCd`);
             showAlert("품목번호를 입력해주세요.", () => el?.focus());
@@ -184,13 +175,13 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
         }
 
         // 단가 정수체크
-        const invalidPriceIdx = items.findIndex(v => v.chk === '1' && v.price !== '' && !INT_REGEX.test(v.price));
+        const invalidPriceIdx      = itemList.findIndex(v => v.chk === '1' && v.price !== '' && !INT_REGEX.test(v.price));
         // 용기수량 정수체크
-        const invalidInnerpackIdx = items.findIndex(v => v.chk === '1' && v.innerpack !== '' && !INT_REGEX.test(v.innerpack));
+        const invalidInnerpackIdx  = itemList.findIndex(v => v.chk === '1' && v.innerpack !== '' && !INT_REGEX.test(v.innerpack));
         // 중량 실수체크
-        const invalidWeightIdx = items.findIndex(v => v.chk === '1' && v.weight !== '' && !FLOAT_REGEX.test(v.weight));
+        const invalidWeightIdx     = itemList.findIndex(v => v.chk === '1' && v.weight !== '' && !FLOAT_REGEX.test(v.weight));
         // 실중량 실수체크
-        const invalidRealWeightIdx = items.findIndex(v => v.chk == '1' && v.realWeight !== '' && !FLOAT_REGEX.test(v.realWeight));
+        const invalidRealWeightIdx = itemList.findIndex(v => v.chk === '1' && v.realWeight !== '' && !FLOAT_REGEX.test(v.realWeight));
 
 
         if (invalidPriceIdx !== -1) {
@@ -200,7 +191,7 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
         }
 
         if (invalidInnerpackIdx !== -1) {
-            const el = cellRefs.current.get(`${invalidInnerpackIdx}_price`);
+            const el = cellRefs.current.get(`${invalidInnerpackIdx}_innerpack`);
             showAlert("용기수량은 정수만 입력 가능합니다.", () => el?.focus());
             return;
         }
@@ -218,7 +209,6 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
         }
 
         showConfirm(`저장하시겠습니까?`, () => {
-            closePopup();
             setIsSaved(true);
 
             const userId = payload?.userId ?? '';
@@ -240,6 +230,7 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
                 weight          : Number(v.weight),
                 realWeight      : Number(v.realWeight),
                 weightUnit      : v.weightUnit,
+                prodSpec        : v.prodSpec,
                 userId
             }));
 
@@ -247,8 +238,7 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
                 { prodList },
                 (res) => {
                     setIsSaved(false);
-                    showAlert(res.resultMessage ?? "저장되었습니다.");
-                    handleSearch();
+                    showAlert(res.resultMessage ?? "저장되었습니다.", () => handleSearch());
                 },
                 (err) => {
                     setIsSaved(false);
@@ -260,7 +250,7 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
 
     // 삭제
     const handleDelete = () => {
-        const chkRow = items.filter(v => v.chk === '1' && !v.isNew);
+        const chkRow = itemList.filter(v => v.chk === '1' && !v.isNew);
 
         if (chkRow.length === 0) {
             showAlert("삭제할 항목을 선택해주세요.");
@@ -268,7 +258,6 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
         }
 
         showConfirm(`삭제하시겠습니까?`, () => {
-            closePopup();
             deleteProdInfo(
                 {
                   srvcCd    : chkRow[0].srvcCd,
@@ -283,7 +272,7 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
 
     // 엑셀다운로드
     const handleExcel = async () => {
-        if (items.length === 0) {
+        if (itemList.length === 0) {
             showAlert("다운로드할 데이터가 없습니다.");
             return;
         }
@@ -337,7 +326,7 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
         headerRow.height = 22;
 
         // 데이터 행 추가
-        items.forEach(v => {
+        itemList.forEach(v => {
             const row = ws.addRow({
                 srvcCd      : v.srvcCd,
                 whCd        : v.whCd,
@@ -391,7 +380,7 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
 
     // 행추가
     const handleAddRow = () => {
-        setItems(prev => [...prev, {
+        setItemList(prev => [...prev, {
             chk             : '1',
             srvcCd          : selectSrvcCd,
             whCd            : selectWhCd,
@@ -410,6 +399,7 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
             weight          : '',
             realWeight      : '',
             weightUnit      : '',
+            prodSpec        : '',
             regId           : '',
             regDate         : '',
             updId           : '',
@@ -422,11 +412,11 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
 
     // 행삭제
     const handleDeleteRow = () => {
-        const lastNewIdx = items.map((v, i) => v.isNew ? i : -1).filter(i => i >= 0).pop();
+        const lastNewIdx = itemList.map((v, i) => v.isNew ? i : -1).filter(i => i >= 0).pop();
 
         if (lastNewIdx === undefined) return;
 
-        setItems(prev => prev.filter((_, i) => i !== lastNewIdx));
+        setItemList(prev => prev.filter((_, i) => i !== lastNewIdx));
     };
 
     // 양식다운로드
@@ -449,12 +439,13 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
             { header: "중량",                      key: "weight",       width: 18 },
             { header: "실중량",                    key: "realWeight",   width: 18 },
             { header: "무게단위",                  key: "weightUnit",   width: 18 },
+            { header: "사양",                      key: "prodSpec",     width: 18 },
         ];
 
         const exampleRows = [
-            { srvcCd: selectSrvcCd, whCd: selectWhCd, prodCd: '0K2KB-41697', prodNm: 'RS APS1', steitemNo : '999997', prodCategory : '', prodShape : '', prodType : '', price : '', innerpack : '', prodUnit : '', weight : '', realWeight : '', weightUnit : '' },
-            { srvcCd: selectSrvcCd, whCd: selectWhCd, prodCd: '0K2KB-41698', prodNm: 'RS APS2', steitemNo : '999998', prodCategory : '', prodShape : '', prodType : '', price : '', innerpack : '', prodUnit : '', weight : '', realWeight : '', weightUnit : '' },
-            { srvcCd: selectSrvcCd, whCd: selectWhCd, prodCd: '0K2KB-41699', prodNm: 'RS APS3', steitemNo : '999999', prodCategory : '', prodShape : '', prodType : '', price : '', innerpack : '', prodUnit : '', weight : '', realWeight : '', weightUnit : '' },
+            { srvcCd: selectSrvcCd, whCd: selectWhCd, prodCd: '0K2KB-41697', prodNm: 'RS APS1', steitemNo : '999997', prodCategory : '', prodShape : '', prodType : '', price : '', innerpack : '', prodUnit : '', weight : '', realWeight : '', weightUnit : '', prodSpec : '' },
+            { srvcCd: selectSrvcCd, whCd: selectWhCd, prodCd: '0K2KB-41698', prodNm: 'RS APS2', steitemNo : '999998', prodCategory : '', prodShape : '', prodType : '', price : '', innerpack : '', prodUnit : '', weight : '', realWeight : '', weightUnit : '', prodSpec : '' },
+            { srvcCd: selectSrvcCd, whCd: selectWhCd, prodCd: '0K2KB-41699', prodNm: 'RS APS3', steitemNo : '999999', prodCategory : '', prodShape : '', prodType : '', price : '', innerpack : '', prodUnit : '', weight : '', realWeight : '', weightUnit : '', prodSpec : '' },
         ];
 
         // 헤더 행 스타일
@@ -524,9 +515,8 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
             const ws = wb.Sheets[wb.SheetNames[0]];
             const rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
 
-            const newItems: ItemRow[] = rows.slice(1)
-                .filter(row => row.length > 0 && row[2])
-                .map(row => ({
+            const newItems: Item[] = rows.slice(1)
+                .filter(row => row.some((cell: any) => cell !== null && cell !== undefined && cell !== '')).map(row => ({
                     chk          : '1',
                     srvcCd       : String(row[0]  ?? selectSrvcCd).trim(),
                     whCd         : String(row[1]  ?? selectWhCd).trim(),
@@ -545,6 +535,7 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
                     weight       : String(row[11] ?? '').trim(),
                     realWeight   : String(row[12] ?? '').trim(),
                     weightUnit   : String(row[13] ?? '').trim(),
+                    prodSpec     : String(row[14] ?? '').trim(),
                     regId        : '',
                     regDate      : '',
                     updId        : '',
@@ -554,7 +545,7 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
                     uploadStatus : '검증중...',
                 }));
 
-            setItems(newItems);
+            setItemList(newItems);
 
             getCheckList(
                 { prodList: newItems.map(v => ({
@@ -566,14 +557,14 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
                 }))},
                 (res) => {
                     const results: CheckResult[] = res.data ?? [];
-                    setItems(prev => prev.map((v, i) => {
+                    setItemList(prev => prev.map((v, i) => {
                         const r = results.find(r => r.rowIndex === i);
                         return { ...v, uploadStatus: r ? (r.isValid ? 'OK' : r.errors.join(' / ')) : v.uploadStatus };
                     }));
                     setIsUploading(false);
                 },
                 (err) => {
-                    setItems([]);
+                    setItemList([]);
                     showAlert("유효성 검증 실패: " + err?.message);
                     setIsUploading(false);
                 }
@@ -590,30 +581,12 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
     };
 
      // 인라인 컬럼 편집
-    const handleCellChange = (idx: number, field: keyof ItemRow, value: string) => {
-        setItems(prev => prev.map((v, i) => i === idx ? { ...v, [field]: value, isDirty: true } : v));
+    const handleCellChange = (idx: number, field: keyof Item, value: string) => {
+        setItemList(prev => prev.map((v, i) => i === idx ? { ...v, [field]: value, isDirty: true, chk : '1' } : v));
     };
 
     return (
         <>
-        <Popup
-            isOpen={popup.isOpen}
-            message={popup.message}
-            type={popup.type}
-            onConfirm={popup.onConfirm}
-            onCancel={closePopup}
-        />
-        <ProdSearchPopup
-            isOpen={isProdSearchOpen}
-            srvcCd={searchSrvcCd}
-            whCd={searchWhCd}
-            initialProdCd={searchProdCd}
-            onSelect={(prodCd, prodNm) => {
-                setSearchProdCd(prodCd);
-                setSearchProdNm(prodNm);
-            }}
-            onClose={() => setIsProdSearchOpen(false)}
-        />
         <div className={pageShell}>
             <div className={contentShell}>
                 <div className={sectionCard}>
@@ -644,7 +617,7 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
                         </div>
 
                         {/* Search Filter Box */}
-                        <div className={filterBox}>
+                        <div className={`${filterBox} mt-4`}>
                             <div className="grid grid-cols-4 gap-4">
                                 {/* 고객사 */}
                                 <div className={filterItem}>
@@ -663,12 +636,12 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
                                 {/* 품목코드 */}
                                 <div className={filterItem}>
                                     <label className={filterLabel}>품목번호</label>
-                                    <div className="flex min-w-0">
-                                        <input type="text" className={filterInputSearchOnly} value={searchProdCd} onChange={(e) => setSearchProdCd(e.target.value)} />
-                                        <button className={filterSearchBtn} onClick={() => setIsProdSearchOpen(true)}>
+                                    <div className="flex min-w-0 gap-1.5">
+                                        <input type="text" className={filterInputSearchOnly} value={searchProdCd} onChange={(e) => { setSearchProdCd(e.target.value); setSearchProdNm(''); }} />
+                                        <button className={filterSearchBtn} onClick={() => openProdSearch((prodCd, prodNm) => { setSearchProdCd(prodCd); setSearchProdNm(prodNm); }, searchProdCd)}>
                                             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>search</span>
                                         </button>
-                                        <input type="text" className={filterInputReadonly} value={searchProdNm} onChange={(e) => setSearchProdNm(e.target.value)} readOnly />
+                                        <input type="text" className={filterInputReadonly} value={searchProdNm} onChange={(e) => setSearchProdNm(e.target.value) } readOnly />
                                     </div>
                                 </div>
                                 {/* 사용여부 */}
@@ -699,7 +672,7 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
                         </div>
 
                         {/* Functional Toolbar */}
-                        <div className="flex items-center justify-between gap-3">
+                        <div className="mt-3 flex items-center justify-between gap-3">
                             <div className="flex items-center gap-2">
                                 <button className={btnToolbar} onClick={handleAddRow}>
                                     <span className="material-symbols-outlined" style={{ color: '#003f87', fontSize: '16px' }}>add</span>
@@ -727,7 +700,7 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
 
                     {/* Data Table */}
                     <div className={tableWrapper}>
-                        <table className="min-w-[2760px] table-fixed border-collapse text-xs">
+                        <table className="min-w-[2760px] table-fixed border-separate border-spacing-0 text-xs">
                             <colgroup>
                                 {/* 체크박스 */}
                                 <col style={{ width: '40px' }} />
@@ -765,6 +738,8 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
                                 <col style={{ width: '90px' }} />
                                 {/* 무게단위 */}
                                 <col style={{ width: '90px' }} />
+                                {/* 사양 */}
+                                <col style={{ width: '450px' }} />
                                 {/* 등록자 */}
                                 <col style={{ width: '90px' }} />
                                 {/* 등록일자 */}
@@ -779,8 +754,8 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
                             <thead className="sticky top-0 z-10 bg-slate-50 text-slate-500">
                                 <tr>
                                     <th rowSpan={2} className="border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide">
-                                        <input type="checkbox" className="customCheckbox" onChange={handleSelectAll} checked={items.length > 0 &&
-                                            items.every(v => v.chk === '1')}/>
+                                        <input type="checkbox" className="customCheckbox" onChange={handleSelectAll} checked={itemList.length > 0 &&
+                                            itemList.every(v => v.chk === '1')}/>
                                     </th>
                                     <th rowSpan={2} className="border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide">고객사</th>
                                     <th rowSpan={2} className="border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide">센터</th>
@@ -796,6 +771,7 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
                                     <th rowSpan={2} className="border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide">단가</th>
                                     <th colSpan={2} className="px-2 py-2 text-center font-semibold uppercase tracking-wide" style={thGroupStyle}>용기</th>
                                     <th colSpan={3} className="px-2 py-2 text-center font-semibold uppercase tracking-wide" style={thGroupAltStyle}>무게</th>
+                                    <th rowSpan={2} className="border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide">사양</th>
                                     <th rowSpan={2} className="border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide">등록자</th>
                                     <th rowSpan={2} className="border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide">등록일자</th>
                                     <th rowSpan={2} className="border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide">수정자</th>
@@ -811,14 +787,14 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50 text-slate-700">
-                                {searched && items.length === 0 ? (
+                                {searched && itemList.length === 0 ? (
                                     <tr>
                                         <td colSpan={23} className="px-4 py-12 text-center text-slate-400">
                                             <span className="material-symbols-outlined block text-4xl">inbox</span>
                                             <p className="mt-2 text-sm">조회된 데이터가 없습니다.</p>
                                         </td>
                                     </tr>
-                                ) : items.map((item, index) => (
+                                ) : itemList.map((item, index) => (
                                     <tr key={index} onClick={() => handleSelectRow(index)} className="hover:bg-slate-50">
                                         <td className={cellCenter}>
                                             <input type="checkbox" className="customCheckbox" onChange={() => {}} checked={item.chk === '1'}/>
@@ -913,6 +889,11 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
                                              onChange={e => handleCellChange(index, "weightUnit", e.target.value)}
                                              onClick={e => e.stopPropagation()}/>
                                         </td>
+                                        <td className={cellCenter} style={cellGroupAltStyle}>
+                                            <input type="text" className={cellInput} value={item.prodSpec}
+                                             onChange={e => handleCellChange(index, "prodSpec", e.target.value)}
+                                             onClick={e => e.stopPropagation()}/>
+                                        </td>
                                         <td className={cellCenter}>{item.regId}</td>
                                         <td className={cellCenter}>{item.regDate}</td>
                                         <td className={cellCenter}>{item.updId}</td>
@@ -938,6 +919,16 @@ const CJ_WMS_MASTER_0030: React.FC = () => {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+
+                    {/* 건수 표시 */}
+                    <div className="shrink-0 flex items-center justify-end gap-3 border-t border-slate-100 px-4 py-2 text-xs text-slate-500">
+                        <span>
+                            총 <span className="font-bold text-slate-800">{itemList.length.toLocaleString()}</span> 건
+                        </span>
+                        <span>
+                            선택 <span className="font-bold text-primary">{itemList.filter(v => v.chk === '1').length.toLocaleString()}</span> 건
+                        </span>
                     </div>
                 </div>
             </div>
