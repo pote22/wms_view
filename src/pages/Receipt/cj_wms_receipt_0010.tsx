@@ -14,7 +14,7 @@ import { usePopupContext } from '../../components/common/PopupProvider';
 import ExcelJS from 'exceljs';
 import * as XLSX from 'xlsx';
 // 공통서비스
-import { getCommCodeList, type CommCode } from '../../api/common/commonService';
+import { getCommCodeList, getProdSearchList, getZoneSearchList, type CommCode } from '../../api/common/commonService';
 import { getList, getKeyInfo, saveReceiptList, getCheckList, type ReceiptHdr, type ReceiptDtl, type KeyInfo, type CheckResult } from '../../api/receipt/receipt_0010Service'
 import { formatDate } from '../../utils/dateUtils';
 
@@ -111,7 +111,10 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
     const filterInExptDateRef                               = useRef<HTMLDivElement>(null);
 
     const cellRefs                                          = useRef<Map<string, HTMLInputElement | HTMLSelectElement>>(new Map());
-    
+    // 엑셀 업로드 시 품명/존명 매핑용 마스터 캐시 (prodCd->prodNm, zoneCd->zoneNm)
+    const prodNmMap                                         = useRef<Map<string, string>>(new Map());
+    const zoneNmMap                                         = useRef<Map<string, string>>(new Map());
+
     const setCellRef = (idx: number, field: string) => (
         el: HTMLInputElement | HTMLSelectElement | null) => {
             if (el) cellRefs.current.set(`${idx}_${field}`, el);
@@ -201,6 +204,27 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
             (err) => showAlert('공통코드 조회 실패 : ' + err?.message)
         );
     }, []);
+
+    // 품목/존 마스터 캐시 (엑셀 업로드 시 품명/존명 매핑용) — 고객사/센터 변경 시 재조회
+    useEffect(() => {
+        if (!searchSrvcCd || !searchWhCd) return;
+
+        getProdSearchList(
+            { srvcCd: searchSrvcCd, whCd: searchWhCd, useYn: 'Y' },
+            (res) => {
+                prodNmMap.current = new Map((res.data ?? []).map(p => [p.prod_cd, p.prod_nm] as [string, string]));
+            },
+            (err) => showAlert('품목 마스터 조회 실패 : ' + err?.message)
+        );
+
+        getZoneSearchList(
+            { srvcCd: searchSrvcCd, whCd: searchWhCd, useYn: 'Y' },
+            (res) => {
+                zoneNmMap.current = new Map((res.data ?? []).map(z => [z.zone_cd, z.zone_nm] as [string, string]));
+            },
+            (err) => showAlert('존 마스터 조회 실패 : ' + err?.message)
+        );
+    }, [searchSrvcCd, searchWhCd]);
 
     // 조회
     const handleSearch = (inNo?: string) => {
@@ -467,7 +491,20 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
             // 입고등록
             saveReceiptList(
                 { hdrList, dtlList },
-                () => {
+                (res) => {
+                    // 정합성 오류(resultCode !== '0000') → 저장 안 됨: 오류 행을 그리드에 표시 후 중단
+                    if (res.resultCode !== '0000') {
+                        const results = res.data ?? [];
+                        setReceiptDtlList(prev => prev.map((v, i) => {
+                            const r = results.find((x: any) => x.rowIndex === i);
+                            return r && !r.isValid
+                                ? { ...v, uploadStatus: r.errors.join(' / ') }
+                                : v;
+                        }));
+                        showAlert(res.resultMessage || '저장에 실패했습니다.');
+                        return;
+                    }
+
                     const inNo = keyInfo?.inNo ?? '';
 
                     setSearchInNo(inNo);
@@ -476,7 +513,7 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
                     setSearchClientNm('');
                     setSearchVehicleNo('');
                     setSearchVehicleNm('');
-                    
+
                     showAlert('저장 되었습니다.', () => handleSearch(inNo));
                 },
                 (err) => showAlert('저장 실패: ' + err?.message)
@@ -865,6 +902,8 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
                         const r = results.find(r => r.rowIndex === i);
                         return {
                             ...v,
+                            prodNm      : prodNmMap.current.get(v.prodCd)   ?? '',
+                            inZoneNm    : zoneNmMap.current.get(v.inZoneCd) ?? '',
                             uploadStatus: r ? (r.isValid ? 'OK' : r.errors.join(' / ')) : v.uploadStatus
                         };
                     }));
