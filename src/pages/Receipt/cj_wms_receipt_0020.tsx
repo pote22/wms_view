@@ -7,13 +7,9 @@ import { getTokenPayload } from '../../utils/auth';
 // 공통서비스
 import { getCommCodeList, type CommCode } from '../../api/common/commonService';
 // 공통 컴포넌트
-import ClientSearchPopup  from '../../components/common/ClientSearchPopup';
-import Popup from '../../components/common/Popup';
-import ProdSearchPopup    from '../../components/common/ProdSearchPopup';
-import VehicleSearchPopup from '../../components/common/VehicleSearchPopup';
 import { formatDate } from '../../utils/dateUtils';
 import { useCommonWhList } from '../../api/common/commonWhList';
-import { usePopup } from '../../components/common/usePopup';
+import { usePopupContext } from '../../components/common/PopupProvider';
 // API
 import { getList, saveReceiptConfirm, saveRemarkInfo, type ReceiptRow } from '../../api/receipt/receipt_0020Service'
 // 엑셀
@@ -21,63 +17,63 @@ import ExcelJS from 'exceljs';
 import * as XLSX from 'xlsx';
 
 // ── 레이아웃
-const pageShell     = "flex min-h-0 flex-1 bg-surface";
-const contentShell  = "flex min-w-0 flex-1 flex-col";
-const sectionCard   = "flex min-h-0 flex-1 flex-col rounded-t-xl border border-slate-200/60 bg-surface-card shadow-sm";
-const sectionHeader = "shrink-0 border-b border-slate-100 p-6";
+const pageShell             = "flex min-h-0 flex-1 bg-surface";
+const contentShell          = "flex min-w-0 flex-1 flex-col";
+const sectionCard           = "flex min-h-0 flex-1 flex-col rounded-t-xl border border-slate-200/60 bg-surface-card shadow-sm";
+const sectionHeader         = "shrink-0 border-b border-slate-100 p-6";
 
 // ── 버튼
-const btnBase    = "inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition";
-const btnPrimary = `${btnBase} bg-primary text-white hover:bg-primary-hover`;
-const btnOutline = `${btnBase} border border-border-soft bg-white text-slate-700 hover:bg-slate-50`;
-const btnBlue    = `${btnBase} border border-blue-200/60 bg-blue-50/50 text-primary font-bold hover:bg-blue-100/80`;
+const btnBase               = "inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition";
+const btnPrimary            = `${btnBase} bg-primary text-white hover:bg-primary-hover`;
+const btnOutline            = `${btnBase} border border-border-soft bg-white text-slate-700 hover:bg-slate-50`;
+const btnBlue               = `${btnBase} border border-blue-200/60 bg-blue-50/50 text-primary font-bold hover:bg-blue-100/80`;
 
 // ── 필터
-const filterBox          = "mt-5 rounded-lg border border-slate-100 bg-slate-50 p-4";
-const filterGrid         = "grid grid-cols-4 gap-4";
-const filterItem         = "flex min-w-0 flex-col gap-1.5";
-const filterItemWide     = "col-span-2 flex min-w-0 flex-col gap-1.5";
-const filterLabel        = "text-xs font-semibold uppercase tracking-wide text-slate-500";
-const filterSelect       = "h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
-const filterInput        = "h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/15";
-const filterInputGroup   = "flex min-w-0 gap-1.5";
-const filterInputReadonly = "h-9 min-w-0 flex-1 rounded-md border border-slate-300 bg-slate-100 px-3 text-sm text-slate-600";
-const filterSearchBtn    = "inline-flex h-9 w-9 flex-none items-center justify-center rounded-md bg-primary text-white hover:bg-primary-hover";
+const filterBox             = "mt-5 rounded-lg border border-slate-100 bg-slate-50 p-4";
+const filterGrid            = "grid grid-cols-4 gap-4";
+const filterItem            = "flex min-w-0 flex-col gap-1.5";
+const filterItemWide        = "col-span-2 flex min-w-0 flex-col gap-1.5";
+const filterLabel           = "text-xs font-semibold uppercase tracking-wide text-slate-500";
+const filterSelect          = "h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
+const filterInput           = "h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/15";
+const filterInputGroup      = "flex min-w-0 gap-1.5";
+const filterInputReadonly   = "h-9 min-w-0 flex-1 rounded-md border border-slate-300 bg-slate-100 px-3 text-sm text-slate-600";
+const filterSearchBtn       = "inline-flex h-9 w-9 flex-none items-center justify-center rounded-md bg-primary text-white hover:bg-primary-hover";
 
 // ── 툴바
-const toolbar      = "mt-4 flex items-center justify-end gap-3";
-const toolbarGroup = "flex items-center gap-1.5";
-const btnToolbar   = "inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50";
-const selectToolbar = "h-8 rounded-md border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-700 outline-none focus:border-primary appearance-none";
+const toolbar               = "mt-4 flex items-center justify-end gap-3";
+const toolbarGroup          = "flex items-center gap-1.5";
+const btnToolbar            = "inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50";
+const selectToolbar         = "h-8 rounded-md border border-slate-200 bg-white px-3 pr-8 text-xs font-bold text-slate-700 outline-none focus:border-primary appearance-none";
 
 // ── 테이블
-const tableWrapper = "min-h-0 flex-1 overflow-auto";
-const tableClass   = "min-w-[5200px] table-fixed border-collapse text-xs";
-const theadClass   = "sticky top-0 z-10 bg-slate-50 text-slate-500";
-const thCell       = "border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide";
-const thGroupQty   = "border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide bg-blue-100 text-blue-700 border-l border-r border-blue-200";
-const thGroupScan  = "border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide bg-teal-100 text-teal-700 border-l border-r border-teal-200";
-const thGroupSubQty  = "border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide bg-blue-100 text-blue-700 border-l border-blue-200";
-const thGroupSubScan = "border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide bg-teal-100 text-teal-700 border-l border-teal-200";
-const tbodyClass   = "divide-y divide-slate-50 text-slate-700";
-const cellCenter   = "px-2 py-2 text-center";
-const cellRight    = "px-2 py-2 text-right tabular-nums";
-const cellMedium   = "px-2 py-2 font-medium text-slate-700";
-const cellDim      = "px-2 py-2 text-slate-500";
-const emptyCell    = "px-4 py-12 text-center text-slate-400";
+const tableWrapper          = "min-h-0 flex-1 overflow-auto";
+const tableClass            = "min-w-[5200px] table-fixed border-collapse text-xs";
+const theadClass            = "sticky top-0 z-10 bg-slate-50 text-slate-500";
+const thCell                = "border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide";
+const thGroupQty            = "border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide bg-blue-100 text-blue-700 border-l border-r border-blue-200";
+const thGroupScan           = "border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide bg-teal-100 text-teal-700 border-l border-r border-teal-200";
+const thGroupSubQty         = "border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide bg-blue-100 text-blue-700 border-l border-blue-200";
+const thGroupSubScan        = "border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide bg-teal-100 text-teal-700 border-l border-teal-200";
+const tbodyClass            = "divide-y divide-slate-50 text-slate-700";
+const cellCenter            = "px-2 py-2 text-center";
+const cellRight             = "px-2 py-2 text-right tabular-nums";
+const cellMedium            = "px-2 py-2 font-medium text-slate-700";
+const cellDim               = "px-2 py-2 text-slate-500";
+const emptyCell             = "px-4 py-12 text-center text-slate-400";
 
 // ── 인라인 편집
-const cellInput = "h-7 w-full rounded border border-slate-200 bg-white px-2 text-xs outline-none focus:border-primary focus:ring-1 focus:ring-primary/20";
+const cellInput             = "h-7 w-full rounded border border-slate-200 bg-white px-2 text-xs outline-none focus:border-primary focus:ring-1 focus:ring-primary/20";
 
 // ── 상태 배지
-const badgePlan    = "inline-flex items-center rounded-full border border-slate-300 bg-white px-2 py-0.5 text-xs font-bold text-slate-700";
-const badgePartial = "inline-flex items-center rounded-full bg-purple-100 px-2 py-0.5 text-xs font-bold text-purple-800";
-const badgeConf    = "inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold text-green-800";
+const badgePlan             = "inline-flex items-center rounded-full border border-slate-300 bg-white px-2 py-0.5 text-xs font-bold text-slate-700";
+const badgePartial          = "inline-flex items-center rounded-full bg-purple-100 px-2 py-0.5 text-xs font-bold text-purple-800";
+const badgeConf             = "inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold text-green-800";
 
 const CJ_WMS_RECEIPT_0020: React.FC = () => {
     // 공통
     const { srvcList, whList, selectSrvcCd, selectWhCd }    = useCommonWhList();
-    const { popup, showAlert, showConfirm, closePopup }     = usePopup();
+    const { showAlert, showConfirm, openClientSearch, openProdSearch, openVehicleSearch } = usePopupContext();
     // 검색조건
     const [searchSrvcCd,        setSearchSrvcCd]            = useState(selectSrvcCd);
     const [searchWhCd,          setSearchWhCd]              = useState(selectWhCd);
@@ -100,11 +96,6 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
     const [receiptStatus,       setReceiptStatus]           = useState<CommCode[]>([]);         // 입고상태 리스트
     const [receiptType,         setReceiptType]             = useState<CommCode[]>([]);         // 수불유형 리스트
     const [inNotRsnCd,          setInNotRsnCd]              = useState<CommCode[]>([]);         // 미입고사유 리스트
-
-    // 팝업관리
-    const [isClientPopupOpen,    setIsClientPopupOpen]      = useState(false);
-    const [isProdPopupOpen,      setIsProdPopupOpen]        = useState(false);
-    const [isVehiclePopupOpen,   setIsVehiclePopupOpen]     = useState(false);
 
     const [receiptList,         setReceiptList]             = useState<ReceiptRow[]>([]);       // 입고예정리스트
     const [notRsnCd,            setNotRsnCd]                = useState('');                     // 미입고사유
@@ -131,7 +122,14 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                 , sysEtc4      : ''
                 , sysEtc5      : ''
             },
-            (res) => setReceiptCategory(res.data ?? []),
+            (res) => {
+                const rows : CommCode[] = (res.data ?? []).map((v : any) => ({
+                    sysCd       : v.sys_cd      ?? '',
+                    sysCdNm     : v.sys_cdnm    ?? ''
+                }));
+
+                setReceiptCategory(rows);
+            },
             (err) => showAlert('공통코드 조회 실패 : ' + err?.message)
         );
 
@@ -148,7 +146,14 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                 , sysEtc4      : ''
                 , sysEtc5      : ''
             },
-            (res) => setReceiptStatus(res.data ?? []),
+            (res) => {
+                const rows : CommCode[] = (res.data ?? []).map((v : any) => ({
+                    sysCd       : v.sys_cd      ?? '',
+                    sysCdNm     : v.sys_cdnm    ?? ''
+                }));
+
+                setReceiptStatus(rows);
+            },
             (err) => showAlert('공통코드 조회 실패 : ' + err?.message)
         );
 
@@ -165,7 +170,14 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                 , sysEtc4      : ''
                 , sysEtc5      : ''
             },
-            (res) => setReceiptType(res.data ?? []),
+            (res) => {
+                const rows : CommCode[] = (res.data ?? []).map((v : any) => ({
+                    sysCd       : v.sys_cd      ?? '',
+                    sysCdNm     : v.sys_cdnm    ?? ''
+                }));
+
+                setReceiptType(rows);
+            },
             (err) => showAlert('공통코드 조회 실패 : ' + err?.message)
         );
 
@@ -182,7 +194,14 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                 , sysEtc4      : ''
                 , sysEtc5      : ''
             },
-            (res) => setInNotRsnCd(res.data ?? []),
+            (res) => {
+                const rows : CommCode[] = (res.data ?? []).map((v : any) => ({
+                    sysCd       : v.sys_cd      ?? '',
+                    sysCdNm     : v.sys_cdnm    ?? ''
+                }));
+
+                setInNotRsnCd(rows);
+            },
             (err) => showAlert('공통코드 조회 실패 : ' + err?.message)
         );
     }, []);
@@ -210,12 +229,13 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
             (res) => {
                 const row : ReceiptRow[] = (res.data ?? []).map((v : any) => ({
                     chk             : v.chk                 ?? '0',
-                    srvcCd          : v.srvcCd             ?? '',
+                    srvcCd          : v.srvc_cd             ?? '',
                     whCd            : v.wh_cd               ?? '',
                     inNo            : v.in_no               ?? '',
                     inExpectedDate  : v.in_expected_date    ?? '',
                     inExpectedNo    : v.in_expected_no      ?? '',
                     inExpectedSeq   : v.in_expected_seq     ?? '',
+                    totalStatus     : v.total_status        ?? '',
                     status          : v.status              ?? '',
                     receiptClsCd    : v.receipt_cls_cd      ?? '',
                     receiptType     : v.receipt_type        ?? '',
@@ -447,8 +467,6 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
         }
 
         showConfirm('입고확정 처리하시겠습니까?', () => {
-            closePopup();
-
             const payload = getTokenPayload();
             const userId  = payload?.userId ?? '';
 
@@ -538,8 +556,6 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
         }
 
         showConfirm('비고를 저장하시겠습니까?', () => {
-            closePopup();
-
             const payload = getTokenPayload();
             const userId  = payload?.userId ?? '';
 
@@ -562,24 +578,6 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
             );
         });
     }
-
-    // 이벤트 : 매입처검색
-    const handleClientSelect = (clientCd: string, clientNm: string) => {
-        setSearchClientCd(clientCd);
-        setSearchClientNm(clientNm);
-    };
-
-    // 이벤트 : 품목검색
-    const handleProdSelect = (prodCd: string, prodNm: string) => {
-        setSearchProdCd(prodCd);
-        setSearchProdNm(prodNm);
-    };
-
-    // 이벤트 : 차량검색
-    const handleVehicleSelect = (vehicleNo: string, drvNm: string) => {
-        setSearchVehicleNo(vehicleNo);
-        setSearchDrvNm(drvNm);
-    };
 
     // 체크박스 : 선택
     const handleSelectRow = (idx: number) => {
@@ -709,7 +707,7 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                         </select>
                                         <div className="flex flex-1 items-center gap-2">
                                             <div className="datepicker-wrapper relative flex-1">
-                                                <span className="material-symbols-outlined pointer-events-none absolute left-2 z-[1] text-slate-400 text-[16px]">calendar_today</span>
+                                                <span className="material-symbols-outlined pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 z-1 text-slate-400 text-[16px]">calendar_today</span>
                                                 <DatePicker
                                                     selected={searchStrDate ? new Date(`${searchStrDate.slice(0,4)}-${searchStrDate.slice(4,6)}-${searchStrDate.slice(6,8)}`) : null}
                                                     onChange={(date: Date | null) => setSearchStrDate(date ? formatDate(date) : '')}
@@ -721,7 +719,7 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                             </div>
                                             <span className="text-xs text-slate-400 shrink-0">~</span>
                                             <div className="datepicker-wrapper relative flex-1">
-                                                <span className="material-symbols-outlined pointer-events-none absolute left-2 z-[1] text-slate-400 text-[16px]">calendar_today</span>
+                                                <span className="material-symbols-outlined pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 z-1 text-slate-400 text-[16px]">calendar_today</span>
                                                 <DatePicker
                                                     selected={searchEndDate ? new Date(`${searchEndDate.slice(0,4)}-${searchEndDate.slice(4,6)}-${searchEndDate.slice(6,8)}`) : null}
                                                     onChange={(date: Date | null) => setSearchEndDate(date ? formatDate(date) : '')}
@@ -738,32 +736,32 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                 <div className={filterItemWide}>
                                     <label className={filterLabel}>매입처</label>
                                     <div className={filterInputGroup}>
-                                        <input type="text" className="h-9 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/15" value={searchClientCd} placeholder=""/>
-                                        <button className={filterSearchBtn} onClick={() => setIsClientPopupOpen(true)}>
+                                        <input type="text" className="h-9 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/15" value={searchClientCd} onChange={e => { setSearchClientCd(e.target.value); setSearchClientNm(''); }} placeholder=""/>
+                                        <button className={filterSearchBtn} onClick={() => openClientSearch((clientCd, clientNm) => { setSearchClientCd(clientCd); setSearchClientNm(clientNm); }, searchClientCd)}>
                                             <span className="material-symbols-outlined text-[18px]">search</span>
                                         </button>
-                                        <input type="text" className={filterInputReadonly} value={searchClientNm} placeholder="" readOnly/>
+                                        <input type="text" className={filterInputReadonly} value={searchClientNm} onChange={e => setSearchClientNm(e.target.value)} placeholder="" readOnly/>
                                     </div>
                                 </div>
                                 <div className={filterItemWide}>
                                     <label className={filterLabel}>품번</label>
                                     <div className={filterInputGroup}>
-                                        <input type="text" className="h-9 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/15" value={searchProdCd} placeholder=""/>
-                                        <button className={filterSearchBtn} onClick={() => setIsProdPopupOpen(true)}>
+                                        <input type="text" className="h-9 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/15" value={searchProdCd} onChange={e => { setSearchProdCd(e.target.value); setSearchProdNm(''); }} placeholder=""/>
+                                        <button className={filterSearchBtn} onClick={() => openProdSearch((prodCd, prodNm) => { setSearchProdCd(prodCd); setSearchProdNm(prodNm); }, searchProdCd)}>
                                             <span className="material-symbols-outlined text-[18px]">search</span>
                                         </button>
-                                        <input type="text" className={filterInputReadonly} value={searchProdNm} placeholder="" readOnly/>
+                                        <input type="text" className={filterInputReadonly} value={searchProdNm} onChange={e => setSearchProdNm(e.target.value)} placeholder="" readOnly/>
                                     </div>
                                 </div>
                                 {/* 4행 */}
                                 <div className={filterItemWide}>
                                     <label className={filterLabel}>차량번호</label>
                                     <div className={filterInputGroup}>
-                                        <input type="text" className="h-9 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/15" value={searchVehicleNo} placeholder=""/>
-                                        <button className={filterSearchBtn} onClick={() => setIsVehiclePopupOpen(true)}>
+                                        <input type="text" className="h-9 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/15" onChange={e => { setSearchVehicleNo(e.target.value); setSearchDrvNm(''); }} value={searchVehicleNo} placeholder=""/>
+                                        <button className={filterSearchBtn} onClick={() => openVehicleSearch((vehicleNo, drvNm) => { setSearchVehicleNo(vehicleNo); setSearchDrvNm(drvNm); }, searchVehicleNo)}>
                                             <span className="material-symbols-outlined text-[18px]">search</span>
                                         </button>
-                                        <input type="text" className={filterInputReadonly} value={searchDrvNm} placeholder="" readOnly/>
+                                        <input type="text" className={filterInputReadonly} value={searchDrvNm} onChange={e => setSearchDrvNm(e.target.value)} placeholder="" readOnly/>
                                     </div>
                                 </div>
                                 <div className={filterItem}/>
@@ -810,6 +808,8 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                 <col style={{ width: '200px' }} />
                                 {/* 입고순번 */}
                                 <col style={{ width: '80px' }} />
+                                {/* 입고상태(헤더) */}
+                                <col style={{ width: '150px' }} />
                                 {/* 입고상태 */}
                                 <col style={{ width: '150px' }} />
                                 {/* 입고구분 */}
@@ -879,6 +879,7 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                     <th rowSpan={2} className={thCell}>입고예정일</th>
                                     <th rowSpan={2} className={thCell}>입고번호</th>
                                     <th rowSpan={2} className={thCell}>입고순번</th>
+                                    <th rowSpan={2} className={thCell}>입고상태(전체)</th>
                                     <th rowSpan={2} className={thCell}>입고상태</th>
                                     <th rowSpan={2} className={thCell}>입고구분</th>
                                     <th rowSpan={2} className={thCell}>수불유형</th>
@@ -937,6 +938,7 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                         <td className={cellCenter}>{v.inExpectedDate}</td>
                                         <td className={cellCenter}>{v.inNo}</td>
                                         <td className={cellCenter}>{v.inExpectedSeq}</td>
+                                        <td className={cellCenter}>{getStatusBadge(v.totalStatus)}</td>
                                         <td className={cellCenter}>{getStatusBadge(v.status)}</td>
                                         <td className={cellCenter}>
                                             { (c => c ? `${c.sysCdNm}` : v.receiptClsCd)(receiptCategory.find(c => c.sysCd === v.receiptClsCd)) }
@@ -989,42 +991,15 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                             </tbody>
                         </table>
                     </div>
+
+                    {/* Pagination */}
+                    <div className="shrink-0 border-t border-slate-100 px-4 py-2">
+                        <span className="text-xs text-muted">총 {receiptList.length} 건</span>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <Popup
-            isOpen={popup.isOpen}
-            message={popup.message}
-            type={popup.type}
-            onConfirm={popup.onConfirm}
-            onCancel={closePopup}
-        />
-
-        <ClientSearchPopup
-            isOpen={isClientPopupOpen}
-            srvcCd={searchSrvcCd}
-            whCd={searchWhCd}
-            initialClientCd={searchClientCd}
-            onSelect={handleClientSelect}
-            onClose={() => setIsClientPopupOpen(false)}
-        />
-        <ProdSearchPopup
-            isOpen={isProdPopupOpen}
-            srvcCd={searchSrvcCd}
-            whCd={searchWhCd}
-            initialProdCd={searchProdCd}
-            onSelect={handleProdSelect}
-            onClose={() => setIsProdPopupOpen(false)}
-        />
-        <VehicleSearchPopup
-            isOpen={isVehiclePopupOpen}
-            srvcCd={searchSrvcCd}
-            whCd={searchWhCd}
-            initialVehicleNo={searchVehicleNo}
-            onSelect={handleVehicleSelect}
-            onClose={() => setIsVehiclePopupOpen(false)}
-        />
         </>
     );
 };
