@@ -9,6 +9,7 @@ export interface ReceiptRow {
     inExpectedDate  : string;
     inExpectedNo    : string;
     inExpectedSeq   : string;
+    totalStatus     : string;
     status          : string;
     receiptClsCd    : string;
     receiptType     : string;
