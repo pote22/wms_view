@@ -28,13 +28,11 @@ const LocSearchPopup: React.FC<Props> = ({ isOpen, srvcCd, whCd, zoneCd, initial
             setSearched(false);
             setTimeout(() => inputRef.current?.focus(), 50);
 
-            if (initVal) {
-                getLocSearchList(
-                    { srvcCd, whCd, zoneCd: zoneCd ?? '', locCd: initVal, useYn: '' },
-                    (res) => { setLocList(res.data ?? []); setSearched(true); },
-                    () => {}
-                );
-            }
+            getLocSearchList(
+                { srvcCd, whCd, zoneCd: zoneCd ?? '', locCd: initVal, useYn: '' },
+                (res) => { setLocList(res.data ?? []); setSearched(true); },
+                () => {}
+            );
         }
     }, [isOpen]);
 
