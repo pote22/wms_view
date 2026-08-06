@@ -24,52 +24,52 @@ const CalendarPortal: React.FC<{ children?: React.ReactNode }> = ({ children }) 
 // ── Tailwind 상수 ──────────────────────────────────────────────
 
 // ── 레이아웃
-const pageShell    = "flex min-h-0 flex-1 bg-surface";
-const contentShell = "flex min-w-0 flex-1 flex-col";
-const sectionCard  = "flex min-h-0 flex-1 flex-col rounded-t-xl border border-slate-200/60 bg-surface-card shadow-sm";
-const sectionHeader = "shrink-0 border-b border-slate-100 p-6";
+const pageShell             = "flex min-h-0 flex-1 bg-surface";
+const contentShell          = "flex min-w-0 flex-1 flex-col";
+const sectionCard           = "flex min-h-0 flex-1 flex-col rounded-t-xl border border-slate-200/60 bg-surface-card shadow-sm";
+const sectionHeader         = "shrink-0 border-b border-slate-100 p-6";
 
 // ── 버튼
-const btnBase    = "inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition";
-const btnPrimary = `${btnBase} bg-primary text-white hover:bg-primary-hover`;
-const btnOutline = `${btnBase} border border-border-soft bg-white text-slate-700 hover:bg-slate-50`;
+const btnBase               = "inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition";
+const btnPrimary            = `${btnBase} bg-primary text-white hover:bg-primary-hover`;
+const btnOutline            = `${btnBase} border border-border-soft bg-white text-slate-700 hover:bg-slate-50`;
 
 // ── 필터
-const filterBox   = "mt-5 rounded-lg border border-slate-100 bg-slate-50 p-4";
-const filterGrid  = "grid grid-cols-4 gap-4";
-const filterItem  = "flex min-w-0 flex-col gap-1.5";
-const filterItemWide = "col-span-2 flex min-w-0 flex-col gap-1.5";
-const filterLabel = "text-xs font-semibold uppercase tracking-wide text-slate-500";
-const filterSelect = "h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:opacity-50 disabled:cursor-not-allowed";
-const filterInput  = "h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:opacity-50 disabled:cursor-not-allowed";
-const filterInputGroup    = "flex min-w-0 gap-1.5";
-const filterInputReadonly = "h-9 min-w-0 flex-1 rounded-md border border-slate-300 bg-slate-100 px-3 text-sm text-slate-600";
-const filterSearchBtn     = "inline-flex h-9 w-9 flex-none items-center justify-center rounded-md bg-primary text-white hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed";
+const filterBox             = "mt-5 rounded-lg border border-slate-100 bg-slate-50 p-4";
+const filterGrid            = "grid grid-cols-4 gap-4";
+const filterItem            = "flex min-w-0 flex-col gap-1.5";
+const filterItemWide        = "col-span-2 flex min-w-0 flex-col gap-1.5";
+const filterLabel           = "text-xs font-semibold uppercase tracking-wide text-slate-500";
+const filterSelect          = "h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:opacity-50 disabled:cursor-not-allowed";
+const filterInput           = "h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:opacity-50 disabled:cursor-not-allowed";
+const filterInputGroup      = "flex min-w-0 gap-1.5";
+const filterInputReadonly   = "h-9 min-w-0 flex-1 rounded-md border border-slate-300 bg-slate-100 px-3 text-sm text-slate-600";
+const filterSearchBtn       = "inline-flex h-9 w-9 flex-none items-center justify-center rounded-md bg-primary text-white hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed";
 
 // ── 툴바
-const toolbar      = "mt-4 flex items-center justify-between gap-3";
-const toolbarGroup = "flex items-center gap-1.5";
-const btnToolbar   = "inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed";
+const toolbar               = "mt-4 flex items-center justify-between gap-3";
+const toolbarGroup          = "flex items-center gap-1.5";
+const btnToolbar            = "inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed";
 
 // ── 테이블
-const tableWrapper = "min-h-0 flex-1 overflow-auto";
-const tableClass   = "min-w-[2000px] table-fixed border-collapse text-xs";
-const theadClass   = "sticky top-0 z-[1] bg-slate-50 text-slate-500";
-const thCell       = "border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide";
-const tbodyClass   = "divide-y divide-slate-50 text-slate-700";
-const cellCenter   = "px-2 py-2 text-center";
-const emptyCell    = "px-4 py-12 text-center text-slate-400";
+const tableWrapper          = "min-h-0 flex-1 overflow-auto";
+const tableClass            = "min-w-[2000px] table-fixed border-collapse text-xs";
+const theadClass            = "sticky top-0 z-[1] bg-slate-50 text-slate-500";
+const thCell                = "border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide";
+const tbodyClass            = "divide-y divide-slate-50 text-slate-700";
+const cellCenter            = "px-2 py-2 text-center";
+const emptyCell             = "px-4 py-12 text-center text-slate-400";
 
 // ── 인라인 편집
-const cellInput      = "h-7 w-full rounded border border-slate-200 bg-white px-2 text-xs outline-none focus:border-primary focus:ring-1 focus:ring-primary/20";
-const cellInputRight = "h-7 w-full rounded border border-slate-200 bg-white px-2 text-xs outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 text-right tabular-nums";
-const cellSearchBtn  = "inline-flex h-7 w-6 shrink-0 items-center justify-center rounded bg-primary text-white hover:bg-primary-hover";
-const cellInputGroup = "flex items-center gap-0.5";
+const cellInput             = "h-7 w-full rounded border border-slate-200 bg-white px-2 text-xs outline-none focus:border-primary focus:ring-1 focus:ring-primary/20";
+const cellInputRight        = "h-7 w-full rounded border border-slate-200 bg-white px-2 text-xs outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 text-right tabular-nums";
+const cellSearchBtn         = "inline-flex h-7 w-6 shrink-0 items-center justify-center rounded bg-primary text-white hover:bg-primary-hover";
+const cellInputGroup        = "flex items-center gap-0.5";
 
 // ── 업로드 결과 칩
-const chipOk    = "inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-success";
-const chipError = "inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-danger";
-const chipGroup = "flex flex-col gap-1";
+const chipOk                = "inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-success";
+const chipError             = "inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-danger";
+const chipGroup             = "flex flex-col gap-1";
 // ───────────────────────────────────────────────────────────────
 
 const CJ_WMS_RECEIPT_0010: React.FC = () => {
@@ -111,9 +111,6 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
     const filterInExptDateRef                               = useRef<HTMLDivElement>(null);
 
     const cellRefs                                          = useRef<Map<string, HTMLInputElement | HTMLSelectElement>>(new Map());
-    // 엑셀 업로드 시 품명/존명 매핑용 마스터 캐시 (prodCd->prodNm, zoneCd->zoneNm)
-    const prodNmMap                                         = useRef<Map<string, string>>(new Map());
-    const zoneNmMap                                         = useRef<Map<string, string>>(new Map());
 
     const setCellRef = (idx: number, field: string) => (
         el: HTMLInputElement | HTMLSelectElement | null) => {
@@ -205,26 +202,6 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
         );
     }, []);
 
-    // 품목/존 마스터 캐시 (엑셀 업로드 시 품명/존명 매핑용) — 고객사/센터 변경 시 재조회
-    useEffect(() => {
-        if (!searchSrvcCd || !searchWhCd) return;
-
-        getProdSearchList(
-            { srvcCd: searchSrvcCd, whCd: searchWhCd, useYn: 'Y' },
-            (res) => {
-                prodNmMap.current = new Map((res.data ?? []).map(p => [p.prod_cd, p.prod_nm] as [string, string]));
-            },
-            (err) => showAlert('품목 마스터 조회 실패 : ' + err?.message)
-        );
-
-        getZoneSearchList(
-            { srvcCd: searchSrvcCd, whCd: searchWhCd, useYn: 'Y' },
-            (res) => {
-                zoneNmMap.current = new Map((res.data ?? []).map(z => [z.zone_cd, z.zone_nm] as [string, string]));
-            },
-            (err) => showAlert('존 마스터 조회 실패 : ' + err?.message)
-        );
-    }, [searchSrvcCd, searchWhCd]);
 
     // 조회
     const handleSearch = (inNo?: string) => {
@@ -495,12 +472,14 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
                     // 정합성 오류(resultCode !== '0000') → 저장 안 됨: 오류 행을 그리드에 표시 후 중단
                     if (res.resultCode !== '0000') {
                         const results = res.data ?? [];
+                        
                         setReceiptDtlList(prev => prev.map((v, i) => {
-                            const r = results.find((x: any) => x.rowIndex === i);
+                            const  r = results.find((x: any) => x.rowIndex === i);
                             return r && !r.isValid
                                 ? { ...v, uploadStatus: r.errors.join(' / ') }
                                 : v;
                         }));
+
                         showAlert(res.resultMessage || '저장에 실패했습니다.');
                         return;
                     }
@@ -836,9 +815,9 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
 
         reader.onload = (evt) => {
             const data = evt.target?.result;
-            const wb = XLSX.read(new Uint8Array(data as ArrayBuffer), { type: 'array' });
-            const ws = wb.Sheets[wb.SheetNames[0]];
-            const rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
+            const wb   = XLSX.read(new Uint8Array(data as ArrayBuffer), { type: 'array' });
+            const ws   = wb.Sheets[wb.SheetNames[0]];
+            const rows : any[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
 
             const newItems: ReceiptDtl[] = rows.slice(1).filter(row => row.some(cell => cell !== null && cell !== undefined && cell !== '')).map(row => ({
                 srvcCd          : String(row[0] ?? searchSrvcCd).trim(),
@@ -869,52 +848,80 @@ const CJ_WMS_RECEIPT_0010: React.FC = () => {
 
             setReceiptDtlList(newItems);
 
-            getCheckList(
-                {
-                    dtlList: newItems.map((v, i) => ({
-                        rowIndex    : i,
-                        srvcCd      : v.srvcCd,
-                        whCd        : v.whCd,
-                        prodCd      : v.prodCd,
-                        prodNm      : v.prodNm,
-                        inZoneCd    : v.inZoneCd,
-                        inZoneNm    : v.inZoneNm,
-                        inLocCd     : v.inLocCd,
-                        originalQty : v.originalQty,
-                        lotNo       : v.lotNo,
-                    }))
-                },
-                (res) => {
-                    const results: CheckResult[] = res.data ?? [];
-                    //입고헤더 set
-                    setReceiptHdrList(prev => prev.map(row => ({
-                        ...row,
-                        receiptClsCd    : searchInCategory,
-                        vendorCd        : searchClientCd,
-                        vendorNm        : searchClientNm,
-                        inVNo           : searchVehicleNo,
-                        inVNm           : searchVehicleNm,
-                        inExpectedDate  : searchInExptDate
-                    })));
+            // 엑셀에 입력된 품목코드, 존코드 리스트를 저장(중복코드 저장 X)
+            const uniqueProdCds = [...new Set(newItems.map(v => v.prodCd).filter(Boolean))];
+            const uniqueZoneCds = [...new Set(newItems.map(v => v.inZoneCd).filter(Boolean))];
 
-                    // 입고상세 set
-                    setReceiptDtlList(prev => prev.map((v, i) => {
-                        const r = results.find(r => r.rowIndex === i);
-                        return {
-                            ...v,
-                            prodNm      : prodNmMap.current.get(v.prodCd)   ?? '',
-                            inZoneNm    : zoneNmMap.current.get(v.inZoneCd) ?? '',
-                            uploadStatus: r ? (r.isValid ? 'OK' : r.errors.join(' / ')) : v.uploadStatus
-                        };
-                    }));
-                    setIsUploading(false);
-                },
-                (err) => {
-                    setReceiptDtlList([]);
-                    showAlert('유효성 검증 실패: ' + err?.message);
-                    setIsUploading(false);
-                }
-            );
+            // Promise 선언 : 비동기 작업 수행시, 병렬 API 호출 (품목정보, 존코드 정보)
+            const prodPromise = new Promise<Map<string, string>>((resolve) => {
+                getProdSearchList(
+                    { srvcCd: searchSrvcCd, whCd: searchWhCd, useYn: 'Y', prodCds: uniqueProdCds },
+                    (res) => resolve(new Map((res.data ?? []).map(p => [p.prod_cd, p.prod_nm] as [string, string]))),
+                    (err) => { showAlert('품목 정보 조회 실패: ' + err?.message); resolve(new Map()); }
+                );
+            });
+
+            const zonePromise = new Promise<Map<string, string>>((resolve) => {
+                getZoneSearchList(
+                    { srvcCd: searchSrvcCd, whCd: searchWhCd, useYn: 'Y', zoneCds: uniqueZoneCds },
+                    (res) => resolve(new Map((res.data ?? []).map(z => [z.zone_cd, z.zone_nm] as [string, string]))),
+                    (err) => { showAlert('존 정보 조회 실패: ' + err?.message); resolve(new Map()); }
+                );
+            });
+
+            // Promise 수행 : prodPromise, zonePromise 작업수행이 완료되었을 경우, 
+            // getCheckList 실행하여 콜백함수 수행
+            Promise.all([prodPromise, zonePromise]).then(([tempProdMap, tempZoneMap]) => {
+                getCheckList(
+                    {
+                        dtlList: newItems.map((v, i) => ({
+                            rowIndex    : i,
+                            srvcCd      : v.srvcCd,
+                            whCd        : v.whCd,
+                            prodCd      : v.prodCd,
+                            prodNm      : v.prodNm,
+                            inZoneCd    : v.inZoneCd,
+                            inZoneNm    : v.inZoneNm,
+                            inLocCd     : v.inLocCd,
+                            originalQty : v.originalQty,
+                            lotNo       : v.lotNo,
+                        }))
+                    },
+                    (res) => {
+                        const results: CheckResult[] = res.data ?? [];
+                        //입고헤더 set
+                        setReceiptHdrList(prev => prev.map(row => ({
+                            ...row,
+                            receiptClsCd    : searchInCategory,
+                            vendorCd        : searchClientCd,
+                            vendorNm        : searchClientNm,
+                            inVNo           : searchVehicleNo,
+                            inVNm           : searchVehicleNm,
+                            inExpectedDate  : searchInExptDate
+                        })));
+
+                        // 입고상세 set
+                        setReceiptDtlList(prev => prev.map((v, i) => {
+                            const r = results.find(r => r.rowIndex === i);
+                            return {
+                                ...v,
+                                prodNm      : tempProdMap.get(v.prodCd)   ?? '',
+                                inZoneNm    : tempZoneMap.get(v.inZoneCd) ?? '',
+                                uploadStatus: r ? (r.isValid ? 'OK' : r.errors.join(' / ')) : v.uploadStatus
+                            };
+                        }));
+
+                        setIsUploading(false);
+                    },
+                    (err) => {
+                        setReceiptDtlList([]);
+                        showAlert('유효성 검증 실패: ' + err?.message);
+                        setIsUploading(false);
+                    }
+                );
+            }).catch(() => {
+                setIsUploading(false);
+            });
         };
 
         reader.onerror = () => {
