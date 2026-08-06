@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 // datepicker
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -9,10 +10,11 @@ import { formatDate } from '../../utils/dateUtils';
 import { usePopupContext } from "../../components/common/PopupProvider";
 // 엑셀
 import ExcelJS from "exceljs";
-// CSS (datepicker 보정 전용)
-import styles from './cj_wms_stock_0090.module.css';
 // API
 import { getList, type Transaction } from '../../api/stock/stock_0090Service';
+
+const CalendarPortal: React.FC<{ children?: React.ReactNode }> = ({ children }) =>
+    createPortal(children ?? null, document.body);
 
 // ── Tailwind 클래스 상수 ──
 const pageShell     = "flex min-h-0 flex-1 bg-surface";
@@ -47,10 +49,12 @@ const badgeDefault = `${badgeBase} bg-slate-100 text-slate-500`;
 
 // 구분 옵션
 const TXN_TP_OPTIONS = [
-    { value: '',  label: '전체' },
-    { value: 'I', label: '입고' },
-    { value: 'O', label: '출고' },
-    { value: 'M', label: '이동' },
+    { value: '',   label: '전체' },
+    { value: 'DP', label: '입고' },
+    { value: 'WD', label: '출고' },
+    { value: 'MV', label: '재고이동' },
+    { value: 'AJ', label: '재고조정' },
+    { value: 'TR', label: '물류이동' },
 ];
 
 // 날짜 문자열(YYYYMMDD) → Date 변환
@@ -63,10 +67,11 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
     // 조회조건
     const [searchSrvcCd,   setSearchSrvcCd]   = useState(selectSrvcCd);
     const [searchWhCd,     setSearchWhCd]     = useState(selectWhCd);
-    const [searchWorkDtFr, setSearchWorkDtFr] = useState('');
-    const [searchWorkDtTo, setSearchWorkDtTo] = useState('');
+    const [searchWorkDtFr, setSearchWorkDtFr] = useState(formatDate(new Date()));
+    const [searchWorkDtTo, setSearchWorkDtTo] = useState(formatDate(new Date()));
     const [searchRcptDt,   setSearchRcptDt]   = useState('');
     const [searchProdCd,   setSearchProdCd]   = useState('');
+    const [searchProdNm,   setSearchProdNm]   = useState('');
     const [searchTxnKey,   setSearchTxnKey]   = useState('');
     const [searchTxnTp,    setSearchTxnTp]    = useState('');
     const [searchOrdNo,    setSearchOrdNo]    = useState('');
@@ -77,7 +82,7 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
     const [searched, setSearched] = useState(false);
 
     // 팝업
-    const { showAlert } = usePopupContext();
+    const { showAlert, openProdSearch } = usePopupContext();
 
     // 조회
     const handleSearch = () => {
@@ -270,7 +275,8 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
                                 <div className={filterItem}>
                                     <label className={filterLabel}>작업일자</label>
                                     <div className="flex items-center gap-1">
-                                        <div className={`${styles.datepickerWrapper} min-w-0 flex-1`}>
+                                        <div className="datepicker-wrapper min-w-0 flex-1">
+                                            <span className="material-symbols-outlined pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 z-1 text-slate-400 text-[16px]">calendar_today</span>
                                             <DatePicker
                                                 selected={toDate(searchWorkDtFr)}
                                                 onChange={(date: Date | null) => setSearchWorkDtFr(date ? formatDate(date) : '')}
@@ -278,10 +284,12 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
                                                 locale={ko}
                                                 isClearable
                                                 placeholderText=""
+                                                popperContainer={CalendarPortal}
                                             />
                                         </div>
                                         <span className="shrink-0 text-xs text-slate-400">~</span>
-                                        <div className={`${styles.datepickerWrapper} min-w-0 flex-1`}>
+                                        <div className="datepicker-wrapper min-w-0 flex-1">
+                                            <span className="material-symbols-outlined pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 z-1 text-slate-400 text-[16px]">calendar_today</span>
                                             <DatePicker
                                                 selected={toDate(searchWorkDtTo)}
                                                 onChange={(date: Date | null) => setSearchWorkDtTo(date ? formatDate(date) : '')}
@@ -289,15 +297,30 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
                                                 locale={ko}
                                                 isClearable
                                                 placeholderText=""
+                                                popperContainer={CalendarPortal}
                                             />
                                         </div>
+                                    </div>
+                                </div>
+
+                                {/* 품번 */}
+                                <div className={filterItem}>
+                                    <label className={filterLabel}>품번</label>
+                                    <div className="flex min-w-0 gap-1.5">
+                                        <input type="text" className="h-9 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" value={searchProdCd}
+                                            onChange={e => { setSearchProdCd(e.target.value); setSearchProdNm(''); }} placeholder="" />
+                                        <button className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-md bg-primary text-white hover:bg-primary-hover" onClick={() => openProdSearch((prodCd, prodNm) => { setSearchProdCd(prodCd); setSearchProdNm(prodNm); }, searchProdCd)}>
+                                            <span className="material-symbols-outlined text-[18px]">search</span>
+                                        </button>
+                                        <input type="text" className="h-9 min-w-0 flex-1 rounded-md border border-slate-300 bg-slate-100 px-3 text-sm text-slate-600" value={searchProdNm} readOnly />
                                     </div>
                                 </div>
 
                                 {/* 입고일자 */}
                                 <div className={filterItem}>
                                     <label className={filterLabel}>입고일자</label>
-                                    <div className={styles.datepickerWrapper}>
+                                    <div className="datepicker-wrapper">
+                                        <span className="material-symbols-outlined pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 z-1 text-slate-400 text-[16px]">calendar_today</span>
                                         <DatePicker
                                             selected={toDate(searchRcptDt)}
                                             onChange={(date: Date | null) => setSearchRcptDt(date ? formatDate(date) : '')}
@@ -305,15 +328,9 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
                                             locale={ko}
                                             isClearable
                                             placeholderText=""
+                                            popperContainer={CalendarPortal}
                                         />
                                     </div>
-                                </div>
-
-                                {/* 품번 */}
-                                <div className={filterItem}>
-                                    <label className={filterLabel}>품번</label>
-                                    <input type="text" className={filterInput} value={searchProdCd}
-                                        onChange={e => setSearchProdCd(e.target.value)} placeholder="품번 입력" />
                                 </div>
 
                                 {/* 트랜잭션KEY */}
@@ -460,10 +477,14 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
                         </table>
                     </div>
 
+                    {/* Pagination */}
+                    <div className="shrink-0 border-t border-slate-100 px-4 py-2">
+                        <span className="text-xs text-muted">총 {txnList.length} 건</span>
+                    </div>
                 </div>
             </div>
         </div>
-        </>
+</>
     );
 };
 

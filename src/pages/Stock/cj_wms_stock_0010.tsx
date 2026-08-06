@@ -10,7 +10,6 @@ import { usePopupContext } from "../../components/common/PopupProvider";
 // 엑셀
 import ExcelJS from "exceljs";
 // CSS (datepicker 보정 전용)
-import styles from './cj_wms_stock_0010.module.css';
 // API
 import { getList, type Stock } from '../../api/stock/stock_0010Service';
 
@@ -45,7 +44,7 @@ const CJ_WMS_STOCK_0010: React.FC = () => {
     const [searchSrvcCd, setSearchSrvcCd]   = useState(selectSrvcCd);
     const [searchWhCd,   setSearchWhCd]     = useState(selectWhCd);
     const [searchBarCd,  setSearchBarCd]    = useState('');
-    const [searchRcptDt, setSearchRcptDt]   = useState('');
+    const [searchRcptDt, setSearchRcptDt]   = useState(formatDate(new Date()));
     const [searchZoneCd, setSearchZoneCd]   = useState('');
     const [searchZoneNm, setSearchZoneNm]   = useState('');
     const [searchLocCd,  setSearchLocCd]    = useState('');
@@ -102,7 +101,10 @@ const CJ_WMS_STOCK_0010: React.FC = () => {
                 setStockList(list);
                 setSearched(true);
             },
-            (err) => { showAlert('조회 실패: ' + err?.message); setSearched(true); }
+            (err) => { 
+                showAlert('조회 실패: ' + err?.message); 
+                setSearched(true); 
+            }
         );
     };
 
@@ -234,15 +236,15 @@ const CJ_WMS_STOCK_0010: React.FC = () => {
                                 <div className="flex gap-2 [&>*]:flex-1 [&>*]:min-w-0">
                                     <div className={filterItem}>
                                         <label className={filterLabel}>입고일자</label>
-                                        <div className={`${styles.datepickerWrapper} relative w-full min-w-0`}>
+                                        <div className="datepicker-wrapper relative w-full min-w-0">
                                             <span className="material-symbols-outlined absolute left-2.5 top-1/2 z-[1] -translate-y-1/2 text-slate-400 pointer-events-none" style={{ fontSize: '16px' }}>calendar_today</span>
                                             <DatePicker
                                                 selected={searchRcptDt ? new Date(`${searchRcptDt.slice(0,4)}-${searchRcptDt.slice(4,6)}-${searchRcptDt.slice(6,8)}`) : null}
                                                 onChange={(date: Date | null) => setSearchRcptDt(date ? formatDate(date) : '')}
                                                 dateFormat="yyyy-MM-dd"
                                                 locale={ko}
+                                                placeholderText="입고일자"
                                                 isClearable
-                                                placeholderText=""
                                             />
                                         </div>
                                     </div>
@@ -257,12 +259,12 @@ const CJ_WMS_STOCK_0010: React.FC = () => {
                                 <div className={filterItem}>
                                     <label className={filterLabel}>존</label>
                                     <div className="flex min-w-0 gap-1.5">
-                                        <input type="text" className="h-9 w-[70px] rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" value={searchZoneCd}
-                                            onChange={e => setSearchZoneCd(e.target.value)} />
+                                        <input type="text" className="h-9 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" value={searchZoneCd}
+                                            onChange={e => { setSearchZoneCd(e.target.value); setSearchZoneNm(''); }} />
                                         <button className={filterSearchBtn} onClick={() => openZoneSearch((zoneCd, zoneNm) => { setSearchZoneCd(zoneCd); setSearchZoneNm(zoneNm); })}>
                                             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>search</span>
                                         </button>
-                                        <input type="text" className={filterReadonly} value={searchZoneNm} readOnly />
+                                        <input type="text" className={filterReadonly} value={searchZoneNm} onChange={e => setSearchZoneCd(e.target.value)} readOnly />
                                     </div>
                                 </div>
 
@@ -282,7 +284,7 @@ const CJ_WMS_STOCK_0010: React.FC = () => {
                                 <div className={filterItem}>
                                     <label className={filterLabel}>품번</label>
                                     <div className="flex min-w-0 gap-1.5">
-                                        <input type="text" className="h-9 w-[70px] rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" value={searchItemCd}
+                                        <input type="text" className="h-9 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" value={searchItemCd}
                                             onChange={e => setSearchItemCd(e.target.value)} />
                                         <button className={filterSearchBtn} onClick={() => openProdSearch((prodCd, prodNm) => { setSearchItemCd(prodCd); setSearchItemNm(prodNm); })}>
                                             <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>search</span>
@@ -383,7 +385,7 @@ const CJ_WMS_STOCK_0010: React.FC = () => {
                                         <td className={cellQty}>{item.pickQty}</td>
                                         <td className={cellQty}>{item.avlQty}</td>
                                         <td className={cellCenter}>{item.lotNo}</td>
-                                        <td className={cellMedium}>{item.id}</td>
+                                        <td className={cellCenter}>{item.id}</td>
                                         <td className={cellMedium}>{item.rmk}</td>
                                         <td className={cellCenter}>{item.aging}</td>
                                         <td className={cellCenter}>{item.prodSpec}</td>
@@ -397,6 +399,10 @@ const CJ_WMS_STOCK_0010: React.FC = () => {
                         </table>
                     </div>
 
+                    {/* Pagination */}
+                    <div className="shrink-0 border-t border-slate-100 px-4 py-2">
+                        <span className="text-xs text-muted">총 {stockList.length} 건</span>
+                    </div>
                 </div>
             </div>
         </div>
