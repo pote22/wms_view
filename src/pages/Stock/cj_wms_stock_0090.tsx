@@ -11,44 +11,42 @@ import { usePopupContext } from "../../components/common/PopupProvider";
 // 엑셀
 import ExcelJS from "exceljs";
 // API
-import { getList, type Transaction } from '../../api/stock/stock_0090Service';
+import { getList, type Itrn } from '../../api/stock/stock_0090Service';
 
 const CalendarPortal: React.FC<{ children?: React.ReactNode }> = ({ children }) =>
     createPortal(children ?? null, document.body);
 
 // ── Tailwind 클래스 상수 ──
-const pageShell     = "flex min-h-0 flex-1 bg-surface";
-const contentShell  = "flex min-w-0 flex-1 flex-col";
-const sectionCard   = "flex min-h-0 flex-1 flex-col rounded-t-xl border border-slate-200/60 bg-surface-card shadow-sm";
-const sectionHeader = "shrink-0 border-b border-slate-100 p-6";
+const pageShell         = "flex min-h-0 flex-1 bg-surface";
+const contentShell      = "flex min-w-0 flex-1 flex-col";
+const sectionCard       = "flex min-h-0 flex-1 flex-col rounded-t-xl border border-slate-200/60 bg-surface-card shadow-sm";
+const sectionHeader     = "shrink-0 border-b border-slate-100 p-6";
 
-const btnBase    = "inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition";
-const btnPrimary = `${btnBase} bg-primary text-white hover:bg-primary-hover`;
-const btnOutline = `${btnBase} border border-border-soft bg-white text-slate-700 hover:bg-slate-50`;
+const btnBase           = "inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-medium transition";
+const btnPrimary        = `${btnBase} bg-primary text-white hover:bg-primary-hover`;
+const btnOutline        = `${btnBase} border border-border-soft bg-white text-slate-700 hover:bg-slate-50`;
 
-const filterItem   = "flex min-w-0 flex-col gap-1.5";
-const filterLabel  = "text-xs font-semibold uppercase tracking-wide text-slate-500";
-const filterSelect = "h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
-const filterInput  = "h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
+const filterItem        = "flex min-w-0 flex-col gap-1.5";
+const filterLabel       = "text-xs font-semibold uppercase tracking-wide text-slate-500";
+const filterSelect      = "h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
+const filterInput       = "h-9 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15";
 
-const thBase = "border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide";
+const thBase            = "border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide";
 
 const cellCenter        = "px-2 py-2 text-center";
 const cellMedium        = "px-2 py-2 font-medium text-slate-700";
 const cellQty           = "px-2 py-2 text-right tabular-nums font-bold text-blue-700";
-const cellApplyQtyUp    = "px-2 py-2 text-right tabular-nums font-bold text-success";
-const cellApplyQtyDown  = "px-2 py-2 text-right tabular-nums font-bold text-danger";
 const cellTxnKey        = "truncate px-2 py-2 font-mono text-xs";
-const cellDim           = "px-2 py-2 text-center text-[11px] text-muted";
 
-const badgeBase    = "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium";
-const badgeIn      = `${badgeBase} bg-green-50 text-success`;
-const badgeOut     = `${badgeBase} bg-red-50 text-danger`;
-const badgeMove    = `${badgeBase} bg-blue-50 text-blue-700`;
-const badgeDefault = `${badgeBase} bg-slate-100 text-slate-500`;
+const badgeBase         = "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium";
+const badgeIn           = `${badgeBase} bg-green-50 text-success`;
+const badgeOut          = `${badgeBase} bg-blue-50 text-blue-700`;
+const badgeMove         = `${badgeBase} bg-fuchsia-50 text-fuchsia-700`;
+const badgeMv           = `${badgeBase} bg-amber-50 text-amber-700`;
+const badgeDefault      = `${badgeBase} bg-slate-100 text-slate-500`;
 
 // 구분 옵션
-const TXN_TP_OPTIONS = [
+const TRAN_TYPE_OPTIONS = [
     { value: '',   label: '전체' },
     { value: 'DP', label: '입고' },
     { value: 'WD', label: '출고' },
@@ -65,21 +63,21 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
     const { srvcList, whList, selectSrvcCd, selectWhCd } = useCommonWhList();
 
     // 조회조건
-    const [searchSrvcCd,   setSearchSrvcCd]   = useState(selectSrvcCd);
-    const [searchWhCd,     setSearchWhCd]     = useState(selectWhCd);
-    const [searchWorkDtFr, setSearchWorkDtFr] = useState(formatDate(new Date()));
-    const [searchWorkDtTo, setSearchWorkDtTo] = useState(formatDate(new Date()));
-    const [searchRcptDt,   setSearchRcptDt]   = useState('');
-    const [searchProdCd,   setSearchProdCd]   = useState('');
-    const [searchProdNm,   setSearchProdNm]   = useState('');
-    const [searchTxnKey,   setSearchTxnKey]   = useState('');
-    const [searchTxnTp,    setSearchTxnTp]    = useState('');
-    const [searchOrdNo,    setSearchOrdNo]    = useState('');
-    const [searchBarCd,    setSearchBarCd]    = useState('');
+    const [searchSrvcCd,        setSearchSrvcCd]        = useState(selectSrvcCd);
+    const [searchWhCd,          setSearchWhCd]          = useState(selectWhCd);
+    const [searchStrDate,       setSearchStrDate]       = useState(formatDate(new Date()));
+    const [searchEndDate,       setSearchEndDate]       = useState(formatDate(new Date()));
+    const [searchProdCd,        setSearchProdCd]        = useState('');
+    const [searchProdNm,        setSearchProdNm]        = useState('');
+    const [searchLotNo,         setSearchLotNo]         = useState('');
+    const [searchItrnKey,       setSearchItrnKey]       = useState('');
+    const [searchTranType,      setSearchTranType]      = useState('');
+    const [searchSourceKey,     setSearchSourceKey]     = useState('');
+    const [searchBarcode,       setSearchBarcode]       = useState('');
 
     // 조회결과
-    const [txnList,  setTxnList]  = useState<Transaction[]>([]);
-    const [searched, setSearched] = useState(false);
+    const [itrnList,            setItrnList]            = useState<Itrn[]>([]);
+    const [searched,            setSearched]            = useState(false);
 
     // 팝업
     const { showAlert, openProdSearch } = usePopupContext();
@@ -91,45 +89,47 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
 
         getList(
             {
-                srvcCd   : searchSrvcCd,
-                whCd     : searchWhCd,
-                workDtFr : searchWorkDtFr,
-                workDtTo : searchWorkDtTo,
-                rcptDt   : searchRcptDt,
-                prodCd   : searchProdCd,
-                txnKey   : searchTxnKey,
-                txnTp    : searchTxnTp,
-                ordNo    : searchOrdNo,
-                barcode  : searchBarCd,
+                srvcCd      : searchSrvcCd,
+                whCd        : searchWhCd,
+                strDate     : searchStrDate,
+                endDate     : searchEndDate,
+                prodCd      : searchProdCd,
+                lotNo       : searchLotNo,
+                itrnKey     : searchItrnKey,
+                tranType    : searchTranType,
+                sourceKey   : searchSourceKey,
+                barcode     : searchBarcode,
             },
             (res) => {
-                const list: Transaction[] = (res.data ?? []).map((v: any) => ({
-                    srvcCd    : v.srvc_cd     ?? '',
-                    whCd      : v.wh_cd       ?? '',
-                    txnKey    : v.txn_key     ?? '',
-                    txnTp     : v.txn_tp      ?? '',
-                    txnTpNm   : v.txn_tp_nm   ?? '',
-                    workDt    : v.work_dt     ?? '',
-                    prodCd    : v.prod_cd     ?? '',
-                    prodNm    : v.prod_nm     ?? '',
-                    rcptLotNo : v.rcpt_lot_no ?? '',
-                    prodLotNo : v.prod_lot_no ?? '',
-                    befZoneCd : v.bef_zone_cd ?? '',
-                    befLocCd  : v.bef_loc_cd  ?? '',
-                    befBarCd  : v.bef_bar_cd  ?? '',
-                    aftZoneCd : v.aft_zone_cd ?? '',
-                    aftLocCd  : v.aft_loc_cd  ?? '',
-                    aftBarCd  : v.aft_bar_cd  ?? '',
-                    ordNo     : v.ord_no      ?? '',
-                    stockQty  : v.stock_qty   ?? 0,
-                    applyQty  : v.apply_qty   ?? 0,
-                    ioGb      : v.io_gb       ?? '',
-                    regId     : v.reg_id      ?? '',
-                    regDate   : v.reg_date    ?? '',
-                    updId     : v.upd_id      ?? '',
-                    updDate   : v.upd_date    ?? '',
+                const list: Itrn[] = (res.data ?? []).map((v: any) => ({
+                    srvcCd          : v.srvc_cd         ?? '',
+                    whCd            : v.wh_cd           ?? '',
+                    itrnKey         : v.itrn_key        ?? '',
+                    tranType        : v.tran_type       ?? '',
+                    effectiveDate   : v.effective_date  ?? '',
+                    prodCd          : v.prod_cd         ?? '',
+                    prodNm          : v.prod_nm         ?? '',
+                    lotNo           : v.lot_no          ?? '',
+                    prodLotNo       : v.prod_lot_no     ?? '',
+                    fromZoneCd      : v.from_zone_cd    ?? '',
+                    fromLocCd       : v.from_loc_cd     ?? '',
+                    fromId          : v.from_id         ?? '',
+                    toZoneCd        : v.to_zone_cd      ?? '',
+                    toLocCd         : v.to_loc_cd       ?? '',
+                    toId            : v.to_id           ?? '',
+                    vendorCd        : v.vendor_cd       ?? '',
+                    vendorNm        : v.vendor_nm       ?? '',
+                    sourceKey       : v.source_key      ?? '',
+                    qty             : v.qty             ?? 0,
+                    realQty         : v.real_qty        ?? 0,
+                    tranDivision    : v.tran_division   ?? '',
+                    regId           : v.reg_id          ?? '',
+                    regDate         : v.reg_date        ?? '',
+                    updId           : v.upd_id          ?? '',
+                    updDate         : v.upd_date        ?? '',
                 }));
-                setTxnList(list);
+
+                setItrnList(list);
                 setSearched(true);
             },
             (err) => { showAlert('조회 실패: ' + err?.message); setSearched(true); }
@@ -138,7 +138,7 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
 
     // 엑셀
     const handleExcel = async () => {
-        if (txnList.length === 0) {
+        if (itrnList.length === 0) {
             showAlert("다운로드할 데이터가 없습니다.");
             return;
         }
@@ -147,29 +147,31 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
         const ws = wb.addWorksheet("트랜잭션현황");
 
         ws.columns = [
-            { header: "센터명",           key: "whNm",      width: 16 },
-            { header: "고객사",           key: "srvcNm",    width: 16 },
-            { header: "트랜잭션KEY",      key: "txnKey",    width: 18 },
-            { header: "구분",             key: "txnTpNm",   width: 8 },
-            { header: "작업일자",         key: "workDt",    width: 12 },
-            { header: "품번",             key: "prodCd",    width: 16 },
-            { header: "품명",             key: "prodNm",    width: 24 },
-            { header: "입고일자(로트번호)", key: "rcptLotNo", width: 16 },
-            { header: "생산로트(로트번호)", key: "prodLotNo", width: 16 },
-            { header: "존(이동전)",       key: "befZoneCd", width: 12 },
-            { header: "로케이션(이동전)", key: "befLocCd",  width: 14 },
-            { header: "바코드(이동전)",   key: "befBarCd",  width: 14 },
-            { header: "존(이동후)",       key: "aftZoneCd", width: 12 },
-            { header: "로케이션(이동후)", key: "aftLocCd",  width: 14 },
-            { header: "바코드(이동후)",   key: "aftBarCd",  width: 14 },
-            { header: "지시번호",         key: "ordNo",     width: 14 },
-            { header: "수량(재고)",       key: "stockQty",  width: 12 },
-            { header: "재고반영(수량)",   key: "applyQty",  width: 12 },
-            { header: "증차감구분자",     key: "ioGb",      width: 12 },
-            { header: "등록자",           key: "regId",     width: 12 },
-            { header: "등록일자",         key: "regDate",   width: 18 },
-            { header: "수정자",           key: "updId",     width: 12 },
-            { header: "수정일자",         key: "updDate",   width: 18 },
+            { header: "센터명",             key: "whCd",            width: 16 },
+            { header: "고객사",             key: "srvcCd",          width: 16 },
+            { header: "트랜잭션KEY",        key: "itrnKey",         width: 18 },
+            { header: "구분",               key: "tranType",        width: 8 },
+            { header: "작업일자",           key: "effectiveDate",   width: 12 },
+            { header: "품번",               key: "prodCd",          width: 16 },
+            { header: "품명",               key: "prodNm",          width: 24 },
+            { header: "입고일자(로트번호)",  key: "lotNo",           width: 16 },
+            { header: "생산로트(로트번호)",  key: "prodLotNo",       width: 16 },
+            { header: "존(이동전)",         key: "fromZoneCd",      width: 12 },
+            { header: "로케이션(이동전)",   key: "fromLocCd",        width: 14 },
+            { header: "바코드(이동전)",     key: "fromId",           width: 14 },
+            { header: "존(이동후)",         key: "toZoneCd",         width: 12 },
+            { header: "로케이션(이동후)",   key: "toLocCd",          width: 14 },
+            { header: "거래처코드",         key: "vendorCd",         width: 14 },
+            { header: "거래처명",           key: "vendorNm",         width: 14 },
+            { header: "바코드(이동후)",     key: "toId",             width: 14 },
+            { header: "지시번호",           key: "sourceKey",        width: 14 },
+            { header: "수량(재고)",         key: "qty",              width: 12 },
+            { header: "재고반영(수량)",     key: "realQty",          width: 12 },
+            { header: "증차감구분자",       key: "tranDivision",     width: 12 },
+            { header: "등록자",             key: "regId",            width: 12 },
+            { header: "등록일자",           key: "regDate",          width: 18 },
+            { header: "수정자",             key: "updId",            width: 12 },
+            { header: "수정일자",           key: "updDate",          width: 18 },
         ];
 
         const headerRow = ws.getRow(1);
@@ -181,7 +183,7 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
         });
         headerRow.height = 22;
 
-        txnList.forEach(v => {
+        itrnList.forEach(v => {
             const s = srvcList.find(s => s.srvcCd === v.srvcCd);
             const w = whList.find(w => w.whCd === v.whCd);
             const row = ws.addRow({
@@ -211,21 +213,16 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
     useEffect(() => { setSearchSrvcCd(selectSrvcCd); }, [selectSrvcCd]);
     useEffect(() => { setSearchWhCd(selectWhCd); },     [selectWhCd]);
 
-    // 구분 뱃지 클래스
     const badgeClass = (tp: string) =>
-        tp === 'I' ? badgeIn
-      : tp === 'O' ? badgeOut
-      : tp === 'M' ? badgeMove
+        tp === 'DP' ? badgeIn
+      : tp === 'WD' ? badgeOut
+      : tp === 'MV' ? badgeMv
+      : tp === 'TR' ? badgeMove
       : badgeDefault;
 
-    // 구분명 표시 (txnTpNm 우선, 없으면 옵션 라벨)
-    const txnTpLabel = (item: Transaction) =>
-        item.txnTpNm || TXN_TP_OPTIONS.find(o => o.value === item.txnTp)?.label || item.txnTp;
-
-    // 증가/감소 판정
-    const isUp = (item: Transaction) =>
-        item.ioGb ? item.ioGb === 'I' : Number(item.applyQty) >= 0;
-
+    const tranTypeLabel = (item: Itrn) =>
+        TRAN_TYPE_OPTIONS.find(o => o.value === item.tranType)?.label ?? item.tranType;
+    
     return (
         <>
         <div className={pageShell}>
@@ -278,8 +275,8 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
                                         <div className="datepicker-wrapper min-w-0 flex-1">
                                             <span className="material-symbols-outlined pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 z-1 text-slate-400 text-[16px]">calendar_today</span>
                                             <DatePicker
-                                                selected={toDate(searchWorkDtFr)}
-                                                onChange={(date: Date | null) => setSearchWorkDtFr(date ? formatDate(date) : '')}
+                                                selected={toDate(searchStrDate)}
+                                                onChange={(date: Date | null) => setSearchStrDate(date ? formatDate(date) : '')}
                                                 dateFormat="yyyy-MM-dd"
                                                 locale={ko}
                                                 isClearable
@@ -291,8 +288,8 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
                                         <div className="datepicker-wrapper min-w-0 flex-1">
                                             <span className="material-symbols-outlined pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 z-1 text-slate-400 text-[16px]">calendar_today</span>
                                             <DatePicker
-                                                selected={toDate(searchWorkDtTo)}
-                                                onChange={(date: Date | null) => setSearchWorkDtTo(date ? formatDate(date) : '')}
+                                                selected={toDate(searchEndDate)}
+                                                onChange={(date: Date | null) => setSearchEndDate(date ? formatDate(date) : '')}
                                                 dateFormat="yyyy-MM-dd"
                                                 locale={ko}
                                                 isClearable
@@ -322,8 +319,8 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
                                     <div className="datepicker-wrapper">
                                         <span className="material-symbols-outlined pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 z-1 text-slate-400 text-[16px]">calendar_today</span>
                                         <DatePicker
-                                            selected={toDate(searchRcptDt)}
-                                            onChange={(date: Date | null) => setSearchRcptDt(date ? formatDate(date) : '')}
+                                            selected={toDate(searchLotNo)}
+                                            onChange={(date: Date | null) => setSearchLotNo(date ? formatDate(date) : '')}
                                             dateFormat="yyyy-MM-dd"
                                             locale={ko}
                                             isClearable
@@ -336,30 +333,30 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
                                 {/* 트랜잭션KEY */}
                                 <div className={filterItem}>
                                     <label className={filterLabel}>트랜잭션KEY</label>
-                                    <input type="text" className={filterInput} value={searchTxnKey}
-                                        onChange={e => setSearchTxnKey(e.target.value)} placeholder="TXN-0000" />
+                                    <input type="text" className={filterInput} value={searchItrnKey}
+                                        onChange={e => setSearchItrnKey(e.target.value)} placeholder="TXN-0000" />
                                 </div>
 
                                 {/* 구분 */}
                                 <div className={filterItem}>
                                     <label className={filterLabel}>구분</label>
-                                    <select className={filterSelect} value={searchTxnTp} onChange={e => setSearchTxnTp(e.target.value)}>
-                                        {TXN_TP_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                                    <select className={filterSelect} value={searchTranType} onChange={e => setSearchTranType(e.target.value)}>
+                                        {TRAN_TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                                     </select>
                                 </div>
 
                                 {/* 지시번호 */}
                                 <div className={filterItem}>
                                     <label className={filterLabel}>지시번호</label>
-                                    <input type="text" className={filterInput} value={searchOrdNo}
-                                        onChange={e => setSearchOrdNo(e.target.value)} placeholder="지시번호 입력" />
+                                    <input type="text" className={filterInput} value={searchSourceKey}
+                                        onChange={e => setSearchSourceKey(e.target.value)} placeholder="지시번호 입력" />
                                 </div>
 
                                 {/* 바코드 */}
                                 <div className={filterItem}>
                                     <label className={filterLabel}>바코드</label>
-                                    <input type="text" className={filterInput} value={searchBarCd}
-                                        onChange={e => setSearchBarCd(e.target.value)} placeholder="바코드 입력" />
+                                    <input type="text" className={filterInput} value={searchBarcode}
+                                        onChange={e => setSearchBarcode(e.target.value)} placeholder="바코드 입력" />
                                 </div>
 
                             </div>
@@ -367,7 +364,7 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
 
                         {/* ── 테이블 툴바 ── */}
                         <div className="mt-4 flex items-center justify-between gap-3">
-                            <span className="text-sm font-semibold text-primary">Total: {txnList.length} Items</span>
+                            <span className="text-sm font-semibold text-primary">Total: {itrnList.length} Items</span>
                         </div>
                     </div>
 
@@ -385,21 +382,23 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
                                 <col style={{ width: '140px' }} />   {/* 입고일자(로트) */}
                                 <col style={{ width: '140px' }} />   {/* 생산로트 */}
                                 <col style={{ width: '100px' }} />   {/* 존(이동전) */}
-                                <col style={{ width: '120px' }} />   {/* 로케이션(이동전) */}
+                                <col style={{ width: '150px' }} />   {/* 로케이션(이동전) */}
                                 <col style={{ width: '120px' }} />   {/* 바코드(이동전) */}
                                 <col style={{ width: '100px' }} />   {/* 존(이동후) */}
-                                <col style={{ width: '120px' }} />   {/* 로케이션(이동후) */}
+                                <col style={{ width: '150px' }} />   {/* 로케이션(이동후) */}
                                 <col style={{ width: '120px' }} />   {/* 바코드(이동후) */}
+                                <col style={{ width: '120px' }} />   {/* 거래처번호 */}
+                                <col style={{ width: '150px' }} />   {/* 거래처명 */}
                                 <col style={{ width: '120px' }} />   {/* 지시번호 */}
                                 <col style={{ width: '100px' }} />   {/* 수량(재고) */}
                                 <col style={{ width: '110px' }} />   {/* 재고반영(수량) */}
-                                <col style={{ width: '90px' }} />    {/* 증차감구분자 */}
+                                <col style={{ width: '125px' }} />    {/* 증차감구분자 */}
                                 <col style={{ width: '90px' }} />    {/* 등록자 */}
                                 <col style={{ width: '150px' }} />   {/* 등록일자 */}
                                 <col style={{ width: '90px' }} />    {/* 수정자 */}
                                 <col style={{ width: '150px' }} />   {/* 수정일자 */}
                             </colgroup>
-                            <thead className="sticky top-0 z-10 bg-slate-50 text-slate-500">
+                            <thead className="sticky top-0 z-1 bg-slate-50 text-slate-500">
                                 <tr>
                                     <th className={thBase}>센터명</th>
                                     <th className={thBase}>고객사</th>
@@ -415,6 +414,8 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
                                     <th className={thBase}>바코드(이동전)</th>
                                     <th className={thBase}>존(이동후)</th>
                                     <th className={thBase}>로케이션(이동후)</th>
+                                    <th className={thBase}>거래처번호</th>
+                                    <th className={thBase}>거래처명</th>
                                     <th className={thBase}>바코드(이동후)</th>
                                     <th className={thBase}>지시번호</th>
                                     <th className={thBase}>수량(재고)</th>
@@ -427,14 +428,14 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50 text-slate-700">
-                                {searched && txnList.length === 0 ? (
+                                {searched && itrnList.length === 0 ? (
                                     <tr>
                                         <td colSpan={23} className="px-4 py-12 text-center text-slate-400">
                                             <span className="material-symbols-outlined block text-4xl">inbox</span>
                                             <p className="mt-2 text-sm">조회된 데이터가 없습니다.</p>
                                         </td>
                                     </tr>
-                                ) : txnList.map((item, idx) => (
+                                ) : itrnList.map((item, idx) => (
                                     <tr key={idx} className="hover:bg-slate-50">
                                         <td className={cellCenter}>
                                             { (w => w ? `${w.whCd} [${w.whNm}]` : item.whCd)(whList.find(w => w.whCd === item.whCd)) }
@@ -442,35 +443,31 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
                                         <td className={cellCenter}>
                                             { (s => s ? `${s.srvcCd} [${s.srvcNm}]` : item.srvcCd)(srvcList.find(s => s.srvcCd === item.srvcCd)) }
                                         </td>
-                                        <td className={cellTxnKey}>{item.txnKey}</td>
+                                        <td className={cellCenter}>{item.itrnKey}</td>
                                         <td className={cellCenter}>
-                                            <span className={badgeClass(item.txnTp)}>{txnTpLabel(item)}</span>
+                                            <span className={badgeClass(item.tranType)}>{tranTypeLabel(item)}</span>
                                         </td>
-                                        <td className={cellCenter}>{item.workDt}</td>
+                                        <td className={cellCenter}>{item.effectiveDate}</td>
                                         <td className={cellMedium}>{item.prodCd}</td>
                                         <td className={cellMedium}>{item.prodNm}</td>
-                                        <td className={cellCenter}>{item.rcptLotNo}</td>
+                                        <td className={cellCenter}>{item.lotNo}</td>
                                         <td className={cellCenter}>{item.prodLotNo}</td>
-                                        <td className={cellCenter}>{item.befZoneCd}</td>
-                                        <td className={cellCenter}>{item.befLocCd}</td>
-                                        <td className={cellCenter}>{item.befBarCd}</td>
-                                        <td className={cellCenter}>{item.aftZoneCd}</td>
-                                        <td className={cellCenter}>{item.aftLocCd}</td>
-                                        <td className={cellCenter}>{item.aftBarCd}</td>
-                                        <td className={cellCenter}>{item.ordNo}</td>
-                                        <td className={cellQty}>{Number(item.stockQty).toLocaleString()}</td>
-                                        <td className={isUp(item) ? cellApplyQtyUp : cellApplyQtyDown}>
-                                            {Number(item.applyQty) > 0 ? '+' : ''}{Number(item.applyQty).toLocaleString()}
-                                        </td>
-                                        <td className={cellCenter}>
-                                            <span className={`material-symbols-outlined ${isUp(item) ? 'text-success' : 'text-danger'}`}>
-                                                {isUp(item) ? 'trending_up' : 'trending_down'}
-                                            </span>
-                                        </td>
+                                        <td className={cellCenter}>{item.fromZoneCd}</td>
+                                        <td className={cellCenter}>{item.fromLocCd}</td>
+                                        <td className={cellCenter}>{item.fromId}</td>
+                                        <td className={cellCenter}>{item.toZoneCd}</td>
+                                        <td className={cellCenter}>{item.toLocCd}</td>
+                                        <td className={cellCenter}>{item.toId}</td>
+                                        <td className={cellCenter}>{item.vendorCd}</td>
+                                        <td className={cellMedium}>{item.vendorNm}</td>
+                                        <td className={cellCenter}>{item.sourceKey}</td>
+                                        <td className={cellQty}>{Number(item.qty).toLocaleString()}</td>
+                                        <td className={cellQty}>{Number(item.realQty).toLocaleString()}</td>
+                                        <td className={cellCenter}>{item.tranDivision}</td>
                                         <td className={cellCenter}>{item.regId}</td>
-                                        <td className={cellDim}>{item.regDate}</td>
-                                        <td className={cellCenter}>{item.updId || '-'}</td>
-                                        <td className={cellDim}>{item.updDate || '-'}</td>
+                                        <td className={cellCenter}>{item.regDate}</td>
+                                        <td className={cellCenter}>{item.updId}</td>
+                                        <td className={cellCenter}>{item.updDate}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -479,7 +476,7 @@ const CJ_WMS_STOCK_0090: React.FC = () => {
 
                     {/* Pagination */}
                     <div className="shrink-0 border-t border-slate-100 px-4 py-2">
-                        <span className="text-xs text-muted">총 {txnList.length} 건</span>
+                        <span className="text-xs text-muted">총 {itrnList.length} 건</span>
                     </div>
                 </div>
             </div>
