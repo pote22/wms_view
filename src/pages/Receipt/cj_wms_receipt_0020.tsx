@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { ko } from 'date-fns/locale';
@@ -15,6 +16,9 @@ import { getList, saveReceiptConfirm, saveRemarkInfo, type ReceiptRow } from '..
 // 엑셀
 import ExcelJS from 'exceljs';
 import * as XLSX from 'xlsx';
+
+const CalendarPortal: React.FC<{ children?: React.ReactNode }> = ({ children }) =>
+    createPortal(children ?? null, document.body);
 
 // ── 레이아웃
 const pageShell             = "flex min-h-0 flex-1 bg-surface";
@@ -49,7 +53,7 @@ const selectToolbar         = "h-8 rounded-md border border-slate-200 bg-white p
 // ── 테이블
 const tableWrapper          = "min-h-0 flex-1 overflow-auto";
 const tableClass            = "min-w-[5200px] table-fixed border-collapse text-xs";
-const theadClass            = "sticky top-0 z-10 bg-slate-50 text-slate-500";
+const theadClass            = "sticky top-0 z-1 bg-slate-50 text-slate-500";
 const thCell                = "border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide";
 const thGroupQty            = "border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide bg-blue-100 text-blue-700 border-l border-r border-blue-200";
 const thGroupScan           = "border-b border-slate-100 px-2 py-2 text-center font-semibold uppercase tracking-wide bg-teal-100 text-teal-700 border-l border-r border-teal-200";
@@ -715,6 +719,7 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                                     locale={ko}
                                                     placeholderText="시작일"
                                                     isClearable
+                                                    popperContainer={CalendarPortal}
                                                 />
                                             </div>
                                             <span className="text-xs text-slate-400 shrink-0">~</span>
@@ -727,6 +732,7 @@ const CJ_WMS_RECEIPT_0020: React.FC = () => {
                                                     locale={ko}
                                                     placeholderText="종료일"
                                                     isClearable
+                                                    popperContainer={CalendarPortal}
                                                 />
                                             </div>
                                         </div>

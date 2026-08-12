@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 // datapicker
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -12,6 +13,9 @@ import ExcelJS from "exceljs";
 // CSS (datepicker 보정 전용)
 // API
 import { getList, type Stock } from '../../api/stock/stock_0010Service';
+
+const CalendarPortal: React.FC<{ children?: React.ReactNode }> = ({ children }) =>
+    createPortal(children ?? null, document.body);
 
 // ── Tailwind 클래스 상수 ──
 const pageShell    = "flex min-h-0 flex-1 bg-surface";
@@ -245,6 +249,7 @@ const CJ_WMS_STOCK_0010: React.FC = () => {
                                                 locale={ko}
                                                 placeholderText="입고일자"
                                                 isClearable
+                                                popperContainer={CalendarPortal}
                                             />
                                         </div>
                                     </div>
@@ -335,7 +340,7 @@ const CJ_WMS_STOCK_0010: React.FC = () => {
                                 <col style={{ width: '90px' }} />
                                 <col style={{ width: '200px' }} />
                             </colgroup>
-                            <thead className="sticky top-0 z-10 bg-slate-50 text-slate-500">
+                            <thead className="sticky top-0 z-1 bg-slate-50 text-slate-500">
                                 <tr>
                                     <th className={thBase}>고객사</th>
                                     <th className={thBase}>센터명</th>
